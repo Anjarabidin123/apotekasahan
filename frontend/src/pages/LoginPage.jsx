@@ -98,8 +98,8 @@ export function LoginPage({ onSuccess, logoUrl }) {
         </span>
       </header>
 
-      {/* Konten Utama: Form Masuk & Simulasi Interaktif */}
-      <main className="relative z-10 flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 pt-6 pb-5 lg:pt-6 lg:pb-32 flex items-end lg:items-center">
+      {/* Konten utama: kartu masuk dan simulasi interaktif */}
+      <main className="relative z-10 flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 pt-2 pb-10 sm:py-6 lg:pt-6 lg:pb-32 flex items-center">
         <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
           {/* Kolom Kiri Desktop: Judul & Simulasi Interaktif */}
           <section className="hidden lg:flex lg:col-span-7 flex-col gap-4 pt-2">
