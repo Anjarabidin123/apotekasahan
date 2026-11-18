@@ -21,7 +21,7 @@ export function Layout({
   };
 
   return (
-    <div className="flex h-[100dvh] w-full max-w-full bg-slate-50/60 overflow-hidden font-sans">
+    <div className="flex h-[100dvh] w-full max-w-full bg-slate-100/80 overflow-hidden font-sans">
       <Sidebar
         activePage={activePage}
         setActivePage={handleSelectPage}
