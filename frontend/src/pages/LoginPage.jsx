@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { BrandLogo } from '../components/common/BrandLogo';
 import { Pill, Lock, Mail, AlertCircle, ArrowRight, Sparkles } from 'lucide-react';
 
 export function LoginPage({ onSuccess }) {
@@ -39,12 +40,7 @@ export function LoginPage({ onSuccess }) {
       <div className="max-w-md w-full premium-card p-8 sm:p-10 space-y-6 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.07)] border-slate-100">
         {/* Header Logo */}
         <div className="text-center space-y-2">
-          <div
-            className="w-14 h-14 rounded-3xl mx-auto flex items-center justify-center text-white shadow-[0_10px_25px_-5px_rgba(5,150,105,0.4)]"
-            style={{ background: 'var(--gradient-card)' }}
-          >
-            <Pill className="w-7 h-7" strokeWidth={2.4} />
-          </div>
+          <BrandLogo className="w-16 h-16 mx-auto shadow-md border border-blue-400/20" />
           <h1 className="text-2xl font-black text-slate-900 tracking-tight pt-1">
             SIMAAF
           </h1>

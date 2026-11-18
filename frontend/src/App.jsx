@@ -17,6 +17,16 @@ function MainApp() {
   const [tanggalAcuan, setTanggalAcuan] = useState('2026-10-31');
   const [urgentReturCount, setUrgentReturCount] = useState(0);
   const [preselectedBatch, setPreselectedBatch] = useState(null);
+  const [logoUrl, setLogoUrl] = useState(() => localStorage.getItem('simaaf_logo_url') || '/logo-asahan.svg');
+
+  const handleLogoChange = (newUrl) => {
+    setLogoUrl(newUrl);
+    if (newUrl) {
+      localStorage.setItem('simaaf_logo_url', newUrl);
+    } else {
+      localStorage.removeItem('simaaf_logo_url');
+    }
+  };
 
   // Muat data pengaturan & hitung badge pengingat mendesak
   const refreshBadgeAndSettings = async () => {
@@ -80,6 +90,7 @@ function MainApp() {
       activePageTitle={getPageTitle()}
       tanggalAcuan={tanggalAcuan}
       urgentCount={urgentReturCount}
+      logoUrl={logoUrl}
     >
       {activePage === 'dashboard' && (
         <DashboardPage
@@ -124,6 +135,8 @@ function MainApp() {
       {activePage === 'pengaturan' && (
         <PengaturanPage
           onSettingsUpdated={refreshBadgeAndSettings}
+          currentLogoUrl={logoUrl}
+          onLogoChange={handleLogoChange}
         />
       )}
     </Layout>

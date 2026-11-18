@@ -3,7 +3,7 @@ import { Sidebar } from './Sidebar';
 import { Navbar } from './Navbar';
 import { BottomNav } from './BottomNav';
 
-export function Layout({ children, activePage, setActivePage, activePageTitle, tanggalAcuan, urgentCount }) {
+export function Layout({ children, activePage, setActivePage, activePageTitle, tanggalAcuan, urgentCount, logoUrl }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   return (
@@ -14,6 +14,7 @@ export function Layout({ children, activePage, setActivePage, activePageTitle, t
         setActivePage={setActivePage}
         isCollapsed={isCollapsed}
         urgentCount={urgentCount}
+        logoUrl={logoUrl}
       />
 
       {/* Main Content Shell */}

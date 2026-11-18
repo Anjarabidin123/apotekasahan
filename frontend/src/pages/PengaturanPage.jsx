@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { BrandLogo } from '../components/common/BrandLogo';
 import {
   Building2,
   FileText,
@@ -29,7 +30,7 @@ import {
   Calendar
 } from 'lucide-react';
 
-export function PengaturanPage({ onSettingsUpdated }) {
+export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange }) {
   const { isAdmin, user } = useAuth();
   const [activeTab, setActiveTab] = useState('identitas'); // 'identitas' | 'dokumen' | 'kategori' | 'rekanan'
   const [loading, setLoading] = useState(false);
@@ -50,7 +51,7 @@ export function PengaturanPage({ onSettingsUpdated }) {
     jam_operasional: 'Senin - Minggu: 08.00 - 22.00 WIB',
     catatan_kaki_surat: 'Obat yang diretur wajib bersegel utuh dan diverifikasi nomor batch resminya.',
     format_no_retur: 'BAP-RETUR/{YYYY}/{MM}/{INDEX}',
-    logo_url: null,
+    logo_url: currentLogoUrl || '/logo-asahan.svg',
   });
 
   // Master Distributor (PBF Rekanan)
@@ -117,17 +118,28 @@ export function PengaturanPage({ onSettingsUpdated }) {
     }
     const reader = new FileReader();
     reader.onload = () => {
-      setProfile((prev) => ({ ...prev, logo_url: reader.result }));
+      const newUrl = reader.result;
+      setProfile((prev) => ({ ...prev, logo_url: newUrl }));
+      if (onLogoChange) onLogoChange(newUrl);
       setSuccessMsg('Logo resmi Apotek Asahan Farma berhasil diperbarui!');
       setTimeout(() => setSuccessMsg(''), 4000);
     };
     reader.readAsDataURL(file);
   };
 
+  const handleSelectPresetLogo = (presetUrl, presetName) => {
+    setProfile((prev) => ({ ...prev, logo_url: presetUrl }));
+    if (onLogoChange) onLogoChange(presetUrl);
+    setSuccessMsg(`Logo diubah ke preset: ${presetName}!`);
+    setTimeout(() => setSuccessMsg(''), 4000);
+  };
+
   const handleRemoveLogo = () => {
-    setProfile((prev) => ({ ...prev, logo_url: null }));
+    const defaultUrl = '/logo-asahan.svg';
+    setProfile((prev) => ({ ...prev, logo_url: defaultUrl }));
     if (fileInputRef.current) fileInputRef.current.value = '';
-    setSuccessMsg('Logo dihapus.');
+    if (onLogoChange) onLogoChange(defaultUrl);
+    setSuccessMsg('Logo dikembalikan ke default resmi.');
     setTimeout(() => setSuccessMsg(''), 3000);
   };
 
@@ -324,57 +336,123 @@ export function PengaturanPage({ onSettingsUpdated }) {
             </div>
 
             {/* Logo Section */}
-            <div>
-              <label className="text-xs font-black text-slate-700 block mb-2">
-                Logo / Stempel Resmi Apotek
+            <div className="space-y-3">
+              <label className="text-xs font-black text-slate-700 block">
+                Logo / Brand Mark Resmi Apotek
               </label>
-              <div className="flex items-center gap-4">
-                {profile.logo_url ? (
-                  <div className="relative w-20 h-20 rounded-2xl border-2 border-blue-500/30 overflow-hidden bg-white shadow-xs flex items-center justify-center p-1.5 shrink-0">
-                    <img
-                      src={profile.logo_url}
-                      alt="Logo Apotek"
-                      className="w-full h-full object-contain"
-                    />
-                  </div>
-                ) : (
-                  <div className="w-20 h-20 rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 flex flex-col items-center justify-center text-slate-400 shrink-0">
-                    <ImageIcon className="w-6 h-6 stroke-1 mb-1" />
-                    <span className="text-[10px] font-bold">Belum ada</span>
-                  </div>
-                )}
+              
+              <div className="flex flex-col sm:flex-row sm:items-center gap-4 p-3.5 rounded-2xl bg-slate-50/70 border border-slate-200/80">
+                <div className="relative w-20 h-20 rounded-2xl border-2 border-blue-500/30 overflow-hidden bg-white shadow-xs flex items-center justify-center p-1.5 shrink-0">
+                  <BrandLogo
+                    logoUrl={profile.logo_url}
+                    className="w-full h-full"
+                    alt="Logo Apotek Asahan Farma"
+                  />
+                </div>
 
                 <div className="flex-1 space-y-2">
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleLogoUpload}
-                    accept="image/png, image/jpeg, image/webp"
-                    className="hidden"
-                  />
-                  <div className="flex items-center gap-2 flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-black text-slate-800">
+                      {profile.logo_url === '/logo-asahan.svg'
+                        ? 'Preset: Royal Sapphire Shield (Default)'
+                        : profile.logo_url === '/logo-emerald.svg'
+                        ? 'Preset: Emerald Botanical Cross'
+                        : profile.logo_url === '/logo-modern-af.svg'
+                        ? 'Preset: Modern Monogram AF'
+                        : 'Logo Kustom (Tersimpan)'}
+                    </span>
+                    <span className="text-[10px] px-2 py-0.5 rounded-md bg-blue-100 text-blue-800 font-extrabold">
+                      Aktif di Sistem
+                    </span>
+                  </div>
+
+                  <p className="text-[11px] text-slate-500">
+                    Logo ini langsung ditampilkan pada sidebar navigasi, formulir login, dan KOP resmi Berita Acara Retur (BAP).
+                  </p>
+
+                  <div className="flex items-center gap-2 flex-wrap pt-1">
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleLogoUpload}
+                      accept="image/png, image/jpeg, image/webp"
+                      className="hidden"
+                    />
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
                       className="btn-outline h-8 px-3 text-xs font-bold gap-1.5"
                     >
                       <Upload className="w-3.5 h-3.5" />
-                      <span>{profile.logo_url ? 'Ganti Logo' : 'Unggah Logo'}</span>
+                      <span>Unggah Gambar Sendiri</span>
                     </button>
-                    {profile.logo_url && (
-                      <button
-                        type="button"
-                        onClick={handleRemoveLogo}
-                        className="btn-outline h-8 px-2.5 text-xs text-rose-600 hover:bg-rose-50 border-rose-200"
-                        title="Hapus Logo"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    )}
+
+                    <button
+                      type="button"
+                      onClick={handleRemoveLogo}
+                      className="btn-outline h-8 px-2.5 text-xs text-slate-600 hover:bg-slate-100"
+                      title="Kembalikan ke Default"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      <span>Reset Default</span>
+                    </button>
                   </div>
-                  <p className="text-[10px] text-slate-400">
-                    Format PNG, JPG, atau WEBP transparan. Maks. 2 MB.
-                  </p>
+                </div>
+              </div>
+
+              {/* Pilihan Preset Logo Desain Farmasi */}
+              <div>
+                <span className="text-[11px] font-bold text-slate-500 block mb-2">
+                  Atau pilih Desain Preset Logo Farmasi:
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => handleSelectPresetLogo('/logo-asahan.svg', 'Royal Sapphire Shield')}
+                    className={`p-2.5 rounded-xl border text-left flex items-center gap-3 transition-all cursor-pointer ${
+                      profile.logo_url === '/logo-asahan.svg'
+                        ? 'border-blue-600 bg-blue-50/70 ring-2 ring-blue-500/20 shadow-xs'
+                        : 'border-slate-200 bg-white hover:border-slate-300'
+                    }`}
+                  >
+                    <BrandLogo logoUrl="/logo-asahan.svg" className="w-9 h-9" />
+                    <div>
+                      <span className="text-xs font-bold text-slate-900 block">Royal Sapphire</span>
+                      <span className="text-[10px] text-slate-500">Shield & Daun Vitalitas</span>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleSelectPresetLogo('/logo-emerald.svg', 'Emerald Botanical Cross')}
+                    className={`p-2.5 rounded-xl border text-left flex items-center gap-3 transition-all cursor-pointer ${
+                      profile.logo_url === '/logo-emerald.svg'
+                        ? 'border-blue-600 bg-blue-50/70 ring-2 ring-blue-500/20 shadow-xs'
+                        : 'border-slate-200 bg-white hover:border-slate-300'
+                    }`}
+                  >
+                    <BrandLogo logoUrl="/logo-emerald.svg" className="w-9 h-9" />
+                    <div>
+                      <span className="text-xs font-bold text-slate-900 block">Emerald Botanical</span>
+                      <span className="text-[10px] text-slate-500">Cross Farmasi Alami</span>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleSelectPresetLogo('/logo-modern-af.svg', 'Modern Monogram AF')}
+                    className={`p-2.5 rounded-xl border text-left flex items-center gap-3 transition-all cursor-pointer ${
+                      profile.logo_url === '/logo-modern-af.svg'
+                        ? 'border-blue-600 bg-blue-50/70 ring-2 ring-blue-500/20 shadow-xs'
+                        : 'border-slate-200 bg-white hover:border-slate-300'
+                    }`}
+                  >
+                    <BrandLogo logoUrl="/logo-modern-af.svg" className="w-9 h-9" />
+                    <div>
+                      <span className="text-xs font-bold text-slate-900 block">Monogram AF</span>
+                      <span className="text-[10px] text-slate-500">Minimalis Preskripsi Rx</span>
+                    </div>
+                  </button>
                 </div>
               </div>
             </div>
@@ -600,7 +678,8 @@ export function PengaturanPage({ onSettingsUpdated }) {
               <span className="text-[10px] text-blue-600 font-bold">Standar CDOB</span>
             </div>
 
-            <div className="p-4 rounded-xl border border-slate-200 bg-slate-50 text-center space-y-1 shadow-2xs">
+            <div className="p-4 rounded-xl border border-slate-200 bg-white text-center space-y-1 shadow-xs">
+              <BrandLogo logoUrl={profile.logo_url} className="w-12 h-12 mx-auto mb-2 shadow-xs" />
               <h4 className="text-sm font-black text-slate-900 uppercase tracking-wider">
                 {profile.nama_apotek}
               </h4>

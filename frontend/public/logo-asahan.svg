@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" width="100%" height="100%">
+  <defs>
+    <!-- Background Gradient: Deep Royal Blue to Electric Sapphire -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e3a8a" />
+      <stop offset="50%" stop-color="#2563eb" />
+      <stop offset="100%" stop-color="#0284c7" />
+    </linearGradient>
+
+    <!-- Glassmorphic Gloss Highlight -->
+    <linearGradient id="glossGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.35" />
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0.0" />
+    </linearGradient>
+
+    <!-- Emerald Leaf / Health Accent Gradient -->
+    <linearGradient id="leafGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#059669" />
+      <stop offset="60%" stop-color="#10b981" />
+      <stop offset="100%" stop-color="#34d399" />
+    </linearGradient>
+
+    <!-- Medical Pure White Gradient -->
+    <linearGradient id="whiteGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="100%" stop-color="#f0f9ff" />
+    </linearGradient>
+
+    <!-- Drop Shadows for Dimension -->
+    <filter id="softShadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#0f172a" flood-opacity="0.25" />
+    </filter>
+    <filter id="innerGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#ffffff" flood-opacity="0.4" />
+    </filter>
+  </defs>
+
+  <!-- Squircle Base Canvas -->
+  <rect x="8" y="8" width="144" height="144" rx="40" fill="url(#bgGrad)" filter="url(#softShadow)" />
+  
+  <!-- Subtle Border Ring -->
+  <rect x="8" y="8" width="144" height="144" rx="40" fill="none" stroke="#60a5fa" stroke-width="2.5" stroke-opacity="0.4" />
+
+  <!-- Top Glass Sheen -->
+  <path d="M 8 48 C 8 25.9 25.9 8 48 8 L 112 8 C 134.1 8 152 25.9 152 48 C 152 75 100 85 8 72 Z" fill="url(#glossGrad)" />
+
+  <!-- Core Emblem: Modern Precision Medical Cross with Rounded Geometrics -->
+  <!-- Vertical Beam of Medical Cross -->
+  <rect x="66" y="34" width="28" height="92" rx="14" fill="url(#whiteGrad)" filter="url(#innerGlow)" />
+  
+  <!-- Horizontal Beam of Medical Cross -->
+  <rect x="34" y="66" width="92" height="28" rx="14" fill="url(#whiteGrad)" filter="url(#innerGlow)" />
+
+  <!-- Dynamic Curved Pharmaceutical Health Sprout (Daun Farmasi / Lambang Kesembuhan) -->
+  <path d="M 80 44 C 95 44 118 55 120 78 C 122 101 103 118 80 120 C 80 98 96 82 80 72 Z" fill="url(#leafGrad)" />
+  
+  <!-- Center Accent: Capsule / Molecule Ring -->
+  <circle cx="80" cy="80" r="15" fill="#1e3a8a" />
+  <circle cx="80" cy="80" r="10" fill="#38bdf8" />
+  <circle cx="80" cy="80" r="5" fill="#ffffff" />
+
+  <!-- Sparkle Accent Top Right -->
+  <path d="M 118 36 L 121 43 L 128 46 L 121 49 L 118 56 L 115 49 L 108 46 L 115 43 Z" fill="#67e8f9" />
+</svg>

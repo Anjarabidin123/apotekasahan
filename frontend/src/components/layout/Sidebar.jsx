@@ -1,5 +1,6 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { BrandLogo } from '../common/BrandLogo';
 import {
   LayoutDashboard,
   FileSpreadsheet,
@@ -16,7 +17,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 
-export function Sidebar({ activePage, setActivePage, isCollapsed, urgentCount = 0 }) {
+export function Sidebar({ activePage, setActivePage, isCollapsed, urgentCount = 0, logoUrl }) {
   const { isAdmin } = useAuth();
 
   const navItems = [
@@ -73,9 +74,10 @@ export function Sidebar({ activePage, setActivePage, isCollapsed, urgentCount = 
         className="p-4 border-b border-slate-200/80 bg-white/70 flex items-center gap-3 hover:bg-white transition-colors group cursor-pointer"
         title="Apotek Asahan Farma - SIMAAF"
       >
-        <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center shrink-0 shadow-sm shadow-blue-500/30 p-1 group-hover:scale-105 transition-transform border border-blue-400/20">
-          <Pill className="w-5 h-5 text-white" strokeWidth={2.4} />
-        </div>
+        <BrandLogo
+          logoUrl={logoUrl}
+          className="w-10 h-10 group-hover:scale-105 transition-transform border border-blue-400/20 shadow-sm"
+        />
         {!isCollapsed && (
           <div className="min-w-0 flex-1">
             <h2 className="text-sm font-black text-slate-950 tracking-tight truncate group-hover:text-blue-600 transition-colors">
