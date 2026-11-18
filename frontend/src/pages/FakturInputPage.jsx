@@ -660,7 +660,7 @@ export function FakturInputPage({ onBatchSaved }) {
               type="button"
               onClick={handleSaveBatches}
               disabled={isProcessing}
-              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 min-h-[44px] rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs active:scale-95 disabled:opacity-60 w-full sm:w-auto"
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 min-h-[44px] rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-xs active:scale-95 disabled:opacity-60 w-full sm:w-auto"
             >
               <Save className="w-4 h-4" />
               <span>{isProcessing ? 'Menyimpan...' : 'Simpan ke Inventori'}</span>

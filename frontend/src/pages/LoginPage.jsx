@@ -94,7 +94,7 @@ export function LoginPage({ onSuccess }) {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-xs font-extrabold transition-all flex items-center justify-center gap-2 shadow-sm active:scale-95 disabled:opacity-60"
+            className="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-2 shadow-sm active:scale-95 disabled:opacity-60"
           >
             {loading ? 'Memverifikasi...' : 'Masuk ke Aplikasi'}
             {!loading && <ArrowRight className="w-4 h-4" />}

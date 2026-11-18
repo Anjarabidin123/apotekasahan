@@ -267,7 +267,7 @@ export function InventoriBatchPage({ onSelectBatchForAdjustment }) {
             <button
               type="button"
               onClick={loadData}
-              className="flex-1 h-11 sm:h-9 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition"
+              className="flex-1 h-11 sm:h-9 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition"
             >
               Cari
             </button>
@@ -312,7 +312,7 @@ export function InventoriBatchPage({ onSelectBatchForAdjustment }) {
                 onClick={() => setReturFilter(pill.id)}
                 className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition shrink-0 ${
                   returFilter === pill.id
-                    ? 'bg-blue-600 text-white shadow-2xs'
+                    ? 'bg-emerald-600 text-white shadow-2xs'
                     : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
                 }`}
               >

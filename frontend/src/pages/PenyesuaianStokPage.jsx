@@ -327,7 +327,7 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
                   <button
                     type="button"
                     onClick={() => adjustJumlahFisik(1)}
-                    className="w-11 h-11 min-w-[44px] rounded-xl bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center active:scale-95 transition"
+                    className="w-11 h-11 min-w-[44px] rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center active:scale-95 transition"
                     aria-label="Tambah 1 unit"
                   >
                     <Plus className="w-4 h-4" />
@@ -387,7 +387,7 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
               <button
                 type="submit"
                 disabled={loading}
-                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 min-h-[44px] rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs active:scale-95 disabled:opacity-50 w-full sm:w-auto"
+                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 min-h-[44px] rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-xs active:scale-95 disabled:opacity-50 w-full sm:w-auto"
               >
                 <Save className="w-4 h-4" />
                 <span>{loading ? 'Menyimpan...' : 'Simpan Hasil Opname'}</span>

@@ -228,7 +228,7 @@ export function Sidebar({
       {/* Sidebar Desktop Kontras Gelap */}
       <aside
         data-testid="desktop-sidebar"
-        className={`hidden md:flex bg-slate-900 border-r border-slate-800 text-slate-100 flex-col transition-all duration-300 z-40 select-none shrink-0 ${
+        className={`hidden md:flex bg-gradient-to-b from-slate-900 via-slate-900 to-[#0a131f] border-r border-slate-800/90 text-slate-100 flex-col transition-all duration-300 z-40 select-none shrink-0 ${
           isCollapsed ? 'w-20' : 'w-60'
         }`}
       >
