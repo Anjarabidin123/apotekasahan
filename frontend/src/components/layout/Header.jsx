@@ -1,6 +1,5 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { BrandLogo } from '../common/BrandLogo';
 import { Calendar, LogOut, Menu, PanelLeft, ArrowRightLeft } from 'lucide-react';
 
 export function Header({
@@ -8,7 +7,6 @@ export function Header({
   onOpenMobile,
   activePageTitle,
   tanggalAcuan,
-  logoUrl,
 }) {
   const { login, logout, isAdmin } = useAuth();
 
@@ -46,12 +44,7 @@ export function Header({
           <PanelLeft className="w-4 h-4" />
         </button>
 
-        {/* Logo Ringkas di Mobile */}
-        <div className="md:hidden shrink-0">
-          <BrandLogo logoUrl={logoUrl} className="w-7 h-7" />
-        </div>
-
-        <div className="min-w-0 flex items-center gap-2">
+        <div className="min-w-0 flex items-center gap-2 pl-0.5">
           <span className="hidden md:inline text-xs font-semibold text-slate-400">
             SIMAAF /
           </span>

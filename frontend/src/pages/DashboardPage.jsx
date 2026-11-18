@@ -13,7 +13,8 @@ import {
   Calendar,
   CheckCircle2,
   Download,
-  Search
+  Search,
+  Settings
 } from 'lucide-react';
 
 export function DashboardPage({
@@ -22,6 +23,7 @@ export function DashboardPage({
   onNavigateToFaktur,
   onNavigateToKalender,
   onNavigateToPenyesuaian,
+  onNavigateToPengaturan,
   tanggalAcuan
 }) {
   const [summary, setSummary] = useState(null);
@@ -230,15 +232,30 @@ export function DashboardPage({
   };
 
   const quickActions = [
-    { label: 'Faktur Baru', icon: Plus, action: onNavigateToFaktur },
-    { label: 'Stok Obat', icon: Boxes, action: onNavigateToInventori },
     {
-      label: 'Retur & ED',
-      icon: AlertTriangle,
-      action: onNavigateToPengingat,
-      badge: mendesakList.length > 0 ? mendesakList.length : null
+      label: 'Faktur Baru',
+      icon: Plus,
+      action: onNavigateToFaktur,
+      iconStyle: 'bg-blue-50 text-blue-600 border-blue-200/80'
     },
-    { label: 'Kalender', icon: Calendar, action: onNavigateToKalender }
+    {
+      label: 'Ekspor CSV',
+      icon: Download,
+      action: () => handleExportTableCsv(),
+      iconStyle: 'bg-teal-50 text-teal-600 border-teal-200/80'
+    },
+    {
+      label: 'Kalender ED',
+      icon: Calendar,
+      action: onNavigateToKalender,
+      iconStyle: 'bg-amber-50 text-amber-600 border-amber-200/80'
+    },
+    {
+      label: 'Pengaturan',
+      icon: Settings,
+      action: onNavigateToPengaturan,
+      iconStyle: 'bg-violet-50 text-violet-600 border-violet-200/80'
+    }
   ];
 
   const startPageOptions = [
@@ -250,8 +267,94 @@ export function DashboardPage({
 
   return (
     <div className="space-y-3">
-      {/* Showcase Ringkasan Berilustrasi Ringkas ala Orely Studio */}
-      <div className="relative overflow-hidden rounded-2xl border border-[#DCE3FB] bg-gradient-to-br from-[#F4F6FF] via-[#ECEFFD] to-[#E2E9FC] px-4 sm:px-5 py-3.5 sm:py-4 shadow-[0_4px_18px_rgba(37,99,235,0.06)]">
+      {/* Kartu Ringkasan Khusus Mobile Bergaya Native FinTech-Health */}
+      <section className="md:hidden rounded-2xl bg-gradient-to-br from-[#F4F6FF] via-[#EAEFFD] to-[#DDE6FE] border border-[#D4DFFB] p-4 shadow-[0_6px_20px_rgba(37,99,235,0.07)] space-y-3">
+        <div className="flex items-center justify-between gap-2">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/90 border border-blue-200/80 text-[11px] font-bold text-blue-700 shadow-2xs">
+            <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse" />
+            <span>Acuan {refDate}</span>
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => setHideValue(!hideValue)}
+              className="w-8 h-8 rounded-lg bg-white/90 border border-white text-slate-600 flex items-center justify-center shadow-2xs active:scale-95 transition"
+              aria-label={hideValue ? 'Tampilkan Nominal' : 'Sembunyikan Nominal'}
+            >
+              {hideValue ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+            </button>
+            <button
+              type="button"
+              onClick={() => loadDashboard(true)}
+              disabled={refreshing}
+              className="w-8 h-8 rounded-lg bg-white/90 border border-white text-slate-600 flex items-center justify-center shadow-2xs active:scale-95 transition"
+              aria-label="Segarkan Data"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <p className="text-[11px] font-bold text-slate-500">Total Nilai Persediaan</p>
+          <div className="flex items-baseline justify-between gap-2 mt-0.5">
+            <p className="text-2xl font-black text-slate-950 tracking-tight tabular-nums leading-none">
+              {hideValue ? 'Rp ••••••••' : formatRupiah(summary?.total_nilai_persediaan)}
+            </p>
+            <span className="text-[11px] font-semibold text-slate-500 shrink-0">
+              {summary?.total_batch_aktif || batches.length} batch
+            </span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-2 pt-2.5 border-t border-blue-200/60">
+          <button
+            type="button"
+            onClick={onNavigateToPengingat}
+            className="text-left rounded-xl bg-white/85 border border-white px-2.5 py-2 shadow-2xs active:scale-[0.98] transition"
+          >
+            <span className="flex items-center gap-1 text-[10px] font-bold text-slate-500">
+              <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
+              Risiko
+            </span>
+            <p className="text-xs font-black text-rose-600 tabular-nums mt-0.5">
+              {summary?.persentase_berisiko || 0}% Aset
+            </p>
+          </button>
+
+          <button
+            type="button"
+            onClick={onNavigateToPengingat}
+            className="text-left rounded-xl bg-white/85 border border-white px-2.5 py-2 shadow-2xs active:scale-[0.98] transition"
+          >
+            <span className="flex items-center gap-1 text-[10px] font-bold text-slate-500">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
+              Wajib Retur
+            </span>
+            <p className="text-xs font-black text-slate-950 tabular-nums mt-0.5">
+              {ringkasan?.total_mendesak_retur ?? mendesakList.length} Batch
+            </p>
+          </button>
+
+          <button
+            type="button"
+            onClick={onNavigateToInventori}
+            className="text-left rounded-xl bg-white/85 border border-white px-2.5 py-2 shadow-2xs active:scale-[0.98] transition"
+          >
+            <span className="flex items-center gap-1 text-[10px] font-bold text-slate-500">
+              <span className="w-1.5 h-1.5 rounded-full bg-teal-500 shrink-0" />
+              Stok Aman
+            </span>
+            <p className="text-xs font-black text-teal-700 tabular-nums mt-0.5">
+              {pctAman}% ({countAman})
+            </p>
+          </button>
+        </div>
+      </section>
+
+      {/* Showcase Ringkasan Berilustrasi Ringkas ala Orely Studio (Desktop) */}
+      <div className="hidden md:block relative overflow-hidden rounded-2xl border border-[#DCE3FB] bg-gradient-to-br from-[#F4F6FF] via-[#ECEFFD] to-[#E2E9FC] px-4 sm:px-5 py-3.5 sm:py-4 shadow-[0_4px_18px_rgba(37,99,235,0.06)]">
         {/* Elemen vektor pemandangan apotek & daun botani di latar kanan/bawah */}
         <svg
           aria-hidden="true"
@@ -365,8 +468,8 @@ export function DashboardPage({
         </div>
       </div>
 
-      {/* 4 Kartu Metrik Modular Bersih */}
-      <section className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      {/* 4 Kartu Metrik Modular Bersih (Desktop) */}
+      <section className="hidden md:grid grid-cols-2 lg:grid-cols-4 gap-3">
         <div className="bg-white rounded-2xl border border-slate-200 p-3.5 sm:p-4 flex flex-col justify-between space-y-2 shadow-[0_1px_3px_rgba(15,23,42,0.04)] hover:border-slate-300 hover:shadow-md transition-all duration-200">
           <div className="flex items-center justify-between gap-2">
             <span className="text-xs font-bold text-slate-500">Total Nilai Aset</span>
@@ -449,7 +552,7 @@ export function DashboardPage({
         </button>
       </section>
 
-      {/* Peluncur Cepat 4 Tombol untuk Mobile */}
+      {/* Peluncur Cepat 4 Tombol Berwarna Kontras Halus untuk Mobile */}
       <div className="grid grid-cols-4 gap-2 md:hidden">
         {quickActions.map((item, idx) => {
           const Icon = item.icon;
@@ -458,15 +561,15 @@ export function DashboardPage({
               key={idx}
               type="button"
               onClick={item.action}
-              className="relative flex flex-col items-center justify-center gap-1.5 py-3 px-1.5 surface-elevated active:scale-[0.97]"
+              className="relative flex flex-col items-center justify-center gap-1.5 py-2.5 px-1.5 rounded-2xl bg-white border border-slate-200/85 shadow-[0_2px_8px_rgba(15,23,42,0.04)] active:scale-[0.97] transition"
             >
               {item.badge && (
-                <span className="absolute top-1.5 right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-rose-600 text-white text-[10px] font-bold flex items-center justify-center tabular-nums">
+                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-600 text-white text-[10px] font-extrabold flex items-center justify-center border-2 border-[#ebf0fa] tabular-nums shadow-2xs">
                   {item.badge}
                 </span>
               )}
-              <div className="w-9 h-9 rounded-xl bg-blue-600 text-white shadow-xs shadow-blue-600/20 flex items-center justify-center">
-                <Icon className="w-4 h-4" strokeWidth={2.2} />
+              <div className={`w-10 h-10 rounded-2xl border flex items-center justify-center ${item.iconStyle}`}>
+                <Icon className="w-[18px] h-[18px]" strokeWidth={2.2} />
               </div>
               <span className="text-[11px] font-bold text-slate-800 leading-tight text-center truncate w-full">
                 {item.label}
@@ -608,28 +711,30 @@ export function DashboardPage({
                     key={item.id}
                     type="button"
                     onClick={activeTab === 'stok' ? onNavigateToInventori : onNavigateToPengingat}
-                    className="w-full p-3.5 text-left hover:bg-slate-50 flex items-center justify-between gap-3 transition"
+                    className="w-full px-3.5 py-3 text-left hover:bg-slate-50 active:bg-slate-100/70 flex items-center justify-between gap-3 transition"
                   >
                     <div className="min-w-0 space-y-1">
-                      <p className="text-xs font-bold text-slate-900 truncate">
+                      <p className="text-[13px] font-bold text-slate-900 truncate">
                         {item.nama_obat}
                       </p>
                       <p className="text-[11px] text-slate-500 truncate">
-                        <span className="font-mono">{item.nomor_batch}</span> • {item.nama_distributor}
+                        <span className="font-mono font-semibold text-slate-600">{item.nomor_batch}</span> • {item.nama_distributor}
                       </p>
-                      <StatusReturBadge
-                        status={item.status_retur}
-                        sisaHari={item.sisa_hari_retur}
-                        batasRetur={item.batas_retur}
-                      />
+                      <div className="pt-0.5">
+                        <StatusReturBadge
+                          status={item.status_retur}
+                          sisaHari={item.sisa_hari_retur}
+                          batasRetur={item.batas_retur}
+                        />
+                      </div>
                     </div>
 
-                    <div className="text-right shrink-0">
+                    <div className="text-right shrink-0 flex flex-col items-end">
                       <p className="text-xs font-extrabold text-slate-950 tabular-nums">
                         {hideValue ? '••••••' : formatRupiah(item.nilai_total)}
                       </p>
-                      <p className="text-[11px] text-slate-500 tabular-nums mt-0.5">
-                        Stok: {item.jumlah_saat_ini ?? 0}
+                      <p className="text-[11px] font-medium text-slate-500 tabular-nums mt-0.5">
+                        {item.jumlah_saat_ini ?? 0} unit
                       </p>
                     </div>
                   </button>
@@ -775,7 +880,7 @@ export function DashboardPage({
             )}
           </section>
 
-          <section className="surface-elevated p-4 space-y-2.5">
+          <section className="hidden md:block surface-elevated p-4 space-y-2.5">
             <div className="flex items-center justify-between gap-2">
               <h3 className="text-sm font-extrabold text-slate-900">
                 Halaman Awal Aplikasi
