@@ -20,6 +20,7 @@ import {
   Square,
   Download,
   MessageCircle,
+  ChevronDown,
 } from 'lucide-react';
 
 /**
@@ -49,6 +50,7 @@ export function PengingatReturPage({
   const [filterPbf, setFilterPbf] = useState('semua');
   const [sortBy, setSortBy] = useState('urgensi');
   const [selectedBatchIds, setSelectedBatchIds] = useState([]);
+  const [expandedCards, setExpandedCards] = useState({});
   const [bapModalData, setBapModalData] = useState({ isOpen: false, batches: [] });
 
   useEffect(() => {
@@ -603,11 +605,51 @@ export function PengingatReturPage({
         </div>
       )}
 
-      {/* Tampilan Kartu: Selalu tampil di Mobile (< md), dan tampil di Desktop saat viewMode === 'cards' */}
+      {/* Bar Ringkas Buka/Tutup Semua Dropdown Kartu di Mobile */}
+      {filteredAndSortedList.length > 0 && (
+        <div
+          className={`${
+            viewMode === 'cards' ? 'flex' : 'flex md:hidden'
+          } items-center justify-between px-1 text-[11px] text-slate-500`}
+        >
+          <span>
+            <strong className="text-slate-800">{filteredAndSortedList.length}</strong> batch prioritas
+          </span>
+          <button
+            type="button"
+            onClick={() => {
+              const allExpanded = filteredAndSortedList.every((it) => expandedCards[it.id]);
+              if (allExpanded) {
+                setExpandedCards({});
+              } else {
+                const next = {};
+                filteredAndSortedList.forEach((it) => {
+                  next[it.id] = true;
+                });
+                setExpandedCards(next);
+              }
+            }}
+            className="font-bold text-blue-600 hover:text-blue-800 inline-flex items-center gap-1"
+          >
+            <span>
+              {filteredAndSortedList.every((it) => expandedCards[it.id])
+                ? 'Ringkas Semua'
+                : 'Buka Semua Detail'}
+            </span>
+            <ChevronDown
+              className={`w-3.5 h-3.5 transition-transform ${
+                filteredAndSortedList.every((it) => expandedCards[it.id]) ? 'rotate-180' : ''
+              }`}
+            />
+          </button>
+        </div>
+      )}
+
+      {/* Tampilan Kartu Ringkas + Dropdown Detail: Selalu tampil di Mobile (< md), dan tampil di Desktop saat viewMode === 'cards' */}
       <div
         className={`${
           viewMode === 'cards' ? 'grid' : 'grid md:hidden'
-        } grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3`}
+        } grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5`}
       >
         {filteredAndSortedList.length === 0 ? (
           <div className="col-span-full bg-white rounded-2xl border border-slate-200/80 py-10 text-center text-xs text-slate-400">
@@ -626,107 +668,148 @@ export function PengingatReturPage({
               item.jumlah_saat_ini
             } unit, batas retur ${item.batas_retur || '-'}). Mohon arahan penjemputannya. Terima kasih.`;
             const waUrl = buildWhatsAppUrl(pbfMeta?.telepon, waText);
+            const isExpanded = Boolean(expandedCards[item.id]);
 
             return (
               <div
                 key={item.id}
-                className={`bg-white rounded-2xl border p-3.5 sm:p-4 shadow-xs transition-all space-y-2.5 ${
+                className={`bg-white rounded-2xl border p-3 shadow-xs transition-all space-y-2 ${
                   selectedBatchIds.includes(item.id)
                     ? 'border-blue-400 ring-2 ring-blue-500/20 bg-blue-50/20'
-                    : 'border-slate-200/80 hover:border-slate-300'
+                    : 'border-slate-200/85 hover:border-slate-300'
                 }`}
               >
+                {/* Bagian Utama Selalu Tampil (Info Penting Tidak Disembunyikan) */}
                 <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-start gap-2 min-w-0">
+                  <div className="flex items-start gap-1.5 min-w-0">
                     <button
                       type="button"
                       onClick={() => toggleSelectOne(item.id)}
-                      className="w-10 h-10 min-w-[40px] flex items-center justify-center text-slate-400 hover:text-blue-600 transition -ml-1.5 -mt-1.5 shrink-0"
+                      className="w-8 h-8 min-w-[32px] flex items-center justify-center text-slate-400 hover:text-blue-600 transition -ml-1 -mt-0.5 shrink-0"
                       title={selectedBatchIds.includes(item.id) ? 'Batalkan pilihan' : 'Pilih batch'}
                       aria-label={`Pilih batch ${item.nomor_batch}`}
                     >
                       {selectedBatchIds.includes(item.id) ? (
-                        <CheckSquare className="w-5 h-5 text-blue-600" />
+                        <CheckSquare className="w-4 h-4 text-blue-600" />
                       ) : (
-                        <Square className="w-5 h-5 text-slate-400" />
+                        <Square className="w-4 h-4 text-slate-400" />
                       )}
                     </button>
                     <div className="min-w-0">
                       <h4 className="text-[13px] font-bold text-slate-900 line-clamp-1">
                         {item.nama_obat}
                       </h4>
-                      <span className="font-mono text-[10px] text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded font-semibold mt-0.5 inline-block">
-                        {item.nomor_batch}
-                      </span>
+                      <p className="text-[10.5px] text-slate-500 font-medium truncate mt-0.5">
+                        <span className="font-mono font-bold text-blue-700 bg-blue-50 px-1.5 py-0.2 rounded mr-1.5">
+                          {item.nomor_batch}
+                        </span>
+                        <span>{item.jumlah_saat_ini} unit</span>
+                      </p>
                     </div>
                   </div>
                   <div className="text-right shrink-0">
-                    <span className="text-xs font-black text-slate-900 block tabular-nums">
+                    <span className="text-xs font-black text-slate-950 block tabular-nums">
                       {formatRupiah(item.nilai_total)}
                     </span>
-                    <span className="text-[11px] font-medium text-slate-500">
-                      {item.jumlah_saat_ini} unit
+                    <span className="text-[10.5px] font-bold text-rose-600 tabular-nums">
+                      {item.batas_retur ? `Retur ${item.batas_retur}` : `ED ${item.tanggal_kedaluwarsa}`}
                     </span>
                   </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-1.5">
+                {/* Status Penting + Tombol Cepat BAP & Toggle Dropdown Detail */}
+                <div className="flex items-center justify-between gap-2 pt-0.5">
                   <StatusReturBadge
                     status={item.status_retur}
                     sisaHari={item.sisa_hari_retur}
                     batasRetur={item.batas_retur}
                   />
-                  <StatusRisikoBadge status={item.status_risiko} skor={item.skor_risiko} />
-                </div>
 
-                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-[11px] space-y-1">
-                  <div className="flex justify-between gap-2">
-                    <span className="text-slate-400 shrink-0">Distributor:</span>
-                    <span className="font-bold text-slate-800 truncate">{item.nama_distributor}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Batas Retur:</span>
-                    <span className="font-bold text-rose-600">{item.batas_retur || '-'}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Tgl Kedaluwarsa:</span>
-                    <span className="text-slate-700">{item.tanggal_kedaluwarsa}</span>
-                  </div>
-                </div>
-
-                {/* Tombol Aksi Cepat Mobile-Friendly */}
-                <div className="flex items-center gap-1.5 pt-1 border-t border-slate-100">
-                  <button
-                    type="button"
-                    onClick={() => handleOpenSingleBap(item)}
-                    className="btn-outline h-11 min-h-[44px] px-2.5 text-xs font-bold text-slate-700 flex-1 flex items-center justify-center gap-1"
-                    title="Buat Berita Acara Retur"
-                  >
-                    <FileText className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                    <span>Dokumen BAP</span>
-                  </button>
-                  {waUrl && (
-                    <a
-                      href={waUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="h-11 min-h-[44px] w-11 shrink-0 rounded-xl border border-teal-200 bg-teal-50 hover:bg-teal-100 text-teal-700 flex items-center justify-center transition"
-                      title={`Hubungi PIC PBF (${pbfMeta?.kontak || pbfMeta?.telepon})`}
-                      aria-label={`Hubungi PBF ${item.nama_distributor}`}
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => handleOpenSingleBap(item)}
+                      className="h-8 px-2.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-blue-50 hover:border-blue-200 text-slate-700 hover:text-blue-700 text-[11px] font-bold inline-flex items-center gap-1 transition"
+                      title="Berita Acara Pengembalian"
+                      aria-label={`Berita Acara Retur untuk ${item.nama_obat}`}
                     >
-                      <MessageCircle className="w-4 h-4" />
-                    </a>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => onNavigateToPenyesuaian && onNavigateToPenyesuaian(item)}
-                    className="btn-primary h-11 min-h-[44px] px-2.5 text-xs font-bold flex-1 flex items-center justify-center gap-1"
-                    title="Cek Fisik Rak & Penyesuaian Stok"
-                  >
-                    <span>Cek Rak</span>
-                    <ArrowRight className="w-3.5 h-3.5 shrink-0" />
-                  </button>
+                      <FileText className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                      <span>BAP</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      data-testid={`retur-dropdown-${item.id}`}
+                      onClick={() =>
+                        setExpandedCards((prev) => ({ ...prev, [item.id]: !prev[item.id] }))
+                      }
+                      aria-expanded={isExpanded}
+                      className={`h-8 px-2.5 rounded-lg border text-[11px] font-bold inline-flex items-center gap-1 transition ${
+                        isExpanded
+                          ? 'bg-blue-50 border-blue-200 text-blue-700'
+                          : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      <span>{isExpanded ? 'Tutup' : 'Detail'}</span>
+                      <ChevronDown
+                        className={`w-3.5 h-3.5 transition-transform ${
+                          isExpanded ? 'rotate-180' : ''
+                        }`}
+                      />
+                    </button>
+                  </div>
                 </div>
+
+                {/* Area Dropdown Detail Tambahan & Aksi Lengkap */}
+                {isExpanded && (
+                  <div className="pt-2 border-t border-slate-100 space-y-2">
+                    <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-[11px] space-y-1">
+                      <div className="flex justify-between gap-2">
+                        <span className="text-slate-400 shrink-0">Distributor:</span>
+                        <span className="font-bold text-slate-800 truncate">{item.nama_distributor}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-400">Tgl Kedaluwarsa:</span>
+                        <span className="font-semibold text-slate-700">{item.tanggal_kedaluwarsa}</span>
+                      </div>
+                      <div className="flex items-center justify-between pt-0.5">
+                        <span className="text-slate-400">Tingkat Risiko:</span>
+                        <StatusRisikoBadge status={item.status_risiko} skor={item.skor_risiko} />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => handleOpenSingleBap(item)}
+                        className="btn-outline h-10 px-2.5 text-xs font-bold text-slate-700 flex-1 flex items-center justify-center gap-1"
+                      >
+                        <FileText className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                        <span>Dokumen BAP</span>
+                      </button>
+                      {waUrl && (
+                        <a
+                          href={waUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="h-10 w-10 shrink-0 rounded-xl border border-teal-200 bg-teal-50 hover:bg-teal-100 text-teal-700 flex items-center justify-center transition"
+                          title={`Hubungi PIC PBF (${pbfMeta?.kontak || pbfMeta?.telepon})`}
+                          aria-label={`Hubungi PBF ${item.nama_distributor}`}
+                        >
+                          <MessageCircle className="w-4 h-4" />
+                        </a>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => onNavigateToPenyesuaian && onNavigateToPenyesuaian(item)}
+                        className="btn-primary h-10 px-3 text-xs font-bold flex-1 flex items-center justify-center gap-1"
+                      >
+                        <span>Cek Rak</span>
+                        <ArrowRight className="w-3.5 h-3.5 shrink-0" />
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })

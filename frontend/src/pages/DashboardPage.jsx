@@ -280,20 +280,20 @@ export function DashboardPage({
 
   return (
     <div className="space-y-3">
-      {/* Kartu Ringkasan Khusus Mobile Bergaya Native FinTech-Health */}
-      <section className="md:hidden rounded-2xl bg-gradient-to-br from-[#F4F6FF] via-[#EAEFFD] to-[#DDE6FE] border border-[#D4DFFB] p-4 shadow-[0_6px_20px_rgba(37,99,235,0.07)] space-y-3">
+      {/* Kartu Ringkasan Khusus Mobile Ringkas & Proposional */}
+      <section className="md:hidden rounded-2xl bg-gradient-to-br from-[#F4F6FF] via-[#EAEFFD] to-[#DDE6FE] border border-[#D4DFFB] p-3 shadow-[0_4px_14px_rgba(37,99,235,0.06)] space-y-2">
         <div className="flex items-center justify-between gap-2">
           <button
             type="button"
             onClick={onNavigateToPengaturan}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/90 border border-blue-200/80 text-[11px] font-bold text-blue-700 shadow-2xs active:scale-95 transition"
+            className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/90 border border-blue-200/80 text-[10.5px] font-bold text-blue-700 shadow-2xs active:scale-95 transition"
             title="Ubah tanggal acuan di Pengaturan"
           >
             <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse" />
             <span>Acuan {refDate}</span>
           </button>
 
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1">
             <button
               type="button"
               onClick={() => {
@@ -305,7 +305,7 @@ export function DashboardPage({
                   // abaikan jika storage dibatasi
                 }
               }}
-              className="w-8 h-8 rounded-lg bg-white/90 border border-white text-slate-600 flex items-center justify-center shadow-2xs active:scale-95 transition"
+              className="w-7 h-7 rounded-lg bg-white/90 border border-white text-slate-600 flex items-center justify-center shadow-2xs active:scale-95 transition"
               aria-label={hideValue ? 'Tampilkan Nominal' : 'Sembunyikan Nominal'}
             >
               {hideValue ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
@@ -314,7 +314,7 @@ export function DashboardPage({
               type="button"
               onClick={() => loadDashboard(true)}
               disabled={refreshing}
-              className="w-8 h-8 rounded-lg bg-white/90 border border-white text-slate-600 flex items-center justify-center shadow-2xs active:scale-95 transition"
+              className="w-7 h-7 rounded-lg bg-white/90 border border-white text-slate-600 flex items-center justify-center shadow-2xs active:scale-95 transition"
               aria-label="Segarkan Data"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
@@ -323,12 +323,12 @@ export function DashboardPage({
         </div>
 
         <div>
-          <p className="text-[11px] font-bold text-slate-500">Total Nilai Persediaan</p>
+          <p className="text-[10.5px] font-bold text-slate-500">Total Nilai Persediaan</p>
           <div className="flex items-baseline justify-between gap-2 mt-0.5">
-            <p className="text-2xl font-black text-slate-950 tracking-tight tabular-nums leading-none">
+            <p className="text-[21px] font-black text-slate-950 tracking-tight tabular-nums leading-none">
               {hideValue ? 'Rp ••••••••' : formatRupiah(summary?.total_nilai_persediaan)}
             </p>
-            <span className="text-[11px] font-semibold text-slate-500 shrink-0">
+            <span className="text-[10.5px] font-semibold text-slate-500 shrink-0">
               {summary?.total_batch_aktif || batches.length} batch
             </span>
           </div>
@@ -336,7 +336,7 @@ export function DashboardPage({
 
         {/* Bilah Segmen Sebaran Kondisi Batch */}
         <div className="space-y-1">
-          <div className="h-2 w-full rounded-full bg-white/85 overflow-hidden flex gap-0.5 p-0.5">
+          <div className="h-1.5 w-full rounded-full bg-white/85 overflow-hidden flex gap-0.5 p-0.5">
             {countLewatBatas > 0 && (
               <div
                 className="h-full rounded-full bg-rose-500"
@@ -354,52 +354,52 @@ export function DashboardPage({
               style={{ width: `${(countTerkendali / totalDistCount) * 100}%` }}
             />
           </div>
-          <div className="flex items-center justify-between text-[10px] font-semibold text-slate-600">
+          <div className="flex items-center justify-between text-[9.5px] font-semibold text-slate-600">
             <span>{countLewatBatas} lewat batas</span>
             <span>{countSegeraRetur} wajib retur</span>
             <span>{countTerkendali} aman</span>
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-2 pt-2.5 border-t border-blue-200/60">
+        <div className="grid grid-cols-3 gap-1.5 pt-2 border-t border-blue-200/60">
           <button
             type="button"
-            onClick={onNavigateToPengingat}
-            className="text-left rounded-xl bg-white/85 border border-white px-2.5 py-2 shadow-2xs active:scale-[0.98] transition"
+            onClick={() => onNavigateToPengingat()}
+            className="text-left rounded-xl bg-white/85 border border-white px-2 py-1.5 shadow-2xs active:scale-[0.98] transition"
           >
-            <span className="flex items-center gap-1 text-[10px] font-bold text-slate-500">
+            <span className="flex items-center gap-1 text-[9.5px] font-bold text-slate-500">
               <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
               Risiko
             </span>
-            <p className="text-xs font-black text-rose-600 tabular-nums mt-0.5">
+            <p className="text-[11px] font-black text-rose-600 tabular-nums mt-0.5">
               {summary?.persentase_berisiko || 0}% Aset
             </p>
           </button>
 
           <button
             type="button"
-            onClick={onNavigateToPengingat}
-            className="text-left rounded-xl bg-white/85 border border-white px-2.5 py-2 shadow-2xs active:scale-[0.98] transition"
+            onClick={() => onNavigateToPengingat()}
+            className="text-left rounded-xl bg-white/85 border border-white px-2 py-1.5 shadow-2xs active:scale-[0.98] transition"
           >
-            <span className="flex items-center gap-1 text-[10px] font-bold text-slate-500">
+            <span className="flex items-center gap-1 text-[9.5px] font-bold text-slate-500">
               <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
               Wajib Retur
             </span>
-            <p className="text-xs font-black text-slate-950 tabular-nums mt-0.5">
+            <p className="text-[11px] font-black text-slate-950 tabular-nums mt-0.5">
               {ringkasan?.total_mendesak_retur ?? mendesakList.length} Batch
             </p>
           </button>
 
           <button
             type="button"
-            onClick={onNavigateToInventori}
-            className="text-left rounded-xl bg-white/85 border border-white px-2.5 py-2 shadow-2xs active:scale-[0.98] transition"
+            onClick={() => onNavigateToInventori()}
+            className="text-left rounded-xl bg-white/85 border border-white px-2 py-1.5 shadow-2xs active:scale-[0.98] transition"
           >
-            <span className="flex items-center gap-1 text-[10px] font-bold text-slate-500">
+            <span className="flex items-center gap-1 text-[9.5px] font-bold text-slate-500">
               <span className="w-1.5 h-1.5 rounded-full bg-teal-500 shrink-0" />
               Stok Aman
             </span>
-            <p className="text-xs font-black text-teal-700 tabular-nums mt-0.5">
+            <p className="text-[11px] font-black text-teal-700 tabular-nums mt-0.5">
               {pctAman}% ({countAman})
             </p>
           </button>
@@ -605,9 +605,9 @@ export function DashboardPage({
         </button>
       </section>
 
-      {/* Peluncur Cepat 4 Tombol Berwarna Kontras Halus untuk Mobile */}
-      <div className="grid grid-cols-4 gap-2 md:hidden">
-        {quickActions.map((item, idx) => {
+      {/* Peluncur Cepat 4 Tombol Berwarna Ringkas untuk Mobile */}
+      <div className="grid grid-cols-4 gap-1.5 md:hidden">
+        {quickActions.map((item) => {
           const Icon = item.icon;
           return (
             <button
@@ -615,17 +615,17 @@ export function DashboardPage({
               type="button"
               data-testid={`quick-action-${item.id}`}
               onClick={item.action}
-              className="relative flex flex-col items-center justify-center gap-1.5 py-2.5 px-1.5 rounded-2xl bg-white border border-slate-200/85 shadow-[0_2px_8px_rgba(15,23,42,0.04)] active:scale-[0.97] transition"
+              className="relative flex flex-col items-center justify-center gap-1 py-2 px-1 rounded-xl bg-white border border-slate-200/85 shadow-[0_1px_4px_rgba(15,23,42,0.03)] active:scale-[0.97] transition"
             >
               {item.badge && (
-                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-600 text-white text-[10px] font-extrabold flex items-center justify-center border-2 border-[#ebf0fa] tabular-nums shadow-2xs">
+                <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-1 rounded-full bg-rose-600 text-white text-[9.5px] font-extrabold flex items-center justify-center border-2 border-[#ebf0fa] tabular-nums shadow-2xs">
                   {item.badge}
                 </span>
               )}
-              <div className={`w-10 h-10 rounded-2xl border flex items-center justify-center ${item.iconStyle}`}>
-                <Icon className="w-[18px] h-[18px]" strokeWidth={2.2} />
+              <div className={`w-8 h-8 rounded-xl border flex items-center justify-center ${item.iconStyle}`}>
+                <Icon className="w-4 h-4" strokeWidth={2.2} />
               </div>
-              <span className="text-[11px] font-bold text-slate-800 leading-tight text-center truncate w-full">
+              <span className="text-[10.5px] font-bold text-slate-800 leading-tight text-center truncate w-full">
                 {item.label}
               </span>
             </button>

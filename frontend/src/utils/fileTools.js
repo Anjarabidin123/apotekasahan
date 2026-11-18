@@ -101,6 +101,27 @@ export function downloadTemplateFakturCsv() {
 }
 
 /**
+ * Mengunduh templat Excel/CSV migrasi stok awal & opname massal untuk apotek yang sudah berjalan.
+ */
+export function downloadTemplateOpnameCsv() {
+  const headers = [
+    'Nama Obat',
+    'Nomor Batch',
+    'Tanggal Kedaluwarsa',
+    'Jumlah Fisik',
+    'Harga Beli Satuan',
+    'Satuan',
+    'Distributor PBF',
+  ];
+  const sampleRows = [
+    ['Cefixime 100mg Kapsul', 'CFX-2601-A', '2027-02-15', 14, 78000, 'box', 'PBF Enseval Putera Megatrading'],
+    ['Paracetamol 500mg Strip', 'PCT-2608-M1', '2027-11-30', 65, 4500, 'strip', 'PBF Kimia Farma Trading & Distribution'],
+    ['Vitamin C 500mg Tablet', 'VTC-2610-R2', '2028-03-20', 40, 35000, 'botol', 'PBF Penta Valent Medan'],
+  ];
+  exportToExcelCsv('template_opname_migrasi_simaaf.csv', headers, sampleRows);
+}
+
+/**
  * Menghasilkan dan mengunduh berkas jadwal kalender standar iCalendar (.ics).
  */
 export function exportCalendarIcs(filename, milestones = []) {
@@ -163,9 +184,10 @@ function normalizeDate(raw) {
  * Mencocokkan nama obat hasil pembacaan berkas dengan master obat yang ada.
  */
 function matchObatItem(rawName, obatList = []) {
-  const q = String(rawName || '').toLowerCase().trim();
-  if (!q || obatList.length === 0) {
-    return obatList[0] || { id: 1, nama: rawName || 'Obat Baru', satuan: 'box' };
+  const cleanName = String(rawName || '').trim();
+  const q = cleanName.toLowerCase();
+  if (!q) {
+    return obatList[0] || { id: 1, nama: 'Obat Baru', satuan: 'box' };
   }
   const exact = obatList.find((o) => o.nama.toLowerCase() === q);
   if (exact) return exact;
@@ -174,7 +196,8 @@ function matchObatItem(rawName, obatList = []) {
       o.nama.toLowerCase().includes(q) ||
       q.includes(o.nama.toLowerCase().split(' ')[0])
   );
-  return partial || obatList[0];
+  // Pertahankan nama asli dari dokumen apotek lama jika belum ada di master demo
+  return partial || { id: Date.now() + Math.floor(Math.random() * 1000), nama: cleanName, satuan: 'unit' };
 }
 
 /**
@@ -253,9 +276,10 @@ function parseDelimitedText(text, obatList) {
         nama_obat: matched.nama,
         nomor_batch: (cols[1] || `IMP-${Date.now().toString().slice(-4)}-${idx + 1}`).trim(),
         tanggal_kedaluwarsa: normalizeDate(cols[2]),
-        jumlah: jumlahRaw > 0 ? jumlahRaw : 10,
+        jumlah: jumlahRaw >= 0 && cols[3] !== undefined && cols[3] !== '' ? jumlahRaw : 10,
         harga_beli_satuan: hargaRaw > 0 ? hargaRaw : 25000,
         satuan: (cols[5] || matched.satuan || 'box').trim(),
+        nama_distributor_raw: (cols[6] || '').trim(),
       };
     });
 }
@@ -468,20 +492,21 @@ export async function parseUploadedDocument(file, obatList = [], distributors = 
   const name = (file?.name || '').toLowerCase();
   const mime = file?.type || 'application/octet-stream';
   const isImage = mime.startsWith('image/') || /\.(jpg|jpeg|png|webp)$/i.test(name);
+  const isPdf = mime === 'application/pdf' || name.endsWith('.pdf');
   const isDelimited = /\.(csv|tsv)$/i.test(name);
   const isOfficeZip = /\.(docx|xlsx)$/i.test(name);
   const aiConfig = getAiConfig();
   const hasToken = Boolean(aiConfig.apiKey);
 
-  // Alur gambar: gunakan AI Vision jika token tersedia, atau simulasi lokal jika belum ada token
-  if (isImage) {
-    if (hasToken) {
+  // Alur gambar atau PDF: gunakan AI multimodal jika token tersedia, atau simulasi lokal jika belum ada token
+  if (isImage || isPdf) {
+    if (hasToken && (isImage || aiConfig.provider === 'gemini')) {
       try {
         const { base64 } = await fileToBase64(file);
         const aiResult = await callAiExtraction({
           aiConfig,
           isImage: true,
-          mimeType: mime,
+          mimeType: isPdf ? 'application/pdf' : mime,
           base64,
           documentText: '',
           obatList,
@@ -492,7 +517,7 @@ export async function parseUploadedDocument(file, obatList = [], distributors = 
             sukses: true,
             metode: `AI (${aiConfig.provider.toUpperCase()})`,
             data: aiResult,
-            pesan: `Gambar "${file.name}" berhasil diekstrak akurat menggunakan token AI.`,
+            pesan: `Berkas "${file.name}" berhasil diekstrak akurat menggunakan token AI.`,
           };
         }
       } catch (err) {
@@ -509,9 +534,9 @@ export async function parseUploadedDocument(file, obatList = [], distributors = 
     const sim = await api.ekstrakFakturFoto(file);
     return {
       sukses: true,
-      metode: 'Pemindaian Demo Lokal',
+      metode: isPdf ? 'Pemindaian PDF Demo Lokal' : 'Pemindaian Demo Lokal',
       data: sim.data,
-      pesan: `Foto "${file.name}" dimuat dalam mode lokal. Isi Token AI jika ingin pembacaan OCR langsung dari API.`,
+      pesan: `Berkas "${file.name}" dimuat dalam mode lokal. Isi Token Gemini di Pengaturan untuk membaca PDF/foto secara otomatis.`,
     };
   }
 

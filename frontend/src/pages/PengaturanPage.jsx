@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { api, DEFAULT_PROFILE, DEFAULT_KATEGORI } from '../services/api';
+import { api, DEFAULT_PROFILE, DEFAULT_KATEGORI, DEFAULT_SOP_STEPS } from '../services/api';
 import { BrandLogo } from '../components/common/BrandLogo';
 import { getAiConfig, saveAiConfig, exportToExcelCsv } from '../utils/fileTools';
 import {
@@ -13,6 +13,8 @@ import {
   Database,
   LifeBuoy,
   ChevronRight,
+  ChevronUp,
+  ChevronDown,
   ArrowLeft,
   Search,
   Save,
@@ -31,6 +33,7 @@ import {
   EyeOff,
   KeyRound,
   RefreshCw,
+  Edit3,
 } from 'lucide-react';
 
 /**
@@ -86,6 +89,9 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
   });
   const [distributors, setDistributors] = useState([]);
   const [kategoriList, setKategoriList] = useState(DEFAULT_KATEGORI);
+  const [sopSteps, setSopSteps] = useState(DEFAULT_SOP_STEPS);
+  const [isEditingSop, setIsEditingSop] = useState(false);
+  const [newSopStepText, setNewSopStepText] = useState('');
   const [settings, setSettings] = useState({
     tanggal_acuan: '2026-10-31',
     stok_minimum_default: 10,
@@ -144,11 +150,12 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
 
   const loadAllData = async () => {
     try {
-      const [dList, sData, pData, kList] = await Promise.all([
+      const [dList, sData, pData, kList, sSteps] = await Promise.all([
         api.getDistributors(),
         api.getSettings(),
         api.getProfile(),
         api.getKategoriList(),
+        api.getSopSteps(),
       ]);
       setDistributors(dList);
       setSettings(sData);
@@ -158,6 +165,7 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
         logo_url: currentLogoUrl && !currentLogoUrl.startsWith('/logo-') ? currentLogoUrl : '',
       }));
       setKategoriList(kList);
+      setSopSteps(Array.isArray(sSteps) && sSteps.length > 0 ? sSteps : DEFAULT_SOP_STEPS);
     } catch (e) {
       console.error(e);
     }
@@ -519,27 +527,27 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
       case 'identitas':
         return (
           <form onSubmit={handleSaveProfileAndDocs} className="space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 rounded-2xl bg-slate-50/80 border border-slate-200/80">
-              <div className="w-20 h-20 rounded-2xl border-2 border-blue-500/25 overflow-hidden bg-white shadow-xs flex items-center justify-center p-1.5 shrink-0">
+            <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-slate-50/80 border border-slate-200/80">
+              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl border-2 border-blue-500/25 overflow-hidden bg-white shadow-xs flex items-center justify-center p-1 shrink-0">
                 <BrandLogo
                   logoUrl={profile.logo_url}
                   className="w-full h-full"
                   alt={profile.nama_apotek}
                 />
               </div>
-              <div className="flex-1 space-y-2">
-                <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex-1 space-y-1.5 min-w-0">
+                <div className="flex items-center gap-1.5 flex-wrap">
                   <span className="text-xs font-extrabold text-slate-900">
-                    {profile.logo_url ? 'Logo Kustom Terpasang' : 'Logo Standar SIMAAF'}
+                    {profile.logo_url ? 'Logo Kustom' : 'Logo Standar'}
                   </span>
                   <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 font-bold">
-                    Tampil di Kop & Sidebar
+                    Aktif
                   </span>
                 </div>
-                <p className="text-[11px] text-slate-500">
-                  Format PNG, JPG, WebP, atau SVG (maks. 2 MB).
+                <p className="text-[10.5px] text-slate-500">
+                  PNG, JPG, WebP, atau SVG (maks. 2 MB).
                 </p>
-                <div className="flex items-center gap-2 flex-wrap pt-0.5">
+                <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
                   <input
                     type="file"
                     ref={fileInputRef}
@@ -550,7 +558,7 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="btn-primary h-10 px-3.5 text-xs font-bold gap-1.5"
+                    className="btn-primary h-9 px-3 text-xs font-bold gap-1.5"
                   >
                     <Upload className="w-3.5 h-3.5" />
                     <span>Unggah Logo</span>
@@ -559,10 +567,10 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
                     <button
                       type="button"
                       onClick={handleRemoveLogo}
-                      className="btn-outline h-10 px-3 text-xs text-slate-600"
+                      className="btn-outline h-9 px-2.5 text-xs text-slate-600"
                     >
                       <RotateCcw className="w-3.5 h-3.5" />
-                      <span>Reset Logo</span>
+                      <span>Reset</span>
                     </button>
                   )}
                 </div>
@@ -1251,25 +1259,157 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
         );
 
       case 'bantuan':
-      default:
+      default: {
+        const handleMoveSop = (index, delta) => {
+          const targetIdx = index + delta;
+          if (targetIdx < 0 || targetIdx >= sopSteps.length) return;
+          const copy = [...sopSteps];
+          [copy[index], copy[targetIdx]] = [copy[targetIdx], copy[index]];
+          setSopSteps(copy);
+        };
+
+        const handleSaveSop = async () => {
+          const cleaned = sopSteps.filter((s) => s.teks && s.teks.trim());
+          setSopSteps(cleaned);
+          await api.saveSopSteps(cleaned);
+          setIsEditingSop(false);
+          flashSuccess('Panduan SOP Apotek berhasil diperbarui & tersimpan.');
+        };
+
+        const handleResetSop = async () => {
+          setSopSteps(DEFAULT_SOP_STEPS);
+          await api.saveSopSteps(DEFAULT_SOP_STEPS);
+          flashSuccess('Panduan SOP dikembalikan ke standar awal.');
+        };
+
         return (
-          <div className="space-y-4">
-            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
               <p className="text-xs font-extrabold text-slate-900">
-                SOP Pengembalian Obat Kedaluwarsa ({profile.nama_apotek}):
+                SOP Retur &amp; Pengawasan ({profile.nama_apotek})
               </p>
-              <ol className="list-decimal pl-4 space-y-2 text-xs text-slate-600 leading-relaxed">
-                <li>
-                  Pantau daftar batch pada menu <strong>Retur</strong> sebelum tenggat H-{settings.batas_retur_warning_hari}.
-                </li>
-                <li>Pisahkan fisik kemasan utuh dari rak penjualan ke kotak karantina retur PBF.</li>
-                <li>Cetak formulir <strong>Dokumen BAP</strong> yang memuat nomor batch & tanda tangan APJ.</li>
-                <li>Hubungi PIC PBF mitra sebelum batas pengembalian bulanannya terlewati.</li>
-                <li>Lakukan penyesuaian di menu <strong>Opname</strong> setelah serah terima selesai.</li>
-              </ol>
+              <div className="flex items-center gap-1.5">
+                {isEditingSop ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={handleResetSop}
+                      className="btn-outline h-9 px-2.5 text-[11px] font-bold text-slate-600"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      <span>Reset</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSaveSop}
+                      className="btn-primary h-9 px-3 text-xs font-bold"
+                    >
+                      <Save className="w-3.5 h-3.5" />
+                      <span>Simpan SOP</span>
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    data-testid="edit-sop-btn"
+                    onClick={() => setIsEditingSop(true)}
+                    className="btn-outline h-9 px-3 text-xs font-bold text-blue-700 border-blue-200 bg-blue-50/70 hover:bg-blue-100"
+                  >
+                    <Edit3 className="w-3.5 h-3.5" />
+                    <span>Edit SOP</span>
+                  </button>
+                )}
+              </div>
             </div>
+
+            {isEditingSop ? (
+              <div className="space-y-2.5">
+                <div className="space-y-2">
+                  {sopSteps.map((step, idx) => (
+                    <div
+                      key={step.id || idx}
+                      className="p-2.5 rounded-xl border border-slate-200 bg-slate-50/70 flex items-start gap-2"
+                    >
+                      <span className="w-6 h-6 rounded-lg bg-blue-600 text-white text-[11px] font-black flex items-center justify-center shrink-0 mt-1">
+                        {idx + 1}
+                      </span>
+                      <textarea
+                        rows={3}
+                        value={step.teks}
+                        onChange={(e) => {
+                          const next = [...sopSteps];
+                          next[idx] = { ...step, teks: e.target.value };
+                          setSopSteps(next);
+                        }}
+                        className="flex-1 text-xs p-2 rounded-lg border border-slate-200 bg-white font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                      />
+                      <div className="flex flex-col gap-1 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => handleMoveSop(idx, -1)}
+                          disabled={idx === 0}
+                          className="w-7 h-7 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 disabled:opacity-40 flex items-center justify-center"
+                          title="Geser ke atas"
+                        >
+                          <ChevronUp className="w-3.5 h-3.5 text-slate-600" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleMoveSop(idx, 1)}
+                          disabled={idx === sopSteps.length - 1}
+                          className="w-7 h-7 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 disabled:opacity-40 flex items-center justify-center"
+                          title="Geser ke bawah"
+                        >
+                          <ChevronDown className="w-3.5 h-3.5 text-slate-600" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setSopSteps(sopSteps.filter((_, i) => i !== idx))}
+                          className="w-7 h-7 rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-600 flex items-center justify-center"
+                          title="Hapus langkah"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Tambah Langkah SOP Baru */}
+                <div className="flex items-center gap-2 pt-1">
+                  <input
+                    type="text"
+                    value={newSopStepText}
+                    onChange={(e) => setNewSopStepText(e.target.value)}
+                    placeholder="Tambah langkah SOP baru apotek Anda..."
+                    className="flex-1 text-xs h-10 px-3 rounded-xl border border-slate-200 bg-white font-medium"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!newSopStepText.trim()) return;
+                      setSopSteps([...sopSteps, { id: Date.now(), teks: newSopStepText.trim() }]);
+                      setNewSopStepText('');
+                    }}
+                    className="btn-primary h-10 px-3.5 text-xs font-bold shrink-0"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Tambah</span>
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="p-3.5 sm:p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2.5">
+                <ol className="list-decimal pl-4 space-y-2 text-xs text-slate-700 leading-relaxed">
+                  {sopSteps.map((step, idx) => (
+                    <li key={step.id || idx}>{step.teks}</li>
+                  ))}
+                </ol>
+              </div>
+            )}
           </div>
         );
+      }
     }
   };
 

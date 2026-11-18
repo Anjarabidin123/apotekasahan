@@ -35,6 +35,7 @@ export function Layout({
           onSelectPage={setActivePage}
           activePageTitle={activePageTitle}
           tanggalAcuan={tanggalAcuan}
+          urgentCount={urgentCount}
           logoUrl={logoUrl}
         />
 

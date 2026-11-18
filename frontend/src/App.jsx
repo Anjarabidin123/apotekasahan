@@ -105,7 +105,7 @@ function MainApp() {
   return (
     <Layout
       activePage={currentPage}
-      setActivePage={(pageId) => handleNavigateMenu(pageId)}
+      setActivePage={(pageId, query) => handleNavigateMenu(pageId, query)}
       activePageTitle={getPageTitle()}
       tanggalAcuan={tanggalAcuan}
       urgentCount={urgentReturCount}
