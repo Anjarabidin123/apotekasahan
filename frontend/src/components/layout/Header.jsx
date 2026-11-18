@@ -26,6 +26,7 @@ export function Header({
         {/* Mobile Hamburger Button (>= 44x44px touch target) */}
         <button
           type="button"
+          data-testid="mobile-hamburger"
           onClick={onOpenMobile}
           className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl hover:bg-slate-100 text-slate-700 active:scale-95 transition md:hidden shrink-0"
           aria-label="Buka menu navigasi"
@@ -57,7 +58,10 @@ export function Header({
             </span>
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
           </div>
-          <h1 className="text-sm font-bold text-slate-900 leading-tight truncate max-w-[130px] sm:max-w-xs md:max-w-md">
+          <h1
+            data-testid="page-title"
+            className="text-sm font-bold text-slate-900 leading-tight truncate max-w-[130px] sm:max-w-xs md:max-w-md"
+          >
             {activePageTitle}
           </h1>
         </div>

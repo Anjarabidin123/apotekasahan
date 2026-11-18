@@ -130,30 +130,35 @@ export function KalenderTenggatPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
           <div className="inline-flex items-center rounded-xl border border-slate-200 bg-slate-50 p-1 shadow-xs">
             <button
+              type="button"
               onClick={handlePrevMonth}
-              className="p-1 rounded-lg hover:bg-white text-slate-600 hover:text-slate-900 transition"
+              className="w-11 h-11 sm:w-8 sm:h-8 min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 flex items-center justify-center rounded-xl hover:bg-white text-slate-600 hover:text-slate-900 transition active:scale-95"
               title="Bulan Sebelumnya"
+              aria-label="Bulan Sebelumnya"
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="w-5 h-5 sm:w-4 sm:h-4" />
             </button>
             <span className="px-3 text-xs font-black text-slate-800 min-w-[120px] text-center">
               {monthNames[currentMonth]} {currentYear}
             </span>
             <button
+              type="button"
               onClick={handleNextMonth}
-              className="p-1 rounded-lg hover:bg-white text-slate-600 hover:text-slate-900 transition"
+              className="w-11 h-11 sm:w-8 sm:h-8 min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 flex items-center justify-center rounded-xl hover:bg-white text-slate-600 hover:text-slate-900 transition active:scale-95"
               title="Bulan Berikutnya"
+              aria-label="Bulan Berikutnya"
             >
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="w-5 h-5 sm:w-4 sm:h-4" />
             </button>
           </div>
 
           <button
+            type="button"
             onClick={handleResetToAcuan}
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition shadow-xs cursor-pointer"
+            className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 h-11 sm:h-9 min-h-[44px] sm:min-h-0 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition shadow-xs cursor-pointer active:scale-95"
             title="Kembali ke Bulan Acuan (Nov 2026)"
           >
             <CalendarCheck2 className="w-3.5 h-3.5 text-blue-600" />
@@ -161,12 +166,13 @@ export function KalenderTenggatPage() {
           </button>
 
           <button
+            type="button"
             onClick={() => {
               alert(
                 'Jadwal tenggat retur November 2026 telah diekspor ke format iCal (.ics) untuk disinkronkan ke Google Calendar.'
               );
             }}
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs cursor-pointer active:scale-95"
+            className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 h-11 sm:h-9 min-h-[44px] sm:min-h-0 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs cursor-pointer active:scale-95"
             title="Unduh file kalender .ICS"
           >
             <Download className="w-3.5 h-3.5" />
@@ -225,7 +231,7 @@ export function KalenderTenggatPage() {
                   key={day}
                   type="button"
                   onClick={() => setSelectedDate(dateStr)}
-                  className={`h-16 p-1.5 rounded-xl border text-left flex flex-col justify-between transition-all cursor-pointer relative ${
+                  className={`min-h-[56px] sm:h-16 p-1 sm:p-1.5 rounded-xl border text-left flex flex-col justify-between transition-all cursor-pointer relative ${
                     isSelected
                       ? 'border-blue-600 bg-blue-50/70 ring-2 ring-blue-500/30 shadow-xs'
                       : hasEvents
@@ -244,11 +250,12 @@ export function KalenderTenggatPage() {
                       {day}
                     </span>
                     {returEvents.length > 0 && (
-                      <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse hidden sm:block" />
                     )}
                   </div>
 
-                  <div className="space-y-0.5 w-full mt-auto">
+                  {/* Desktop Badges (hidden sm:block) */}
+                  <div className="hidden sm:block space-y-0.5 w-full mt-auto">
                     {returEvents.length > 0 && (
                       <span className="block text-[9px] font-extrabold px-1 rounded bg-rose-100 text-rose-800 truncate leading-tight">
                         {returEvents.length} Retur
@@ -258,6 +265,22 @@ export function KalenderTenggatPage() {
                       <span className="block text-[9px] font-bold px-1 rounded bg-amber-100 text-amber-800 truncate leading-tight">
                         {expEvents.length} Exp
                       </span>
+                    )}
+                  </div>
+
+                  {/* Mobile Compact Event Dots (sm:hidden) */}
+                  <div className="flex sm:hidden items-center justify-center gap-1 w-full mt-auto pb-0.5">
+                    {returEvents.length > 0 && (
+                      <span
+                        className="w-2 h-2 rounded-full bg-rose-500 shadow-2xs"
+                        title={`${returEvents.length} Retur`}
+                      />
+                    )}
+                    {expEvents.length > 0 && (
+                      <span
+                        className="w-2 h-2 rounded-full bg-amber-500 shadow-2xs"
+                        title={`${expEvents.length} Exp`}
+                      />
                     )}
                   </div>
                 </button>
@@ -340,10 +363,11 @@ export function KalenderTenggatPage() {
                     <div className="pt-2 border-t border-rose-200/60 flex items-center justify-between text-[10px]">
                       <span className="text-rose-600 font-semibold">ED: {b.tanggal_kedaluwarsa}</span>
                       <button
+                        type="button"
                         onClick={() => {
                           alert(`Mempersiapkan formulir retur resmi untuk ${b.nama_obat} ke ${b.nama_distributor}`);
                         }}
-                        className="px-2.5 py-1 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-bold transition shadow-xs cursor-pointer"
+                        className="px-3 py-2 min-h-[44px] sm:min-h-0 sm:py-1 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold transition shadow-xs cursor-pointer flex items-center justify-center text-xs"
                       >
                         Proses Retur
                       </button>

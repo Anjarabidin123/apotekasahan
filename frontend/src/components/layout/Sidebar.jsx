@@ -220,6 +220,7 @@ export function Sidebar({
           3. Desktop Sidebar (hidden md:flex)
       ======================================================== */}
       <aside
+        data-testid="desktop-sidebar"
         className={`hidden md:flex bg-slate-100/80 border-r border-slate-200/90 flex-col transition-all duration-300 z-40 select-none shadow-[1px_0_12px_rgba(0,0,0,0.03)] backdrop-blur-md shrink-0 ${
           isCollapsed ? 'w-20' : 'w-64'
         }`}
