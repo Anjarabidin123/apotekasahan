@@ -88,7 +88,7 @@ export function Sidebar({
   };
 
   /**
-   * Merender item navigasi bergaya kartu putih mengambang di atas rail lembut.
+   * Merender tiap menu dalam gelembung tombol tipis agar terasa responsif dan dapat ditekan.
    */
   const renderNavItem = (item, { isMobileDrawer = false, compactDesktop = false }) => {
     const Icon = item.icon;
@@ -99,13 +99,15 @@ export function Sidebar({
       return (
         <div
           key={item.id}
-          className={`flex items-center justify-between px-3 py-2 rounded-xl text-[13.5px] text-slate-400 select-none cursor-not-allowed opacity-70 font-semibold ${
+          className={`flex items-center justify-between px-2.5 py-2 rounded-xl border border-slate-200/60 bg-slate-100/60 text-[13px] text-slate-400 select-none cursor-not-allowed opacity-70 font-semibold ${
             compactDesktop ? 'justify-center px-2' : ''
           }`}
           title="Khusus Akun Pemilik (Ibu Anni)"
         >
           <div className="flex items-center gap-2.5 min-w-0">
-            <Icon className="w-[17px] h-[17px] shrink-0 text-slate-400" strokeWidth={2} />
+            <span className="w-7 h-7 rounded-lg bg-slate-200/60 flex items-center justify-center shrink-0">
+              <Icon className="w-4 h-4 text-slate-400" strokeWidth={2} />
+            </span>
             {!compactDesktop && <span className="truncate">{item.label}</span>}
           </div>
           {!compactDesktop && <Lock className="w-3.5 h-3.5 text-slate-400 shrink-0" />}
@@ -120,23 +122,24 @@ export function Sidebar({
         data-testid={isMobileDrawer ? `mobile-nav-${item.id}` : undefined}
         onClick={() => (isMobileDrawer ? handleNavClick(item.id) : setActivePage(item.id))}
         className={`group w-full flex items-center ${
-          compactDesktop ? 'justify-center px-2' : 'justify-between px-3'
-        } py-2 rounded-xl text-[13.5px] tracking-tight transition-all cursor-pointer text-left min-h-[40px] ${
+          compactDesktop ? 'justify-center px-1.5' : 'justify-between px-2.5'
+        } py-1.5 rounded-xl text-[13px] tracking-tight transition-all duration-150 cursor-pointer text-left min-h-[42px] border active:scale-[0.98] ${
           isActive
-            ? 'bg-white text-slate-950 font-bold shadow-[0_2px_10px_rgba(15,23,42,0.06)] ring-1 ring-slate-900/5'
-            : 'text-slate-600 hover:bg-white/65 hover:text-slate-950 font-semibold'
+            ? 'bg-blue-600 text-white font-bold border-blue-600 shadow-[0_4px_12px_rgba(37,99,235,0.24)]'
+            : 'bg-white/85 hover:bg-white text-slate-700 hover:text-slate-950 font-semibold border-slate-200/90 hover:border-blue-300/80 shadow-[0_1px_2px_rgba(15,23,42,0.03)] hover:shadow-xs'
         }`}
         title={compactDesktop ? item.label : undefined}
       >
         <div className="flex items-center gap-2.5 min-w-0">
-          <Icon
-            className={`w-[17px] h-[17px] shrink-0 transition-colors ${
+          <span
+            className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
               isActive
-                ? 'text-blue-600'
-                : 'text-slate-400 group-hover:text-blue-600'
+                ? 'bg-white/20 text-white'
+                : 'bg-slate-100/90 text-slate-500 group-hover:bg-blue-50 group-hover:text-blue-600'
             }`}
-            strokeWidth={isActive ? 2.4 : 2}
-          />
+          >
+            <Icon className="w-4 h-4" strokeWidth={isActive ? 2.4 : 2.1} />
+          </span>
           {!compactDesktop && <span className="truncate">{item.label}</span>}
         </div>
 
@@ -144,8 +147,8 @@ export function Sidebar({
           <span
             className={`text-[11px] min-w-[20px] h-5 px-1.5 rounded-full font-bold flex items-center justify-center tabular-nums shrink-0 ${
               isActive
-                ? 'bg-rose-600 text-white'
-                : 'bg-rose-100 text-rose-700'
+                ? 'bg-white text-blue-700'
+                : 'bg-rose-600 text-white'
             }`}
           >
             {item.badge}
@@ -169,14 +172,14 @@ export function Sidebar({
       {/* Drawer Navigasi Mobile */}
       <aside
         data-testid="mobile-drawer"
-        className={`fixed inset-y-0 left-0 z-50 w-64 max-w-[82vw] bg-[#f4f6fc] border-r border-slate-200/80 text-slate-900 flex flex-col md:hidden transform transition-transform duration-300 ease-in-out shadow-2xl ${
+        className={`fixed inset-y-0 left-0 z-50 w-64 max-w-[82vw] bg-[#f8faff] border-r border-slate-200 text-slate-900 flex flex-col md:hidden transform transition-transform duration-300 ease-in-out shadow-2xl ${
           isMobileOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
         role="dialog"
         aria-modal="true"
         aria-label="Menu Navigasi SIMAAF"
       >
-        <div className="px-4 h-14 flex items-center justify-between">
+        <div className="px-4 h-14 border-b border-slate-200/80 flex items-center justify-between bg-white/80">
           <div
             onClick={() => handleNavClick(isAdmin ? 'dashboard' : 'inventori')}
             className="flex items-center gap-2.5 cursor-pointer min-w-0"
@@ -186,7 +189,7 @@ export function Sidebar({
               <h2 className="text-[15px] font-black text-slate-950 tracking-tight truncate leading-none">
                 SIMAAF
               </h2>
-              <p className="text-[11px] font-semibold text-slate-500 truncate mt-0.5 leading-none">
+              <p className="text-[11px] font-semibold text-blue-600 truncate mt-0.5 leading-none">
                 Apotek Asahan Farma
               </p>
             </div>
@@ -196,7 +199,7 @@ export function Sidebar({
             type="button"
             data-testid="mobile-drawer-close"
             onClick={onCloseMobile}
-            className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl hover:bg-white text-slate-500 hover:text-slate-900 transition shrink-0"
+            className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl hover:bg-slate-100 text-slate-500 hover:text-slate-900 transition shrink-0"
             aria-label="Tutup menu navigasi"
             title="Tutup menu"
           >
@@ -204,13 +207,13 @@ export function Sidebar({
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-3 py-2 space-y-4">
+        <div className="flex-1 overflow-y-auto px-3 py-3 space-y-4">
           {navGroups.map((group) => (
-            <div key={group.title} className="space-y-1">
-              <p className="px-3 text-[10.5px] font-bold uppercase tracking-wider text-slate-400">
+            <div key={group.title} className="space-y-1.5">
+              <p className="px-2 text-[10.5px] font-bold uppercase tracking-wider text-slate-400">
                 {group.title}
               </p>
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 {group.items.map((item) =>
                   renderNavItem(item, { isMobileDrawer: true, compactDesktop: false })
                 )}
@@ -219,22 +222,22 @@ export function Sidebar({
           ))}
         </div>
 
-        <div className="px-4 py-3 border-t border-slate-200/70 text-[11px] text-slate-500 space-y-0.5 shrink-0">
+        <div className="px-4 py-3 border-t border-slate-200/80 bg-white/70 text-[11px] text-slate-500 space-y-0.5 shrink-0">
           <p className="font-bold text-slate-800 truncate">Kisaran Timur</p>
           <p className="truncate">Jl. Imam Bonjol No. 331 • NIB 1210210063257</p>
         </div>
       </aside>
 
-      {/* Sidebar Desktop Menyatu Tanpa Kotak Kaku */}
+      {/* Sidebar Desktop dengan Garis Batas & Bayangan Pemisah ke Konten */}
       <aside
         data-testid="desktop-sidebar"
-        className={`hidden md:flex bg-[#eff1f9]/75 border-r border-slate-200/70 text-slate-900 flex-col transition-all duration-300 z-40 select-none shrink-0 ${
-          isCollapsed ? 'w-[72px]' : 'w-[224px]'
+        className={`hidden md:flex bg-[#f8faff] border-r border-slate-200/90 shadow-[4px_0_18px_-4px_rgba(15,23,42,0.07)] text-slate-900 flex-col transition-all duration-300 z-40 select-none shrink-0 relative ${
+          isCollapsed ? 'w-[76px]' : 'w-[228px]'
         }`}
       >
         <div
           onClick={() => setActivePage(isAdmin ? 'dashboard' : 'inventori')}
-          className={`h-14 px-3.5 flex items-center ${
+          className={`h-14 px-3.5 border-b border-slate-200/80 bg-white/75 flex items-center ${
             isCollapsed ? 'justify-center' : 'gap-2.5'
           } cursor-pointer group`}
           title="Apotek Asahan Farma - SIMAAF"
@@ -245,22 +248,22 @@ export function Sidebar({
               <h2 className="text-[15px] font-black text-slate-950 tracking-tight truncate leading-none">
                 SIMAAF
               </h2>
-              <p className="text-[11px] font-semibold text-slate-500 truncate mt-0.5 leading-none">
+              <p className="text-[11px] font-semibold text-blue-600 truncate mt-0.5 leading-none">
                 Apotek Asahan Farma
               </p>
             </div>
           )}
         </div>
 
-        <div className="flex-1 overflow-y-auto px-2.5 py-2 space-y-4">
+        <div className="flex-1 overflow-y-auto px-2.5 py-3 space-y-4">
           {navGroups.map((group) => (
-            <div key={group.title} className="space-y-1">
+            <div key={group.title} className="space-y-1.5">
               {!isCollapsed && (
-                <p className="px-3 text-[10.5px] font-bold uppercase tracking-wider text-slate-400">
+                <p className="px-2 text-[10.5px] font-bold uppercase tracking-wider text-slate-400">
                   {group.title}
                 </p>
               )}
-              <div className="space-y-0.5">
+              <div className="space-y-1.5">
                 {group.items.map((item) =>
                   renderNavItem(item, { isMobileDrawer: false, compactDesktop: isCollapsed })
                 )}
@@ -270,10 +273,10 @@ export function Sidebar({
         </div>
 
         {!isCollapsed && (
-          <div className="mx-3 mb-3 pt-2.5 border-t border-slate-200/70 text-[11px] space-y-0.5 px-1">
+          <div className="mx-3 mb-3 pt-2.5 border-t border-slate-200/80 text-[11px] space-y-0.5 px-1">
             <div className="flex items-center justify-between gap-2">
               <span className="font-bold text-slate-800 truncate">Kisaran Timur</span>
-              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-teal-700">
+              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded-full border border-teal-200/70">
                 <span className="w-1.5 h-1.5 rounded-full bg-teal-500" />
                 Aktif
               </span>

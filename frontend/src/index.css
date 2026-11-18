@@ -105,3 +105,32 @@
     display: none;
   }
 }
+
+@keyframes apotekBob {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-3px); }
+}
+
+@keyframes apotekStroll {
+  0%, 100% { transform: translateX(0px) translateY(0px); }
+  25% { transform: translateX(6px) translateY(-1.5px); }
+  50% { transform: translateX(12px) translateY(0px); }
+  75% { transform: translateX(6px) translateY(-1.5px); }
+}
+
+@keyframes cloudFloat {
+  0%, 100% { transform: translateX(0px); }
+  50% { transform: translateX(10px); }
+}
+
+.animate-apotek-bob {
+  animation: apotekBob 3.2s ease-in-out infinite;
+}
+
+.animate-apotek-stroll {
+  animation: apotekStroll 6s ease-in-out infinite;
+}
+
+.animate-cloud-float {
+  animation: cloudFloat 8s ease-in-out infinite;
+}

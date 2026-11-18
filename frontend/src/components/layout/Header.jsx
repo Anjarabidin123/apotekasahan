@@ -21,7 +21,7 @@ export function Header({
   };
 
   return (
-    <header className="h-14 bg-[#eef1f9]/85 backdrop-blur-md sticky top-0 z-30 flex items-center justify-between px-3 sm:px-4 lg:px-5 w-full max-w-full border-b border-slate-200/60 md:border-b-0">
+    <header className="h-14 bg-[#f8faff]/95 backdrop-blur-md sticky top-0 z-30 flex items-center justify-between px-3 sm:px-4 lg:px-5 w-full max-w-full border-b border-slate-200/90 shadow-[0_4px_14px_-4px_rgba(15,23,42,0.06)]">
       <div className="flex items-center gap-2 min-w-0">
         {/* Tombol Hamburger Mobile */}
         <button
@@ -39,7 +39,7 @@ export function Header({
         <button
           type="button"
           onClick={onToggleSidebar}
-          className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/90 text-slate-500 hover:text-slate-900 transition md:inline-flex hidden shrink-0 cursor-pointer"
+          className="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-slate-200/80 hover:border-blue-300 text-slate-500 hover:text-slate-900 transition shadow-2xs md:inline-flex hidden shrink-0 cursor-pointer"
           title="Buka / Tutup Sidebar"
           aria-label="Buka / Tutup Sidebar"
         >

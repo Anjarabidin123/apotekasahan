@@ -46,7 +46,7 @@ export function Layout({
           logoUrl={logoUrl}
         />
 
-        <main className="flex-1 overflow-y-auto overflow-x-hidden w-full max-w-full px-3 sm:px-4 lg:px-5 pt-1 pb-20 md:pb-5">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden w-full max-w-full bg-[#ebf0fa] shadow-[inset_3px_3px_12px_rgba(15,23,42,0.04)] px-3 sm:px-4 lg:px-5 pt-3 pb-20 md:pb-5">
           <div className="w-full max-w-[1600px] mx-auto space-y-3">
             {children}
           </div>
