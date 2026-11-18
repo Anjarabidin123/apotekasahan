@@ -176,10 +176,10 @@ export function FakturInputPage({ onBatchSaved }) {
           </span>
           <h2 className="text-base font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
             <FileText className="w-5 h-5 text-blue-600" />
-            Penerimaan Obat & Ekstraksi Faktur AI
+            Penerimaan Obat & Pemindaian Faktur (OCR)
           </h2>
           <p className="text-xs text-slate-500">
-            Foto faktur fisik dari distributor untuk pembacaan otomatis via AI, lalu koreksi sebelum disimpan.
+            Unggah foto lembaran faktur distributor untuk pembacaan otomatis nomor batch dan tanggal kedaluwarsa.
           </p>
         </div>
 
@@ -190,8 +190,8 @@ export function FakturInputPage({ onBatchSaved }) {
           disabled={isProcessing}
           className="inline-flex items-center gap-2 px-3.5 py-2 rounded-2xl border border-blue-200 bg-blue-50/80 hover:bg-blue-100 text-blue-800 text-xs font-bold transition shrink-0 active:scale-95 shadow-sm"
         >
-          <Sparkles className="w-4 h-4 text-blue-600" />
-          <span>Demo Ekstraksi Faktur AI</span>
+          <FileText className="w-4 h-4 text-blue-600" />
+          <span>Contoh Pemindaian Faktur</span>
         </button>
       </div>
 
@@ -241,8 +241,8 @@ export function FakturInputPage({ onBatchSaved }) {
             {isProcessing ? (
               <div className="space-y-2">
                 <div className="w-7 h-7 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto" />
-                <p className="text-xs font-bold text-slate-800">Gemini Vision AI membaca teks...</p>
-                <p className="text-[10px] text-slate-400">Mengekstrak nomor batch, exp date, & harga</p>
+                <p className="text-xs font-bold text-slate-800">Sistem OCR membaca dokumen faktur...</p>
+                <p className="text-[10px] text-slate-400">Mengekstrak nomor batch, tanggal ED, dan harga beli</p>
               </div>
             ) : previewImage ? (
               <div className="space-y-1.5 text-center">

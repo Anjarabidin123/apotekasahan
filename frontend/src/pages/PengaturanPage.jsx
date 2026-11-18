@@ -233,9 +233,7 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
 
   return (
     <div className="space-y-6">
-      {/* ========================================================
-          Header Bersih (Mirip catatbirowisata PengaturanBiro)
-          ======================================================== */}
+      
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 border border-blue-200 flex items-center justify-center shrink-0">
@@ -288,9 +286,7 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
         </div>
       )}
 
-      {/* ========================================================
-          Segmented Tab Bar CMS (Gaya Eksak catatbirowisata)
-          ======================================================== */}
+      
       <div className="flex items-center gap-2 overflow-x-auto pb-1">
         {[
           { id: 'identitas', label: 'Identitas & Legalitas', icon: Building2 },
@@ -318,9 +314,7 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
         })}
       </div>
 
-      {/* ========================================================
-          TAB 1: IDENTITAS RESMI & LEGALITAS
-          ======================================================== */}
+      
       {activeTab === 'identitas' && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Card Kiri: Identitas Resmi Apotek & Logo */}
@@ -622,9 +616,7 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
         </div>
       )}
 
-      {/* ========================================================
-          TAB 2: CMS DOKUMEN & FORMAT SURAT RETUR
-          ======================================================== */}
+      
       {activeTab === 'dokumen' && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
@@ -698,9 +690,7 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
         </div>
       )}
 
-      {/* ========================================================
-          TAB 3: KATEGORI OBAT & AMBANG STOK (Mirip Kategori Kas catatbirowisata)
-          ======================================================== */}
+      
       {activeTab === 'kategori' && (
         <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
@@ -771,9 +761,7 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
         </div>
       )}
 
-      {/* ========================================================
-          TAB 4: MASTER DISTRIBUTOR (14 PBF REKANAN)
-          ======================================================== */}
+      
       {activeTab === 'rekanan' && (
         <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
@@ -870,9 +858,7 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
         </div>
       )}
 
-      {/* ========================================================
-          MODAL TAMBAH PBF REKANAN BARU
-          ======================================================== */}
+      
       {showAddPbfModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-md w-full p-5 space-y-4 shadow-xl border border-slate-200 animate-in fade-in zoom-in-95">
@@ -964,9 +950,7 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
         </div>
       )}
 
-      {/* ========================================================
-          MODAL TAMBAH KATEGORI OBAT BARU
-          ======================================================== */}
+      
       {showAddKatModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-sm w-full p-5 space-y-4 shadow-xl border border-slate-200 animate-in fade-in zoom-in-95">
@@ -1034,9 +1018,7 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
         </div>
       )}
 
-      {/* ========================================================
-          MODAL BANTUAN & SOP
-          ======================================================== */}
+      
       {showSupportModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl border border-slate-200 animate-in fade-in zoom-in-95">

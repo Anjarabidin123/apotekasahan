@@ -119,9 +119,7 @@ export function KalenderTenggatPage() {
 
   return (
     <div className="space-y-4">
-      {/* ========================================================
-          Header Kompak & Modern (Tanpa Banner Gelap yang Boros)
-          ======================================================== */}
+      
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200/90 shadow-sm">
         <div>
           <div className="flex items-center gap-2">
@@ -185,9 +183,7 @@ export function KalenderTenggatPage() {
         </div>
       </div>
 
-      {/* ========================================================
-          Layout 2 Kolom Vercel-Style (Grid Kalender & Panel Detail)
-          ======================================================== */}
+      
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         {/* Kolom Kiri: Kalender Grid Interaktif (8 Kolom) */}
         <div className="lg:col-span-8 bg-white rounded-2xl border border-slate-200/90 p-4 shadow-sm space-y-3">

@@ -117,9 +117,7 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
 
   return (
     <div className="space-y-5">
-      {/* ========================================================
-          Top Header Bar
-          ======================================================== */}
+      
       <div className="border-b border-slate-200/80 pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div>
           <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">
@@ -156,13 +154,9 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
         </div>
       )}
 
-      {/* ========================================================
-          TATA LETAK 2-KOLOM GAYA VERCEL (Kompak, Berdampingan, Bebas Boros)
-          ======================================================== */}
+      
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-        {/* ========================================================
-            KOLOM KIRI (7/12): FORMULIR INPUT OPNAME & LIVE CALCULATION
-            ======================================================== */}
+        
         <div className="lg:col-span-7 bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <div>
@@ -328,9 +322,7 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
           </form>
         </div>
 
-        {/* ========================================================
-            KOLOM KANAN (5/12): RIWAYAT AUDIT & ACTIVITY FEED TERAKHIR
-            ======================================================== */}
+        
         <div className="lg:col-span-5 bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <div>

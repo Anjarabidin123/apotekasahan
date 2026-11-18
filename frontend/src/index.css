@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Design System Tokens - Clean Slate & Royal Blue (Inspired by Anjarabidin123/catatbirowisata) */
+/* Design System Tokens - Clean Slate & Royal Blue  */
 :root {
   --radius: 1rem;
   --background: #f8fafc;

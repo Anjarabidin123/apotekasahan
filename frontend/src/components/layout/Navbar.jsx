@@ -45,7 +45,7 @@ export function Navbar({ onToggleSidebar, activePageTitle, tanggalAcuan }) {
           <span>Acuan: <strong className="text-slate-900">{tanggalAcuan || '2026-10-31'}</strong></span>
         </div>
 
-        {/* Quick Switch Role Pill (Style catatbirowisata) */}
+        {/* Quick Switch Role Pill  */}
         <button
           onClick={handleQuickSwitchRole}
           className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold transition active:scale-95 shadow-sm"

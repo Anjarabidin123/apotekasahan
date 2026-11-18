@@ -83,7 +83,7 @@ export function InventoriBatchPage({ onSelectBatchForAdjustment }) {
               Tabel Persediaan & Agregasi Batch Obat
             </h2>
             <p className="text-xs text-slate-500">
-              Menampilkan seluruh batch obat aktif dengan perhitungan batas retur dan skor risiko AI.
+              Menampilkan seluruh batch obat aktif dengan pemantauan batas retur dan prioritas kedaluwarsa (FEFO).
             </p>
           </div>
 
@@ -128,7 +128,7 @@ export function InventoriBatchPage({ onSelectBatchForAdjustment }) {
             className="text-xs h-8 px-2 rounded-md border border-slate-300 bg-white focus:outline-none focus:ring-1 focus:ring-brand-500"
           >
             <option value="semua">Semua Tingkat Risiko</option>
-            <option value="tinggi">Risiko Tinggi (Model AI)</option>
+            <option value="tinggi">Risiko Tinggi (Tenggat Dekat)</option>
             <option value="sedang">Risiko Sedang</option>
             <option value="rendah">Risiko Rendah / Aman</option>
           </select>
@@ -186,7 +186,7 @@ export function InventoriBatchPage({ onSelectBatchForAdjustment }) {
                   <th className="py-2.5 px-3 text-center">Stok</th>
                   <th className="py-2.5 px-3 text-right">Nilai Stok</th>
                   <th className="py-2.5 px-3">Status Retur</th>
-                  <th className="py-2.5 px-3">Risiko AI</th>
+                  <th className="py-2.5 px-3">Status Risiko</th>
                   <th className="py-2.5 px-3 text-center">Aksi</th>
                 </tr>
               </thead>

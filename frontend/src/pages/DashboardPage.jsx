@@ -119,9 +119,7 @@ export function DashboardPage({ onNavigateToPengingat, onNavigateToInventori, on
 
   return (
     <div className="space-y-6">
-      {/* ========================================================
-          Top Header Bar Eksekutif (Style Modern catatbirowisata)
-          ======================================================== */}
+      
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-1 border-b border-slate-200/80">
         <div className="flex items-center gap-3.5">
           <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-black text-lg flex items-center justify-center shadow-sm shadow-blue-500/20 shrink-0">
@@ -183,9 +181,7 @@ export function DashboardPage({ onNavigateToPengingat, onNavigateToInventori, on
         </div>
       </div>
 
-      {/* ========================================================
-          4 Bento Metric Cards Desktop (Clean High-Contrast)
-          ======================================================== */}
+      
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Metric 1: Nilai Persediaan */}
         <div className="bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-5 shadow-sm hover:border-slate-300 hover:shadow-sm transition-all flex flex-col justify-between">
@@ -278,36 +274,34 @@ export function DashboardPage({ onNavigateToPengingat, onNavigateToInventori, on
           </p>
         </div>
 
-        {/* Metric 4: Model Prediksi AI */}
+        {/* Metric 4: Kepatuhan Penataan FEFO */}
         <div className="bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-5 shadow-sm hover:border-slate-300 hover:shadow-sm transition-all flex flex-col justify-between">
           <div>
             <div className="flex items-start justify-between gap-3 mb-2">
               <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
-                Model Analitik AI
+                Kepatuhan Rak FEFO
               </span>
-              <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center justify-center shrink-0">
+              <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center shrink-0">
                 <ShieldCheck className="w-4 h-4" strokeWidth={2.2} />
               </div>
             </div>
 
             <div className="flex items-baseline gap-2 mb-2">
               <h3 className="text-2xl font-black text-slate-900 tracking-tight leading-none">
-                AUC 0.91
+                94.2%
               </h3>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
-                Random Forest
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                Standar BPOM
               </span>
             </div>
           </div>
           <p className="text-[11px] font-medium text-slate-500 pt-2.5 border-t border-slate-100 line-clamp-1">
-            2 temuan optimasi stok terdeteksi
+            Batch terdekat ED berada di baris depan rak
           </p>
         </div>
       </div>
 
-      {/* ========================================================
-          Main Content Grid: 2 Kolom Kiri + 1 Kolom Kanan
-          ======================================================== */}
+      
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Kolom Kiri (2 Kolom): Daftar Batch Berisiko & Rekomendasi Tindakan */}
         <div className="lg:col-span-2 space-y-6">
@@ -414,18 +408,18 @@ export function DashboardPage({ onNavigateToPengingat, onNavigateToInventori, on
             </div>
           </div>
 
-          {/* Card: Wawasan Data Science & Temuan Analitik */}
+          {/* Card: Rekomendasi Operasional & Kepatuhan Rak */}
           <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm space-y-4">
             <div className="flex items-center gap-2.5 border-b border-slate-100 pb-3">
               <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center shrink-0">
-                <Sparkles className="w-4 h-4" />
+                <CheckCircle2 className="w-4 h-4" />
               </div>
               <div>
                 <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">
-                  Wawasan Capstone AI
+                  Rekomendasi Operasional
                 </span>
                 <h3 className="text-sm font-bold text-slate-900">
-                  Temuan Analitis Data Science untuk Efisiensi Stok
+                  Evaluasi Kepatuhan & Efisiensi Stok Rak
                 </h3>
               </div>
             </div>
@@ -437,14 +431,14 @@ export function DashboardPage({ onNavigateToPengingat, onNavigateToInventori, on
                     1
                   </span>
                   <h4 className="text-xs font-bold text-slate-900">
-                    Asimetri Kebijakan Retur PBF
+                    Perbedaan Tenggat Retur Distributor
                   </h4>
                 </div>
                 <p className="text-[11px] text-slate-600 leading-relaxed">
-                  PT Merapi Utama Pharma memberi batas aman 45 hari sebelum ED, sementara PT Kimia Farma TD hanya 15 hari. Keterlambatan input faktur 1 minggu berisiko fatal hangus.
+                  PBF Merapi Utama Pharma memberi batas aman 45 hari sebelum ED, sementara PBF Kimia Farma TD hanya 15 hari. Pastikan faktur diverifikasi segera setelah barang tiba.
                 </p>
                 <div className="pt-2 text-[10px] font-semibold text-blue-600 flex items-center gap-1">
-                  <span>Rekomendasi: Input faktur otomatis via OCR dalam 24 jam.</span>
+                  <span>Tindakan: Verifikasi faktur maksimal 24 jam setelah obat diterima.</span>
                 </div>
               </div>
 
@@ -454,14 +448,14 @@ export function DashboardPage({ onNavigateToPengingat, onNavigateToInventori, on
                     2
                   </span>
                   <h4 className="text-xs font-bold text-slate-900">
-                    Pola Stok Slow-Moving
+                    Monitoring Obat Slow-Moving
                   </h4>
                 </div>
                 <p className="text-[11px] text-slate-600 leading-relaxed">
-                  Ibuprofen 400mg memiliki rasio perputaran lambat (12 strip/bulan vs 80 strip stok) dengan skor risiko model AI 0.88. Berisiko tidak habis sebelum masa kedaluwarsa.
+                  Ibuprofen 400mg memiliki tren perputaran lambat (12 strip/bulan vs 80 strip stok di rak). Berpotensi mendekati tanggal kedaluwarsa sebelum terjual habis.
                 </p>
                 <div className="pt-2 text-[10px] font-semibold text-indigo-600 flex items-center gap-1">
-                  <span>Rekomendasi: Terapkan bundling resep atau program diskon.</span>
+                  <span>Tindakan: Utamakan pengeluaran batch terdekat atau ajukan retur dini.</span>
                 </div>
               </div>
             </div>

@@ -162,9 +162,7 @@ export function PengingatReturPage({ onNavigateToPenyesuaian }) {
 
   return (
     <div className="space-y-5">
-      {/* ========================================================
-          Top Header Bar
-          ======================================================== */}
+      
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200/80 pb-3">
         <div>
           <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">
@@ -219,9 +217,7 @@ export function PengingatReturPage({ onNavigateToPenyesuaian }) {
         </div>
       )}
 
-      {/* ========================================================
-          3 Kartu Metrik Tab Ringkas (Horizontal, Padat & Rapi)
-          ======================================================== */}
+      
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <button
           onClick={() => {
@@ -308,9 +304,7 @@ export function PengingatReturPage({ onNavigateToPenyesuaian }) {
         </button>
       </div>
 
-      {/* ========================================================
-          Toolbar Kontrol: Pencarian, Filter PBF, Sort, & Mode Tampilan
-          ======================================================== */}
+      
       <div className="bg-white rounded-2xl border border-slate-200/80 p-3 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
         {/* Kiri: Search Input */}
         <div className="relative flex-1 max-w-md">
@@ -386,9 +380,7 @@ export function PengingatReturPage({ onNavigateToPenyesuaian }) {
         </div>
       </div>
 
-      {/* ========================================================
-          Floating / Sticky Bulk Action Bar jika ada batch terpilih
-          ======================================================== */}
+      
       {selectedBatchIds.length > 0 && (
         <div className="p-3 bg-blue-50 border border-blue-200 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs animate-in fade-in">
           <div className="flex items-center gap-2">
@@ -420,9 +412,7 @@ export function PengingatReturPage({ onNavigateToPenyesuaian }) {
         </div>
       )}
 
-      {/* ========================================================
-          TAMPILAN 1: COMPACT DATA TABLE (Berdensitas Tinggi, Bebas Boros)
-          ======================================================== */}
+      
       {viewMode === 'table' ? (
         <div className="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-xs">
           <div className="overflow-x-auto">
@@ -597,9 +587,7 @@ export function PengingatReturPage({ onNavigateToPenyesuaian }) {
           </div>
         </div>
       ) : (
-        /* ========================================================
-            TAMPILAN 2: COMPACT GRID CARDS (Lebih Rapi & Padat)
-            ======================================================== */
+        
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
           {filteredAndSortedList.map((item) => (
             <div

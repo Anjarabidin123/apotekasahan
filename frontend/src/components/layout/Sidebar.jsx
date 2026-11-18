@@ -68,7 +68,7 @@ export function Sidebar({ activePage, setActivePage, isCollapsed, urgentCount = 
         isCollapsed ? 'w-20' : 'w-64'
       }`}
     >
-      {/* Brand Header (Style DesktopSidebar catatbirowisata) */}
+      {/* Brand Header  */}
       <div
         onClick={() => setActivePage('dashboard')}
         className="p-4 border-b border-slate-200/80 bg-white/70 flex items-center gap-3 hover:bg-white transition-colors group cursor-pointer"
@@ -90,24 +90,6 @@ export function Sidebar({ activePage, setActivePage, isCollapsed, urgentCount = 
         )}
       </div>
 
-      {/* AI Copilot Badge Button (Khas catatbirowisata) */}
-      {!isCollapsed && (
-        <div className="px-3 pt-3">
-          <div
-            onClick={() => setActivePage('faktur')}
-            className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-black bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-600 text-white shadow-sm shadow-blue-500/20 hover:opacity-95 transition-all cursor-pointer group"
-            title="Model AI Random Forest & Ekstraksi Faktur"
-          >
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-cyan-200 group-hover:rotate-12 transition-transform" />
-              <span>AI Opt-Stok & Vision</span>
-            </div>
-            <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-white/20 font-mono font-bold">
-              v1.0
-            </span>
-          </div>
-        </div>
-      )}
 
       {/* Nav List: Tegas, Menggunakan Kartu Putih Berkontras Tinggi */}
       <div className="flex-1 overflow-y-auto px-3 py-2 space-y-1.5">
@@ -181,7 +163,7 @@ export function Sidebar({ activePage, setActivePage, isCollapsed, urgentCount = 
         })}
       </div>
 
-      {/* Footer Profil Singkat Apotek (Kartu Bersih Khas catatbirowisata) */}
+      {/* Footer Profil Singkat Apotek  */}
       {!isCollapsed && (
         <div className="p-3 m-3 rounded-2xl bg-white border border-slate-200 text-xs space-y-1 shadow-2xs">
           <div className="flex items-center justify-between">
