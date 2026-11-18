@@ -16,7 +16,37 @@ const STORAGE_KEYS = {
   SETTINGS: 'simaaf_settings',
   DISTRIBUTORS: 'simaaf_distributors',
   LOGS: 'simaaf_stock_logs',
+  PROFILE: 'simaaf_profile',
+  KATEGORI: 'simaaf_kategori',
 };
+
+export const DEFAULT_PROFILE = {
+  nama_apotek: 'Apotek Asahan Farma',
+  pimpinan: 'Ibu Anni (Komisaris)',
+  apoteker_pj: 'apt. Nurul Hasanah, S.Farm',
+  sipa: '19930412/SIPA_1208/2022/2041',
+  sia: '503/SIA/042/DPMPTSP/2021',
+  nib: '1210210063257',
+  alamat: 'Jl. Imam Bonjol No. 331, Kel. Kisaran Timur, Kab. Asahan, Sumatera Utara 21214',
+  telepon: '(0623) 41289',
+  whatsapp: '0812-6543-9870',
+  email: 'apotek.asahanfarma@gmail.com',
+  jam_operasional: 'Senin - Minggu: 08.00 - 22.00 WIB',
+  catatan_kaki_surat: 'Obat yang diretur wajib bersegel utuh dan diverifikasi nomor batch resminya.',
+  format_no_retur: 'BAP-RETUR/{YYYY}/{MM}/{INDEX}',
+  tanda_tangan_apj: true,
+};
+
+export const DEFAULT_KATEGORI = [
+  { id: 1, nama: 'Antibiotik (Keras)', stok_minimum: 15, masa_pantau_hari: 30, jenis: 'Keras' },
+  { id: 2, nama: 'Analgesik & Antipiretik', stok_minimum: 20, masa_pantau_hari: 30, jenis: 'Bebas' },
+  { id: 3, nama: 'Antasida & Obat Lambung', stok_minimum: 15, masa_pantau_hari: 45, jenis: 'Bebas Terbatas' },
+  { id: 4, nama: 'Antihipertensi & Jantung', stok_minimum: 20, masa_pantau_hari: 30, jenis: 'Keras' },
+  { id: 5, nama: 'Antidiabetes Oral', stok_minimum: 30, masa_pantau_hari: 30, jenis: 'Keras' },
+  { id: 6, nama: 'Sirup & Tetes Anak', stok_minimum: 15, masa_pantau_hari: 45, jenis: 'Bebas Terbatas' },
+  { id: 7, nama: 'Salep & Krim Topikal', stok_minimum: 10, masa_pantau_hari: 60, jenis: 'Bebas Terbatas' },
+  { id: 8, nama: 'Suplemen & Vitamin', stok_minimum: 20, masa_pantau_hari: 60, jenis: 'Bebas' },
+];
 
 function getStorage(key, fallback) {
   try {
@@ -404,5 +434,86 @@ export const api = {
 
     setStorage(STORAGE_KEYS.BATCHES, batches);
     return { sukses: true, data: distributors[dIndex] };
-  }
+  },
+
+  // Kelola profil sarana apotek & kategori secara persisten di browser
+  async getProfile() {
+    return { ...DEFAULT_PROFILE, ...getStorage(STORAGE_KEYS.PROFILE, {}) };
+  },
+
+  async updateProfile(nextProfile) {
+    const merged = { ...DEFAULT_PROFILE, ...nextProfile };
+    setStorage(STORAGE_KEYS.PROFILE, merged);
+    return { sukses: true, data: merged };
+  },
+
+  async getKategoriList() {
+    return getStorage(STORAGE_KEYS.KATEGORI, DEFAULT_KATEGORI);
+  },
+
+  async saveKategoriList(nextList) {
+    setStorage(STORAGE_KEYS.KATEGORI, nextList);
+    return { sukses: true, data: nextList };
+  },
+
+  async addDistributor(newPbf) {
+    const distributors = getStorage(STORAGE_KEYS.DISTRIBUTORS, DISTRIBUTORS);
+    const updated = [...distributors, newPbf];
+    setStorage(STORAGE_KEYS.DISTRIBUTORS, updated);
+    return { sukses: true, data: updated };
+  },
+
+  async deleteDistributor(id) {
+    const distributors = getStorage(STORAGE_KEYS.DISTRIBUTORS, DISTRIBUTORS);
+    const updated = distributors.filter((d) => d.id !== Number(id));
+    setStorage(STORAGE_KEYS.DISTRIBUTORS, updated);
+    return { sukses: true, data: updated };
+  },
+
+  // Cadangkan, pulihkan, dan reset data lokal (100% frontend)
+  async exportFullBackup() {
+    return {
+      aplikasi: 'SIMAAF Apotek Asahan Farma',
+      versi_skema: 1,
+      dieksport_pada: new Date().toISOString(),
+      data: {
+        profile: { ...DEFAULT_PROFILE, ...getStorage(STORAGE_KEYS.PROFILE, {}) },
+        settings: getStorage(STORAGE_KEYS.SETTINGS, INITIAL_SETTINGS),
+        distributors: getStorage(STORAGE_KEYS.DISTRIBUTORS, DISTRIBUTORS),
+        kategori: getStorage(STORAGE_KEYS.KATEGORI, DEFAULT_KATEGORI),
+        batches: getStorage(STORAGE_KEYS.BATCHES, INITIAL_BATCHES),
+        logs: getStorage(STORAGE_KEYS.LOGS, INITIAL_STOCK_LOGS),
+        default_page: localStorage.getItem('simaaf_default_page') || 'dashboard',
+        privacy_mode: localStorage.getItem('simaaf_privacy_mode') === 'true',
+      },
+    };
+  },
+
+  async importFullBackup(backupJson) {
+    const payload = backupJson?.data || backupJson;
+    if (!payload || !Array.isArray(payload.batches) || !Array.isArray(payload.distributors)) {
+      throw new Error('Format berkas cadangan tidak valid atau rusak.');
+    }
+    setStorage(STORAGE_KEYS.BATCHES, payload.batches);
+    setStorage(STORAGE_KEYS.DISTRIBUTORS, payload.distributors);
+    if (payload.settings) setStorage(STORAGE_KEYS.SETTINGS, payload.settings);
+    if (payload.profile) setStorage(STORAGE_KEYS.PROFILE, payload.profile);
+    if (Array.isArray(payload.kategori)) setStorage(STORAGE_KEYS.KATEGORI, payload.kategori);
+    if (Array.isArray(payload.logs)) setStorage(STORAGE_KEYS.LOGS, payload.logs);
+    if (payload.default_page) localStorage.setItem('simaaf_default_page', payload.default_page);
+    if (typeof payload.privacy_mode === 'boolean') {
+      localStorage.setItem('simaaf_privacy_mode', String(payload.privacy_mode));
+    }
+    return { sukses: true, jumlah_batch: payload.batches.length };
+  },
+
+  async resetDemoData() {
+    setStorage(STORAGE_KEYS.BATCHES, INITIAL_BATCHES);
+    setStorage(STORAGE_KEYS.SETTINGS, INITIAL_SETTINGS);
+    setStorage(STORAGE_KEYS.DISTRIBUTORS, DISTRIBUTORS);
+    setStorage(STORAGE_KEYS.LOGS, INITIAL_STOCK_LOGS);
+    setStorage(STORAGE_KEYS.PROFILE, DEFAULT_PROFILE);
+    setStorage(STORAGE_KEYS.KATEGORI, DEFAULT_KATEGORI);
+    return { sukses: true };
+  },
 };

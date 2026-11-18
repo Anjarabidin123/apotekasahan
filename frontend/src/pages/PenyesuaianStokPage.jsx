@@ -107,7 +107,7 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
       'Petugas',
     ];
     const rows = riwayat.map((l) => [
-      l.waktu,
+      l.waktu || l.tanggal || '-',
       l.nama_obat,
       l.nomor_batch,
       l.jumlah_sebelum,
@@ -167,26 +167,26 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
   const netSelisih = riwayat.reduce((acc, curr) => acc + (curr.selisih || 0), 0);
 
   return (
-    <div className="space-y-4">
-      {/* Header Halaman Opname */}
-      <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
-            <ClipboardCheck className="w-5 h-5" />
+    <div className="space-y-3">
+      {/* Header Halaman Opname Ringkas */}
+      <div className="bg-white rounded-2xl border border-slate-200/80 p-3.5 sm:p-4 shadow-2xs flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+            <ClipboardCheck className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
-          <div>
-            <h2 className="text-sm sm:text-base font-bold text-slate-900">
-              Stok Opname & Audit Fisik Rak
+          <div className="min-w-0">
+            <h2 className="text-sm sm:text-base font-bold text-slate-900 truncate">
+              Stok Opname &amp; Audit Rak
             </h2>
-            <p className="text-xs text-slate-500">
-              Cocokkan jumlah fisik di rak dengan stok tercatat untuk audit berkala.
+            <p className="text-[11px] sm:text-xs text-slate-500 truncate">
+              Cocokkan stok fisik di rak dengan catatan sistem.
             </p>
           </div>
         </div>
 
-        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-50 text-slate-700 border border-slate-200 self-start sm:self-auto">
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200/80 shrink-0 tabular-nums">
           <PackageCheck className="w-3.5 h-3.5 text-blue-600" />
-          <span>{totalOpnameCount} Pemeriksaan Tercatat</span>
+          <span>{totalOpnameCount} Log</span>
         </span>
       </div>
 
@@ -322,7 +322,7 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
                     min="0"
                     value={jumlahFisik}
                     onChange={(e) => setJumlahFisik(e.target.value)}
-                    className="w-20 h-11 text-center text-lg font-extrabold rounded-xl border-2 border-blue-500 text-blue-700 bg-white focus:outline-none tabular-nums"
+                    className="w-20 h-11 text-center text-lg font-extrabold rounded-xl border-2 border-blue-500 text-blue-700 bg-white focus:outline-none tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   />
                   <button
                     type="button"
@@ -340,32 +340,52 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
                     +5
                   </button>
                 </div>
+                {/* Estimasi Dampak Rupiah Selisih */}
+                {selisih !== 0 && (
+                  <div
+                    className={`px-3 py-2 rounded-xl text-[11px] font-bold flex items-center justify-between ${
+                      selisih < 0
+                        ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                        : 'bg-teal-50 text-teal-700 border border-teal-200'
+                    }`}
+                  >
+                    <span>Estimasi Nilai Selisih:</span>
+                    <span className="tabular-nums">
+                      {selisih > 0 ? '+' : ''}
+                      {new Intl.NumberFormat('id-ID', {
+                        style: 'currency',
+                        currency: 'IDR',
+                        maximumFractionDigits: 0,
+                      }).format(selisih * (selectedBatch.harga_beli_satuan || 0))}
+                    </span>
+                  </div>
+                )}
               </div>
             )}
 
             <div className="space-y-2 pt-2 border-t border-slate-100">
               <label className="text-xs font-bold text-slate-800 block">
-                Keterangan Hasil Pemeriksaan
+                Alasan Penyesuaian
               </label>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 {[
-                  'Pemeriksaan rutin rak (stok cocok)',
-                  'Obat terjual ke pasien',
-                  'Kemasan rusak / pecah di rak',
-                  'Koreksi selisih hitung faktur',
-                ].map((txt) => (
+                  { id: 'Pemeriksaan rutin rak (stok cocok)', short: 'Stok Cocok' },
+                  { id: 'Obat terjual ke pasien', short: 'Terjual Pasien' },
+                  { id: 'Kemasan rusak / pecah di rak', short: 'Rusak / Pecah' },
+                  { id: 'Koreksi selisih hitung faktur', short: 'Koreksi Faktur' },
+                ].map((opt) => (
                   <button
-                    key={txt}
+                    key={opt.id}
                     type="button"
-                    onClick={() => setAlasan(txt)}
-                    className={`text-xs p-3 min-h-[44px] rounded-xl border text-left transition flex items-center ${
-                      alasan === txt
+                    onClick={() => setAlasan(opt.id)}
+                    className={`text-xs px-3 py-2 min-h-[42px] rounded-xl border text-left transition flex items-center ${
+                      alasan === opt.id
                         ? 'bg-blue-50 border-blue-400 text-blue-900 font-bold'
-                        : 'bg-slate-50/70 border-slate-200 text-slate-600 hover:bg-white font-medium'
+                        : 'bg-slate-50/70 border-slate-200 text-slate-600 hover:bg-white font-semibold'
                     }`}
                   >
-                    <span>{txt}</span>
+                    <span className="truncate">{opt.short}</span>
                   </button>
                 ))}
               </div>
@@ -469,12 +489,12 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
                   {log.alasan}
                 </p>
 
-                <div className="flex items-center justify-between text-[10px] text-slate-400">
-                  <span className="flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    <span>{log.waktu}</span>
+                <div className="flex items-center justify-between text-[10px] text-slate-500">
+                  <span className="flex items-center gap-1 tabular-nums">
+                    <Clock className="w-3 h-3 text-slate-400" />
+                    <span>{log.waktu || log.tanggal || '-'}</span>
                   </span>
-                  <span className="font-medium text-slate-600">{log.petugas}</span>
+                  <span className="font-semibold text-slate-700">{log.petugas}</span>
                 </div>
               </div>
             ))}

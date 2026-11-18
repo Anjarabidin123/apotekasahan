@@ -226,19 +226,24 @@ export function FakturInputPage({ onBatchSaved }) {
   };
 
   const hasAiToken = Boolean(aiConfig.apiKey);
+  const totalUnitFaktur = items.reduce((sum, it) => sum + (Number(it.jumlah) || 0), 0);
+  const totalNilaiFaktur = items.reduce(
+    (sum, it) => sum + (Number(it.jumlah) || 0) * (Number(it.harga_beli_satuan) || 0),
+    0
+  );
 
   return (
-    <div className="space-y-4">
-      {/* Bilah Alat & Status Token AI */}
+    <div className="space-y-3">
+      {/* Bilah Alat Ringkas & Tombol 3 Kolom Seimbang */}
       <div className="bg-white rounded-2xl border border-slate-200/80 p-3.5 sm:p-4 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
-            <FileSpreadsheet className="w-5 h-5" />
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+            <FileSpreadsheet className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
-          <div>
+          <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <h2 className="text-sm sm:text-base font-bold text-slate-900">
-                Penerimaan & Impor Faktur Obat
+                Penerimaan &amp; Impor Faktur
               </h2>
               <span
                 className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${
@@ -248,42 +253,42 @@ export function FakturInputPage({ onBatchSaved }) {
                 }`}
               >
                 <Sparkles className="w-3 h-3" />
-                {hasAiToken ? `Token AI Aktif (${aiConfig.provider.toUpperCase()})` : 'Mode Lokal'}
+                {hasAiToken ? `AI ${aiConfig.provider.toUpperCase()}` : 'Mode Lokal'}
               </span>
             </div>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Dukung foto faktur, Excel (.csv/.xlsx), Word (.docx), atau berkas teks.
+            <p className="text-[11px] sm:text-xs text-slate-500 truncate">
+              Foto faktur, Excel (.csv/.xlsx), Word, atau input manual.
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="grid grid-cols-3 md:flex items-center gap-1.5 sm:gap-2">
           <button
             type="button"
             onClick={() => setShowAiModal(true)}
-            className="inline-flex items-center gap-1.5 px-3 min-h-[44px] sm:min-h-0 h-11 sm:h-9 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition"
+            className="inline-flex items-center justify-center gap-1 px-2 sm:px-3 min-h-[42px] sm:min-h-0 h-10 sm:h-9 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-[11px] sm:text-xs font-bold transition"
           >
-            <KeyRound className="w-3.5 h-3.5 text-blue-600" />
-            <span>Atur Token AI</span>
+            <KeyRound className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+            <span className="truncate">Token AI</span>
           </button>
 
           <button
             type="button"
             onClick={downloadTemplateFakturCsv}
-            className="inline-flex items-center gap-1.5 px-3 min-h-[44px] sm:min-h-0 h-11 sm:h-9 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition"
+            className="inline-flex items-center justify-center gap-1 px-2 sm:px-3 min-h-[42px] sm:min-h-0 h-10 sm:h-9 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-[11px] sm:text-xs font-semibold transition"
           >
-            <Download className="w-3.5 h-3.5 text-blue-600" />
-            <span>Template CSV</span>
+            <Download className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+            <span className="truncate">Template</span>
           </button>
 
           <button
             type="button"
             onClick={handleSimulateDummyInvoice}
             disabled={isProcessing}
-            className="inline-flex items-center gap-1.5 px-3 min-h-[44px] sm:min-h-0 h-11 sm:h-9 rounded-xl border border-blue-200 bg-blue-50/80 hover:bg-blue-100 text-blue-700 text-xs font-bold transition disabled:opacity-60"
+            className="inline-flex items-center justify-center gap-1 px-2 sm:px-3 min-h-[42px] sm:min-h-0 h-10 sm:h-9 rounded-xl border border-blue-200 bg-blue-50/80 hover:bg-blue-100 text-blue-700 text-[11px] sm:text-xs font-bold transition disabled:opacity-60"
           >
-            <FileText className="w-3.5 h-3.5" />
-            <span>Contoh Faktur</span>
+            <FileText className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">Contoh</span>
           </button>
         </div>
       </div>
@@ -302,43 +307,22 @@ export function FakturInputPage({ onBatchSaved }) {
         </div>
       )}
 
-      {/* Area Unggah Multi-Format */}
-      <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-2xs space-y-3">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-bold text-slate-900">
-            Unggah Foto, Excel/CSV, atau Dokumen Word
+      {/* Area Unggah Cepat + Input Manual Langsung Terjangkau */}
+      <div className="bg-white rounded-2xl border border-slate-200/80 p-3.5 sm:p-4 shadow-2xs space-y-3">
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="text-xs sm:text-sm font-bold text-slate-900">
+            Scan Faktur / Unggah Berkas
           </h3>
-          <span className="text-[11px] text-slate-400">
-            JPG, PNG, CSV, XLSX, DOCX, TXT
+          <span className="text-[10px] sm:text-[11px] text-slate-400">
+            JPG, PNG, CSV, XLSX, DOCX
           </span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 items-stretch">
-          <div className="md:col-span-2 border-2 border-dashed border-slate-200 hover:border-blue-500 rounded-2xl p-5 text-center flex flex-col items-center justify-center bg-slate-50/60 hover:bg-blue-50/30 transition">
-            <div className="w-11 h-11 rounded-xl bg-white shadow-2xs border border-slate-200 flex items-center justify-center mb-2">
-              <UploadCloud className="w-5 h-5 text-blue-600" />
-            </div>
-            <p className="text-xs font-bold text-slate-800">
-              Pilih Berkas Faktur atau Daftar Obat
-            </p>
-            <p className="text-[11px] text-slate-500 mt-0.5">
-              Otomatis membaca tabel CSV/Excel, teks Word (.docx), atau OCR foto
-            </p>
-
-            <div className="flex flex-col sm:flex-row items-center gap-2 mt-3.5 w-full sm:w-auto">
-              <label className="btn-outline h-11 min-h-[44px] px-4 rounded-xl cursor-pointer flex items-center justify-center gap-2 text-xs font-bold text-slate-700 w-full sm:w-auto">
-                <UploadCloud className="w-4 h-4 text-blue-600" />
-                <span>Pilih File / Dokumen</span>
-                <input
-                  type="file"
-                  accept="image/*,.csv,.tsv,.xlsx,.xls,.docx,.doc,.txt,.json"
-                  className="hidden"
-                  onChange={(e) => handleFileUpload(e.target.files?.[0])}
-                />
-              </label>
-
-              <label className="btn-primary h-11 min-h-[44px] px-4 rounded-xl cursor-pointer flex items-center justify-center gap-2 text-xs font-bold text-white w-full sm:w-auto">
-                <Camera className="w-4 h-4" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-stretch">
+          <div className="md:col-span-2 border-2 border-dashed border-slate-200 hover:border-blue-500 rounded-2xl p-3.5 sm:p-4 flex flex-col justify-center bg-slate-50/60 hover:bg-blue-50/30 transition space-y-3">
+            <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2">
+              <label className="btn-primary h-11 min-h-[44px] px-3.5 rounded-xl cursor-pointer flex items-center justify-center gap-1.5 text-xs font-bold text-white">
+                <Camera className="w-4 h-4 shrink-0" />
                 <span>Kamera Faktur</span>
                 <input
                   type="file"
@@ -348,22 +332,49 @@ export function FakturInputPage({ onBatchSaved }) {
                   onChange={(e) => handleFileUpload(e.target.files?.[0])}
                 />
               </label>
+
+              <label className="btn-outline h-11 min-h-[44px] px-3.5 rounded-xl cursor-pointer flex items-center justify-center gap-1.5 text-xs font-bold text-slate-700 bg-white">
+                <UploadCloud className="w-4 h-4 text-blue-600 shrink-0" />
+                <span>Pilih File</span>
+                <input
+                  type="file"
+                  accept="image/*,.csv,.tsv,.xlsx,.xls,.docx,.doc,.txt,.json"
+                  className="hidden"
+                  onChange={(e) => handleFileUpload(e.target.files?.[0])}
+                />
+              </label>
+
+              <button
+                type="button"
+                onClick={handleAddRow}
+                className="col-span-2 sm:col-span-1 h-11 min-h-[44px] px-3.5 rounded-xl bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 text-xs font-bold inline-flex items-center justify-center gap-1.5 transition"
+              >
+                <Plus className="w-4 h-4 shrink-0" />
+                <span>Tambah Obat Manual</span>
+              </button>
             </div>
+            <p className="text-[11px] text-slate-500 text-center sm:text-left">
+              Otomatis baca foto faktur, tabel Excel/CSV, Word (.docx), atau isi manual langsung di bawah.
+            </p>
           </div>
 
-          <div className="min-h-[130px] rounded-2xl border border-slate-200/80 bg-slate-50/70 p-4 flex flex-col items-center justify-center text-center">
+          <div
+            className={`${
+              isProcessing || extractionInfo ? 'flex' : 'hidden md:flex'
+            } min-h-[110px] rounded-2xl border border-slate-200/80 bg-slate-50/70 p-3.5 flex-col items-center justify-center text-center`}
+          >
             {isProcessing ? (
               <div className="space-y-2">
                 <div className="w-7 h-7 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto" />
                 <p className="text-xs font-bold text-slate-800">Memproses berkas...</p>
                 <p className="text-[11px] text-slate-500">
-                  Mengekstrak item obat, nomor batch, & tanggal ED
+                  Mengekstrak item obat, batch, &amp; ED
                 </p>
               </div>
             ) : extractionInfo ? (
               <div className="space-y-1.5">
-                <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center mx-auto">
-                  <CheckCircle2 className="w-5 h-5" />
+                <div className="w-9 h-9 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center mx-auto">
+                  <CheckCircle2 className="w-4 h-4" />
                 </div>
                 <p className="text-xs font-bold text-slate-900 truncate max-w-[200px]">
                   {extractionInfo.fileName}
@@ -376,12 +387,9 @@ export function FakturInputPage({ onBatchSaved }) {
                 </p>
               </div>
             ) : (
-              <div className="text-slate-400 space-y-1.5">
-                <ImageIcon className="w-7 h-7 mx-auto opacity-60" />
-                <p className="text-xs font-medium text-slate-500">Belum ada berkas diunggah</p>
-                <p className="text-[11px] text-slate-400">
-                  Bisa juga langsung isi baris secara manual di bawah
-                </p>
+              <div className="text-slate-400 space-y-1">
+                <ImageIcon className="w-6 h-6 mx-auto opacity-60" />
+                <p className="text-xs font-medium text-slate-500">Siap menerima faktur</p>
               </div>
             )}
           </div>
@@ -653,9 +661,19 @@ export function FakturInputPage({ onBatchSaved }) {
 
         {items.length > 0 && (
           <div className="p-4 bg-slate-50/70 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <span className="text-xs font-semibold text-slate-600">
-              {items.length} batch obat siap disimpan ke inventori
-            </span>
+            <div className="space-y-0.5">
+              <span className="text-xs font-semibold text-slate-600 block">
+                {items.length} batch • <strong className="text-slate-900">{totalUnitFaktur} unit</strong>
+              </span>
+              <span className="text-sm font-black text-blue-700 tabular-nums">
+                Total Faktur:{' '}
+                {new Intl.NumberFormat('id-ID', {
+                  style: 'currency',
+                  currency: 'IDR',
+                  maximumFractionDigits: 0,
+                }).format(totalNilaiFaktur)}
+              </span>
+            </div>
             <button
               type="button"
               onClick={handleSaveBatches}

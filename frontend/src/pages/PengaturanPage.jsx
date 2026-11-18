@@ -1,64 +1,112 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { api } from '../services/api';
-import { useAuth } from '../context/AuthContext';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { api, DEFAULT_PROFILE, DEFAULT_KATEGORI } from '../services/api';
 import { BrandLogo } from '../components/common/BrandLogo';
 import { getAiConfig, saveAiConfig, exportToExcelCsv } from '../utils/fileTools';
 import {
   Building2,
+  Shield,
   FileText,
+  Calendar,
   Wallet,
-  Settings,
+  SlidersHorizontal,
+  Sparkles,
+  Database,
+  LifeBuoy,
+  ChevronRight,
+  ArrowLeft,
+  Search,
   Save,
   Loader2,
   Upload,
+  RotateCcw,
+  Plus,
   Trash2,
+  Check,
   CheckCircle2,
   AlertTriangle,
-  LifeBuoy,
-  Plus,
-  Shield,
-  Check,
-  RotateCcw,
   Printer,
-  Calendar,
-  KeyRound,
+  Download,
+  UploadCloud,
   Eye,
   EyeOff,
-  Download,
-  Sparkles
+  KeyRound,
+  RefreshCw,
 } from 'lucide-react';
 
+/**
+ * Sakelar toggle bersih bergaya pengaturan WhatsApp / Instagram.
+ */
+function SettingToggle({ checked, onChange, label, description }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      className="w-full flex items-center justify-between gap-3 py-3 text-left cursor-pointer group"
+    >
+      <div className="min-w-0">
+        <p className="text-xs sm:text-[13px] font-bold text-slate-900 group-hover:text-blue-700 transition-colors">
+          {label}
+        </p>
+        {description && (
+          <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">{description}</p>
+        )}
+      </div>
+      <span
+        className={`relative inline-flex h-6 w-11 shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ${
+          checked ? 'bg-blue-600' : 'bg-slate-200'
+        }`}
+      >
+        <span
+          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition duration-200 ${
+            checked ? 'translate-x-5' : 'translate-x-0'
+          }`}
+        />
+      </span>
+    </button>
+  );
+}
+
 export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange }) {
-  const { isAdmin, user } = useAuth();
-  const [activeTab, setActiveTab] = useState('identitas');
+  // Null pada mobile berarti menampilkan daftar menu utama bertumpuk; desktop otomatis memilih item aktif
+  const [selectedSection, setSelectedSection] = useState(null);
+  const [menuSearch, setMenuSearch] = useState('');
+  const [pbfSearch, setPbfSearch] = useState('');
+
   const [loading, setLoading] = useState(false);
-  const [showSupportModal, setShowSupportModal] = useState(false);
+  const [savingPbfId, setSavingPbfId] = useState(null);
+  const [successMsg, setSuccessMsg] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
+
+  // State profil apotek & logo
+  const [profile, setProfile] = useState({
+    ...DEFAULT_PROFILE,
+    logo_url: currentLogoUrl && !currentLogoUrl.startsWith('/logo-') ? currentLogoUrl : '',
+  });
+  const [distributors, setDistributors] = useState([]);
+  const [kategoriList, setKategoriList] = useState(DEFAULT_KATEGORI);
+  const [settings, setSettings] = useState({
+    tanggal_acuan: '2026-10-31',
+    stok_minimum_default: 10,
+    batas_kedaluwarsa_warning_hari: 90,
+    batas_retur_warning_hari: 30,
+  });
+
+  // State preferensi tampilan & AI lokal
   const [aiConfig, setAiConfig] = useState(() => getAiConfig());
   const [showApiKey, setShowApiKey] = useState(false);
   const [defaultPage, setDefaultPage] = useState(
     () => localStorage.getItem('simaaf_default_page') || 'dashboard'
   );
+  const [privacyMode, setPrivacyMode] = useState(
+    () => localStorage.getItem('simaaf_privacy_mode') === 'true'
+  );
+  const [mobileQueueFirst, setMobileQueueFirst] = useState(
+    () => localStorage.getItem('simaaf_mobile_queue_first') !== 'false'
+  );
 
-  // Profil Apotek State
-  const [profile, setProfile] = useState({
-    nama_apotek: 'Apotek Asahan Farma',
-    pimpinan: 'Ibu Anni (Komisaris)',
-    apoteker_pj: 'apt. Nurul Hasanah, S.Farm',
-    sipa: '19930412/SIPA_1208/2022/2041',
-    sia: '503/SIA/042/DPMPTSP/2021',
-    nib: '1210210063257',
-    alamat: 'Jl. Imam Bonjol No. 331, Kel. Kisaran Timur, Kab. Asahan, Sumatera Utara 21214',
-    telepon: '(0623) 41289',
-    whatsapp: '0812-6543-9870',
-    email: 'apotek.asahanfarma@gmail.com',
-    jam_operasional: 'Senin - Minggu: 08.00 - 22.00 WIB',
-    catatan_kaki_surat: 'Obat yang diretur wajib bersegel utuh dan diverifikasi nomor batch resminya.',
-    format_no_retur: 'BAP-RETUR/{YYYY}/{MM}/{INDEX}',
-    logo_url: currentLogoUrl && !currentLogoUrl.startsWith('/logo-') ? currentLogoUrl : '',
-  });
-
-  // Master Distributor (PBF Rekanan)
-  const [distributors, setDistributors] = useState([]);
+  // Modal tambah PBF & kategori
   const [showAddPbfModal, setShowAddPbfModal] = useState(false);
   const [newPbf, setNewPbf] = useState({
     kode: '',
@@ -67,46 +115,49 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
     telepon: '',
     kontak: '',
   });
-
-  // Master Kategori Obat & Ambang Batas
-  const [kategoriList, setKategoriList] = useState([
-    { id: 1, nama: 'Antibiotik (Keras)', stok_minimum: 15, masa_pantau_hari: 30, jenis: 'Keras' },
-    { id: 2, nama: 'Analgesik & Antipiretik', stok_minimum: 20, masa_pantau_hari: 30, jenis: 'Bebas' },
-    { id: 3, nama: 'Antasida & Obat Lambung', stok_minimum: 15, masa_pantau_hari: 45, jenis: 'Bebas Terbatas' },
-    { id: 4, nama: 'Antihipertensi & Jantung', stok_minimum: 20, masa_pantau_hari: 30, jenis: 'Keras' },
-    { id: 5, nama: 'Antidiabetes Oral', stok_minimum: 30, masa_pantau_hari: 30, jenis: 'Keras' },
-    { id: 6, nama: 'Sirup & Tetes Anak', stok_minimum: 15, masa_pantau_hari: 45, jenis: 'Bebas Terbatas' },
-    { id: 7, nama: 'Salep & Krim Topikal', stok_minimum: 10, masa_pantau_hari: 60, jenis: 'Bebas Terbatas' },
-    { id: 8, nama: 'Suplemen & Vitamin', stok_minimum: 20, masa_pantau_hari: 60, jenis: 'Bebas' },
-  ]);
   const [showAddKatModal, setShowAddKatModal] = useState(false);
-  const [newKat, setNewKat] = useState({ nama: '', stok_minimum: 15, masa_pantau_hari: 30, jenis: 'Bebas' });
-
-  // Parameter Sistem
-  const [settings, setSettings] = useState({
-    tanggal_acuan: '2026-10-31',
-    stok_minimum_default: 10,
-    batas_kedaluwarsa_warning_hari: 90,
-    batas_retur_warning_hari: 30,
+  const [newKat, setNewKat] = useState({
+    nama: '',
+    stok_minimum: 15,
+    masa_pantau_hari: 30,
+    jenis: 'Bebas',
   });
 
-  const [savingPbfId, setSavingPbfId] = useState(null);
-  const [successMsg, setSuccessMsg] = useState('');
-  const [errorMsg, setErrorMsg] = useState('');
   const fileInputRef = useRef(null);
+  const backupInputRef = useRef(null);
 
   useEffect(() => {
     loadAllData();
   }, []);
 
+  const flashSuccess = (msg) => {
+    setErrorMsg('');
+    setSuccessMsg(msg);
+    setTimeout(() => setSuccessMsg(''), 3500);
+  };
+
+  const flashError = (msg) => {
+    setSuccessMsg('');
+    setErrorMsg(msg);
+    setTimeout(() => setErrorMsg(''), 4500);
+  };
+
   const loadAllData = async () => {
     try {
-      const [dList, sData] = await Promise.all([
+      const [dList, sData, pData, kList] = await Promise.all([
         api.getDistributors(),
         api.getSettings(),
+        api.getProfile(),
+        api.getKategoriList(),
       ]);
       setDistributors(dList);
       setSettings(sData);
+      setProfile((prev) => ({
+        ...prev,
+        ...pData,
+        logo_url: currentLogoUrl && !currentLogoUrl.startsWith('/logo-') ? currentLogoUrl : '',
+      }));
+      setKategoriList(kList);
     } catch (e) {
       console.error(e);
     }
@@ -116,7 +167,7 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 2 * 1024 * 1024) {
-      setErrorMsg('Ukuran logo maksimal 2 MB');
+      flashError('Ukuran logo maksimal 2 MB.');
       return;
     }
     const reader = new FileReader();
@@ -124,8 +175,7 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
       const newUrl = reader.result;
       setProfile((prev) => ({ ...prev, logo_url: newUrl }));
       if (onLogoChange) onLogoChange(newUrl);
-      setSuccessMsg('Logo resmi Apotek Asahan Farma berhasil diperbarui!');
-      setTimeout(() => setSuccessMsg(''), 4000);
+      flashSuccess('Logo Apotek berhasil diperbarui!');
     };
     reader.readAsDataURL(file);
   };
@@ -134,25 +184,40 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
     setProfile((prev) => ({ ...prev, logo_url: '' }));
     if (fileInputRef.current) fileInputRef.current.value = '';
     if (onLogoChange) onLogoChange('');
-    setSuccessMsg('Logo khusus dihapus dan dikembalikan ke inisial standar.');
-    setTimeout(() => setSuccessMsg(''), 3000);
+    flashSuccess('Logo dikembalikan ke lambang standar SIMAAF.');
   };
 
-  const handleSaveAll = async (e) => {
+  const handleSaveProfileAndDocs = async (e) => {
     if (e) e.preventDefault();
     setLoading(true);
-    setErrorMsg('');
-    setSuccessMsg('');
-
     try {
-      await api.updateSettings(settings);
-      setSuccessMsg('Seluruh konfigurasi profil apotek, matriks PBF, dan dokumen berhasil disimpan!');
+      const { logo_url, ...rest } = profile;
+      await api.updateProfile(rest);
+      flashSuccess('Profil & konfigurasi dokumen apotek tersimpan di perangkat.');
       if (onSettingsUpdated) onSettingsUpdated();
     } catch (err) {
-      setErrorMsg(err.message || 'Gagal menyimpan pengaturan.');
+      flashError(err.message || 'Gagal menyimpan profil apotek.');
     } finally {
       setLoading(false);
-      setTimeout(() => setSuccessMsg(''), 4000);
+    }
+  };
+
+  const handleSaveOperationalSettings = async (e) => {
+    if (e) e.preventDefault();
+    setLoading(true);
+    try {
+      await api.updateSettings({
+        ...settings,
+        stok_minimum_default: Number(settings.stok_minimum_default) || 10,
+        batas_kedaluwarsa_warning_hari: Number(settings.batas_kedaluwarsa_warning_hari) || 90,
+        batas_retur_warning_hari: Number(settings.batas_retur_warning_hari) || 30,
+      });
+      flashSuccess('Tanggal acuan & ambang peringatan berhasil disimpan!');
+      if (onSettingsUpdated) onSettingsUpdated();
+    } catch (err) {
+      flashError(err.message || 'Gagal menyimpan parameter operasional.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -160,21 +225,20 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
     setSavingPbfId(pbfId);
     try {
       await api.updateAturanDistributor(pbfId, newBulan);
-      setSuccessMsg('Aturan retur PBF berhasil diperbarui! Batas retur batch terkait telah dihitung ulang.');
       await loadAllData();
+      flashSuccess('Aturan retur PBF diperbarui & seluruh batch terkait dihitung ulang.');
       if (onSettingsUpdated) onSettingsUpdated();
     } catch (err) {
-      setErrorMsg(err.message || 'Gagal memperbarui aturan PBF.');
+      flashError(err.message || 'Gagal memperbarui aturan PBF.');
     } finally {
       setSavingPbfId(null);
-      setTimeout(() => setSuccessMsg(''), 4000);
     }
   };
 
-  const handleAddPbf = (e) => {
+  const handleAddPbf = async (e) => {
     e.preventDefault();
     if (!newPbf.nama.trim()) {
-      setErrorMsg('Nama PBF wajib diisi');
+      flashError('Nama PBF wajib diisi.');
       return;
     }
     const item = {
@@ -185,24 +249,24 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
       telepon: newPbf.telepon.trim() || '-',
       kontak: newPbf.kontak.trim() || 'Bagian Retur',
     };
-    setDistributors([...distributors, item]);
+    const res = await api.addDistributor(item);
+    setDistributors(res.data);
     setShowAddPbfModal(false);
     setNewPbf({ kode: '', nama: '', aturan_retur_bulan: 3, telepon: '', kontak: '' });
-    setSuccessMsg(`PBF "${item.nama}" berhasil ditambahkan ke database rekanan!`);
-    setTimeout(() => setSuccessMsg(''), 4000);
+    flashSuccess(`PBF "${item.nama}" ditambahkan & tersimpan.`);
   };
 
-  const handleDeletePbf = (id, nama) => {
+  const handleDeletePbf = async (id, nama) => {
     if (!window.confirm(`Hapus PBF "${nama}" dari daftar rekanan?`)) return;
-    setDistributors(distributors.filter((d) => d.id !== id));
-    setSuccessMsg(`PBF "${nama}" dihapus.`);
-    setTimeout(() => setSuccessMsg(''), 3000);
+    const res = await api.deleteDistributor(id);
+    setDistributors(res.data);
+    flashSuccess(`PBF "${nama}" dihapus.`);
   };
 
-  const handleAddKategori = (e) => {
+  const handleAddKategori = async (e) => {
     e.preventDefault();
     if (!newKat.nama.trim()) {
-      setErrorMsg('Nama kategori obat wajib diisi');
+      flashError('Nama kategori wajib diisi.');
       return;
     }
     const item = {
@@ -212,126 +276,801 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
       masa_pantau_hari: Number(newKat.masa_pantau_hari) || 30,
       jenis: newKat.jenis,
     };
-    setKategoriList([...kategoriList, item]);
+    const next = [...kategoriList, item];
+    setKategoriList(next);
+    await api.saveKategoriList(next);
     setShowAddKatModal(false);
     setNewKat({ nama: '', stok_minimum: 15, masa_pantau_hari: 30, jenis: 'Bebas' });
-    setSuccessMsg(`Kategori "${item.nama}" berhasil ditambahkan!`);
-    setTimeout(() => setSuccessMsg(''), 4000);
+    flashSuccess(`Kategori "${item.nama}" ditambahkan & tersimpan.`);
   };
 
-  const handleDeleteKategori = (id, nama) => {
+  const handleDeleteKategori = async (id, nama) => {
     if (!window.confirm(`Hapus kategori "${nama}"?`)) return;
-    setKategoriList(kategoriList.filter((k) => k.id !== id));
-    setSuccessMsg(`Kategori "${nama}" dihapus.`);
-    setTimeout(() => setSuccessMsg(''), 3000);
+    const next = kategoriList.filter((k) => k.id !== id);
+    setKategoriList(next);
+    await api.saveKategoriList(next);
+    flashSuccess(`Kategori "${nama}" dihapus.`);
   };
 
-  return (
-    <div className="space-y-3">
-      
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 border border-blue-200 flex items-center justify-center shrink-0">
-            <Settings className="w-5 h-5 text-blue-600" />
-          </div>
-          <div>
-            <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-              <span>Pengaturan Sarana & Profil Apotek</span>
-              <span className="w-2 h-2 rounded-full bg-blue-600" />
-            </h1>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Kelola identitas resmi apotek, format dokumen PDF, klausul retur PBF, dan kategori stok.
-            </p>
-          </div>
-        </div>
+  const handleExportJsonBackup = async () => {
+    const snapshot = await api.exportFullBackup();
+    const blob = new Blob([JSON.stringify(snapshot, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `cadangan_simaaf_${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    flashSuccess('Berkas cadangan penuh (.json) berhasil diunduh.');
+  };
 
-        <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap w-full sm:w-auto">
-          <button
-            type="button"
-            onClick={() => setShowSupportModal(true)}
-            className="btn-outline h-11 sm:h-9 min-h-[44px] sm:min-h-0 text-blue-700 bg-blue-50/70 border-blue-200 hover:bg-blue-100 font-bold gap-1.5 flex-1 sm:flex-initial"
-          >
-            <LifeBuoy className="w-4 h-4 text-blue-600" />
-            <span>Bantuan & SOP</span>
-          </button>
+  const handleImportJsonBackup = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async () => {
+      try {
+        const parsed = JSON.parse(reader.result);
+        const res = await api.importFullBackup(parsed);
+        await loadAllData();
+        setDefaultPage(localStorage.getItem('simaaf_default_page') || 'dashboard');
+        setPrivacyMode(localStorage.getItem('simaaf_privacy_mode') === 'true');
+        if (onSettingsUpdated) onSettingsUpdated();
+        flashSuccess(`Data dipulihkan (${res.jumlah_batch} batch aktif).`);
+      } catch (err) {
+        flashError(err.message || 'Gagal membaca berkas cadangan JSON.');
+      } finally {
+        if (backupInputRef.current) backupInputRef.current.value = '';
+      }
+    };
+    reader.readAsText(file);
+  };
 
-          <button
-            type="button"
-            onClick={handleSaveAll}
-            disabled={loading}
-            className="btn-primary h-11 sm:h-9 min-h-[44px] sm:min-h-0 px-4 font-black flex-1 sm:flex-initial justify-center"
-          >
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            <span>Simpan Pengaturan</span>
-          </button>
-        </div>
-      </div>
+  const handleResetDemo = async () => {
+    if (!window.confirm('Kembalikan seluruh batch, PBF, profil, dan aturan ke data awal demo?')) {
+      return;
+    }
+    await api.resetDemoData();
+    await loadAllData();
+    if (onSettingsUpdated) onSettingsUpdated();
+    flashSuccess('Seluruh data berhasil dikembalikan ke setelan awal demo.');
+  };
 
-      {successMsg && (
-        <div className="p-3.5 rounded-xl bg-blue-50 border border-blue-200 text-blue-800 text-xs flex items-center gap-2.5 shadow-sm">
-          <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0" />
-          <span className="font-bold">{successMsg}</span>
-        </div>
-      )}
+  const handleExportAllBatchesCsv = async () => {
+    const res = await api.getBatches();
+    const rowsData = res.data || [];
+    const headers = [
+      'Nama Obat',
+      'Nomor Batch',
+      'Distributor PBF',
+      'Batas Retur',
+      'Tanggal ED',
+      'Sisa Stok',
+      'Nilai Total (Rp)',
+      'Status Retur',
+    ];
+    const rows = rowsData.map((b) => [
+      b.nama_obat,
+      b.nomor_batch,
+      b.nama_distributor || '-',
+      b.batas_retur || '-',
+      b.tanggal_kedaluwarsa || '-',
+      b.jumlah_saat_ini ?? 0,
+      b.nilai_total || 0,
+      b.status_retur || '-',
+    ]);
+    exportToExcelCsv(`semua_batch_simaaf_${settings.tanggal_acuan}.csv`, headers, rows);
+    flashSuccess(`Diekspor ${rowsData.length} batch persediaan ke CSV.`);
+  };
 
-      {errorMsg && (
-        <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2.5 shadow-sm">
-          <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
-          <span className="font-bold">{errorMsg}</span>
-        </div>
-      )}
+  const defaultPageLabels = {
+    dashboard: 'Beranda',
+    faktur: 'Input Faktur',
+    inventori: 'Stok & Batch',
+    pengingat: 'Retur & ED',
+    penyesuaian: 'Stok Opname',
+    kalender: 'Kalender PBF',
+  };
 
-      
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
-        {[
-          { id: 'identitas', label: 'Identitas Apotek', icon: Building2 },
-          { id: 'ai', label: 'Integrasi AI & Impor', icon: Sparkles },
-          { id: 'dokumen', label: 'Format Dokumen', icon: FileText },
-          { id: 'kategori', label: `Kategori (${kategoriList.length})`, icon: Wallet },
-          { id: 'rekanan', label: `Master PBF (${distributors.length})`, icon: Building2 },
-        ].map((tab) => {
-          const Icon = tab.icon;
-          const isActive = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-3.5 py-2.5 min-h-[44px] rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
-                isActive
-                  ? 'bg-blue-600 text-white shadow-sm shadow-blue-600/20'
-                  : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
-              }`}
-            >
-              <Icon className="w-4 h-4" />
-              <span>{tab.label}</span>
-            </button>
-          );
-        })}
-      </div>
+  // Struktur grup menu bertumpuk vertikal bergaya Instagram / WhatsApp Settings
+  const menuGroups = useMemo(
+    () => [
+      {
+        title: 'Sarana Apotek & Dokumen',
+        items: [
+          {
+            id: 'identitas',
+            label: 'Profil & Logo Apotek',
+            subtitle: `${profile.nama_apotek} • ${profile.logo_url ? 'Logo kustom aktif' : 'Logo standar'}`,
+            icon: Building2,
+            iconClass: 'bg-blue-50 text-blue-600 border-blue-200/70',
+            keywords: 'nama apotek alamat telepon whatsapp pemilik apj logo foto upload',
+          },
+          {
+            id: 'legalitas',
+            label: 'Legalitas BPOM & OSS',
+            subtitle: `NIB ${profile.nib}`,
+            icon: Shield,
+            iconClass: 'bg-teal-50 text-teal-600 border-teal-200/70',
+            keywords: 'nib sia sipa bpom oss izin praktek apoteker',
+          },
+          {
+            id: 'dokumen',
+            label: 'Kop & Format Surat BAP',
+            subtitle: profile.format_no_retur,
+            icon: FileText,
+            iconClass: 'bg-indigo-50 text-indigo-600 border-indigo-200/70',
+            keywords: 'kop surat pdf bap berita acara retur penomoran tanda tangan cdob',
+          },
+        ],
+      },
+      {
+        title: 'Operasional & Aturan Retur',
+        items: [
+          {
+            id: 'operasional',
+            label: 'Tanggal Acuan & Peringatan',
+            subtitle: `Acuan ${settings.tanggal_acuan} • Retur H-${settings.batas_retur_warning_hari} • ED H-${settings.batas_kedaluwarsa_warning_hari}`,
+            icon: Calendar,
+            iconClass: 'bg-amber-50 text-amber-600 border-amber-200/70',
+            keywords: 'tanggal acuan warning peringatan retur ed kedaluwarsa stok minimum hari',
+          },
+          {
+            id: 'rekanan',
+            label: 'Distributor PBF & Tenggat',
+            subtitle: 'Batas bulan pengembalian & kontak PIC',
+            badge: `${distributors.length}`,
+            icon: Building2,
+            iconClass: 'bg-emerald-50 text-emerald-600 border-emerald-200/70',
+            keywords: 'pbf distributor supplier retur bulan pic telepon',
+          },
+          {
+            id: 'kategori',
+            label: 'Kategori Obat & Stok Aman',
+            subtitle: 'Ambang minimum per golongan farmasi',
+            badge: `${kategoriList.length}`,
+            icon: Wallet,
+            iconClass: 'bg-cyan-50 text-cyan-600 border-cyan-200/70',
+            keywords: 'kategori golongan obat keras bebas antibiotik stok minimum',
+          },
+        ],
+      },
+      {
+        title: 'Tampilan & Kecerdasan AI',
+        items: [
+          {
+            id: 'preferensi',
+            label: 'Tampilan Mobile & Privasi',
+            subtitle: `${privacyMode ? 'Nominal tersembunyi' : 'Nominal tampil'} • Awal: ${defaultPageLabels[defaultPage] || 'Beranda'}`,
+            icon: SlidersHorizontal,
+            iconClass: 'bg-violet-50 text-violet-600 border-violet-200/70',
+            keywords: 'privasi sembunyikan rupiah mobile antrean beranda awal default tampilan',
+          },
+          {
+            id: 'ai',
+            label: 'AI Pembaca Faktur & Impor',
+            subtitle: aiConfig.apiKey
+              ? `${aiConfig.provider.toUpperCase()} (${aiConfig.model})`
+              : 'Mode impor CSV/Excel lokal aktif',
+            icon: Sparkles,
+            iconClass: 'bg-sky-50 text-sky-600 border-sky-200/70',
+            keywords: 'ai gemini openai api key token scan foto faktur excel csv word',
+          },
+        ],
+      },
+      {
+        title: 'Data Perangkat & Bantuan',
+        items: [
+          {
+            id: 'cadangan',
+            label: 'Cadangkan, Pulihkan & Reset',
+            subtitle: 'Ekspor JSON/CSV & kembalikan data demo',
+            icon: Database,
+            iconClass: 'bg-slate-100 text-slate-700 border-slate-200',
+            keywords: 'backup cadangan restore pulihkan json csv export reset data demo localstorage',
+          },
+          {
+            id: 'bantuan',
+            label: 'Panduan SOP Retur CDOB',
+            subtitle: 'Langkah karantina rak & serah terima PBF',
+            icon: LifeBuoy,
+            iconClass: 'bg-rose-50 text-rose-600 border-rose-200/70',
+            keywords: 'bantuan sop panduan retur karantina cdob cara pakai',
+          },
+        ],
+      },
+    ],
+    [profile, settings, distributors.length, kategoriList.length, privacyMode, defaultPage, aiConfig]
+  );
 
-      {activeTab === 'ai' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-2xs space-y-4">
-            <div className="border-b border-slate-100 pb-3 flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
-                <KeyRound className="w-4 h-4" />
+  const filteredGroups = useMemo(() => {
+    const q = menuSearch.trim().toLowerCase();
+    if (!q) return menuGroups;
+    return menuGroups
+      .map((group) => ({
+        ...group,
+        items: group.items.filter(
+          (item) =>
+            item.label.toLowerCase().includes(q) ||
+            item.subtitle.toLowerCase().includes(q) ||
+            item.keywords.includes(q)
+        ),
+      }))
+      .filter((group) => group.items.length > 0);
+  }, [menuGroups, menuSearch]);
+
+  const filteredDistributors = useMemo(() => {
+    const q = pbfSearch.trim().toLowerCase();
+    if (!q) return distributors;
+    return distributors.filter(
+      (d) =>
+        d.nama.toLowerCase().includes(q) ||
+        d.kode.toLowerCase().includes(q) ||
+        (d.kontak || '').toLowerCase().includes(q)
+    );
+  }, [distributors, pbfSearch]);
+
+  const allItems = useMemo(() => menuGroups.flatMap((g) => g.items), [menuGroups]);
+  const activeDetailId = selectedSection || 'identitas';
+  const activeDetailMeta = allItems.find((i) => i.id === activeDetailId) || allItems[0];
+
+  const renderDetailContent = (sectionId) => {
+    switch (sectionId) {
+      case 'identitas':
+        return (
+          <form onSubmit={handleSaveProfileAndDocs} className="space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 rounded-2xl bg-slate-50/80 border border-slate-200/80">
+              <div className="w-20 h-20 rounded-2xl border-2 border-blue-500/25 overflow-hidden bg-white shadow-xs flex items-center justify-center p-1.5 shrink-0">
+                <BrandLogo
+                  logoUrl={profile.logo_url}
+                  className="w-full h-full"
+                  alt={profile.nama_apotek}
+                />
               </div>
-              <div>
-                <h3 className="text-sm font-bold text-slate-900">
-                  Token API AI Pembaca Dokumen
-                </h3>
-                <p className="text-xs text-slate-500">
-                  Digunakan saat membaca foto faktur, file Word (.docx), atau Excel secara cerdas.
+              <div className="flex-1 space-y-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs font-extrabold text-slate-900">
+                    {profile.logo_url ? 'Logo Kustom Terpasang' : 'Logo Standar SIMAAF'}
+                  </span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 font-bold">
+                    Tampil di Kop & Sidebar
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500">
+                  Format PNG, JPG, WebP, atau SVG (maks. 2 MB).
                 </p>
+                <div className="flex items-center gap-2 flex-wrap pt-0.5">
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleLogoUpload}
+                    accept="image/png, image/jpeg, image/webp, image/svg+xml"
+                    className="hidden"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="btn-primary h-10 px-3.5 text-xs font-bold gap-1.5"
+                  >
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>Unggah Logo</span>
+                  </button>
+                  {profile.logo_url && (
+                    <button
+                      type="button"
+                      onClick={handleRemoveLogo}
+                      className="btn-outline h-10 px-3 text-xs text-slate-600"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      <span>Reset Logo</span>
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
 
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Penyedia Layanan AI
+                <label className="block text-xs font-bold text-slate-700 mb-1">Nama Sarana Apotek</label>
+                <input
+                  type="text"
+                  value={profile.nama_apotek}
+                  onChange={(e) => setProfile({ ...profile, nama_apotek: e.target.value })}
+                  className="w-full text-xs h-11 px-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-bold"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Komisaris / Pemilik</label>
+                  <input
+                    type="text"
+                    value={profile.pimpinan}
+                    onChange={(e) => setProfile({ ...profile, pimpinan: e.target.value })}
+                    className="w-full text-xs h-11 px-3 rounded-xl border border-slate-200 font-semibold"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Apoteker Penanggung Jawab</label>
+                  <input
+                    type="text"
+                    value={profile.apoteker_pj}
+                    onChange={(e) => setProfile({ ...profile, apoteker_pj: e.target.value })}
+                    className="w-full text-xs h-11 px-3 rounded-xl border border-slate-200 font-semibold"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Alamat Lengkap</label>
+                <input
+                  type="text"
+                  value={profile.alamat}
+                  onChange={(e) => setProfile({ ...profile, alamat: e.target.value })}
+                  className="w-full text-xs h-11 px-3 rounded-xl border border-slate-200 font-medium"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">No. Telepon / WhatsApp</label>
+                  <input
+                    type="text"
+                    value={profile.whatsapp}
+                    onChange={(e) => setProfile({ ...profile, whatsapp: e.target.value })}
+                    className="w-full text-xs h-11 px-3 rounded-xl border border-slate-200 font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Jam Operasional</label>
+                  <input
+                    type="text"
+                    value={profile.jam_operasional}
+                    onChange={(e) => setProfile({ ...profile, jam_operasional: e.target.value })}
+                    className="w-full text-xs h-11 px-3 rounded-xl border border-slate-200 font-medium"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-2 flex justify-end">
+              <button type="submit" disabled={loading} className="btn-primary h-11 px-5 text-xs font-bold">
+                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                <span>Simpan Profil Apotek</span>
+              </button>
+            </div>
+          </form>
+        );
+
+      case 'legalitas':
+        return (
+          <form onSubmit={handleSaveProfileAndDocs} className="space-y-4">
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Nomor Induk Berusaha (NIB)</label>
+                <input
+                  type="text"
+                  value={profile.nib}
+                  onChange={(e) => setProfile({ ...profile, nib: e.target.value })}
+                  className="w-full text-xs h-11 px-3 rounded-xl border border-slate-200 font-mono font-bold"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Surat Izin Apotek (SIA)</label>
+                <input
+                  type="text"
+                  value={profile.sia}
+                  onChange={(e) => setProfile({ ...profile, sia: e.target.value })}
+                  className="w-full text-xs h-11 px-3 rounded-xl border border-slate-200 font-mono"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Surat Izin Praktik Apoteker (SIPA)</label>
+                <input
+                  type="text"
+                  value={profile.sipa}
+                  onChange={(e) => setProfile({ ...profile, sipa: e.target.value })}
+                  className="w-full text-xs h-11 px-3 rounded-xl border border-slate-200 font-mono"
+                />
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-teal-50/70 border border-teal-200 text-xs text-teal-900 space-y-1">
+              <div className="flex items-center gap-1.5 font-bold">
+                <CheckCircle2 className="w-4 h-4 text-teal-600" />
+                <span>Dicetak Otomatis pada Dokumen BAP Retur</span>
+              </div>
+              <p className="text-[11px] text-teal-800/80">
+                Nomor SIA, NIB, dan SIPA akan muncul pada kop surat resmi pengembalian barang ke PBF.
+              </p>
+            </div>
+
+            <div className="pt-1 flex justify-end">
+              <button type="submit" disabled={loading} className="btn-primary h-11 px-5 text-xs font-bold">
+                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                <span>Simpan Legalitas</span>
+              </button>
+            </div>
+          </form>
+        );
+
+      case 'dokumen':
+        return (
+          <form onSubmit={handleSaveProfileAndDocs} className="space-y-4">
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Format Penomoran Surat Retur
                 </label>
+                <input
+                  type="text"
+                  value={profile.format_no_retur}
+                  onChange={(e) => setProfile({ ...profile, format_no_retur: e.target.value })}
+                  className="w-full text-xs h-11 px-3 rounded-xl border border-slate-200 font-mono font-bold"
+                />
+                <p className="text-[11px] text-slate-400 mt-1">
+                  Variabel didukung: {'{YYYY}'}, {'{MM}'}, {'{INDEX}'}
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Catatan Kaki Resmi Lembar BAP
+                </label>
+                <textarea
+                  rows={3}
+                  value={profile.catatan_kaki_surat}
+                  onChange={(e) => setProfile({ ...profile, catatan_kaki_surat: e.target.value })}
+                  className="w-full text-xs p-3 rounded-xl border border-slate-200 font-medium"
+                />
+              </div>
+
+              <div className="border-t border-slate-100">
+                <SettingToggle
+                  checked={Boolean(profile.tanda_tangan_apj)}
+                  onChange={(val) => setProfile({ ...profile, tanda_tangan_apj: val })}
+                  label="Sertakan Kolom Tanda Tangan APJ & Driver PBF"
+                  description="Tampilkan blok tanda tangan basah/stempel di bagian bawah Berita Acara."
+                />
+              </div>
+            </div>
+
+            {/* Pratinjau KOP Resmi */}
+            <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50/70 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-slate-700 inline-flex items-center gap-1.5">
+                  <Printer className="w-3.5 h-3.5 text-blue-600" />
+                  Pratinjau Kop Dokumen Cetak
+                </span>
+                <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full">
+                  CDOB
+                </span>
+              </div>
+              <div className="p-3.5 rounded-xl border border-slate-200 bg-white text-center space-y-1">
+                <BrandLogo logoUrl={profile.logo_url} className="w-10 h-10 mx-auto mb-1" />
+                <h4 className="text-xs sm:text-sm font-black text-slate-900 uppercase tracking-wide">
+                  {profile.nama_apotek}
+                </h4>
+                <p className="text-[11px] text-slate-600">{profile.alamat}</p>
+                <p className="text-[10px] font-mono text-slate-400">
+                  SIA: {profile.sia} • APJ: {profile.apoteker_pj}
+                </p>
+                <div className="w-full h-0.5 bg-slate-900 mt-1.5" />
+              </div>
+            </div>
+
+            <div className="flex justify-end">
+              <button type="submit" disabled={loading} className="btn-primary h-11 px-5 text-xs font-bold">
+                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                <span>Simpan Format Dokumen</span>
+              </button>
+            </div>
+          </form>
+        );
+
+      case 'operasional':
+        return (
+          <form onSubmit={handleSaveOperationalSettings} className="space-y-4">
+            <div className="p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200/80 space-y-2.5">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <span className="text-xs font-bold text-amber-950">Tanggal Acuan Evaluasi</span>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setSettings({
+                      ...settings,
+                      tanggal_acuan: new Date().toISOString().split('T')[0],
+                    })
+                  }
+                  className="text-[11px] font-bold text-blue-700 bg-white border border-blue-200 px-2.5 py-1 rounded-lg hover:bg-blue-50 transition"
+                >
+                  Pakai Tanggal Hari Ini
+                </button>
+              </div>
+              <input
+                type="date"
+                value={settings.tanggal_acuan}
+                onChange={(e) => setSettings({ ...settings, tanggal_acuan: e.target.value })}
+                className="w-full text-xs h-11 px-3 rounded-xl border border-amber-200 bg-white font-black text-blue-700"
+              />
+              <p className="text-[11px] text-amber-900/80">
+                Menentukan acuan perhitungan sisa hari retur, mendekati kedaluwarsa, dan notifikasi dashboard.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Peringatan Retur (Hari)
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  max={180}
+                  value={settings.batas_retur_warning_hari}
+                  onChange={(e) =>
+                    setSettings({ ...settings, batas_retur_warning_hari: Number(e.target.value) })
+                  }
+                  className="w-full text-xs h-11 px-3 rounded-xl border border-slate-200 font-bold tabular-nums"
+                />
+                <p className="text-[10px] text-slate-400 mt-1">Masuk daftar Mendesak Retur</p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Peringatan ED (Hari)
+                </label>
+                <input
+                  type="number"
+                  min={7}
+                  max={365}
+                  value={settings.batas_kedaluwarsa_warning_hari}
+                  onChange={(e) =>
+                    setSettings({
+                      ...settings,
+                      batas_kedaluwarsa_warning_hari: Number(e.target.value),
+                    })
+                  }
+                  className="w-full text-xs h-11 px-3 rounded-xl border border-slate-200 font-bold tabular-nums"
+                />
+                <p className="text-[10px] text-slate-400 mt-1">Masuk tab Dekat Kedaluwarsa</p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Stok Minimum Default
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  max={500}
+                  value={settings.stok_minimum_default}
+                  onChange={(e) =>
+                    setSettings({ ...settings, stok_minimum_default: Number(e.target.value) })
+                  }
+                  className="w-full text-xs h-11 px-3 rounded-xl border border-slate-200 font-bold tabular-nums"
+                />
+                <p className="text-[10px] text-slate-400 mt-1">Peringatan stok menipis</p>
+              </div>
+            </div>
+
+            <div className="pt-1 flex justify-end">
+              <button type="submit" disabled={loading} className="btn-primary h-11 px-5 text-xs font-bold">
+                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                <span>Simpan & Hitung Ulang</span>
+              </button>
+            </div>
+          </form>
+        );
+
+      case 'rekanan':
+        return (
+          <div className="space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div className="relative flex-1">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={pbfSearch}
+                  onChange={(e) => setPbfSearch(e.target.value)}
+                  placeholder="Cari nama atau kode PBF..."
+                  className="w-full text-xs h-10 pl-9 pr-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                />
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const headers = ['Kode PBF', 'Nama Distributor', 'Aturan Retur (Bulan)', 'Kontak PIC', 'Telepon'];
+                    const rows = distributors.map((d) => [d.kode, d.nama, d.aturan_retur_bulan, d.kontak || '-', d.telepon || '-']);
+                    exportToExcelCsv('daftar_pbf_apotek_asahan.csv', headers, rows);
+                  }}
+                  className="btn-outline h-10 px-3 text-xs"
+                >
+                  <Download className="w-3.5 h-3.5 text-blue-600" />
+                  <span>CSV</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowAddPbfModal(true)}
+                  className="btn-primary h-10 px-3.5 text-xs font-bold gap-1"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Tambah PBF</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="divide-y divide-slate-100 rounded-2xl border border-slate-200/80 overflow-hidden bg-white">
+              {filteredDistributors.map((d) => (
+                <div key={d.id} className="p-3.5 space-y-2.5">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono font-bold text-[11px] text-blue-700 bg-blue-50 px-2 py-0.5 rounded">
+                          {d.kode}
+                        </span>
+                        {savingPbfId === d.id ? (
+                          <span className="text-[11px] font-bold text-blue-600 animate-pulse">
+                            Menyimpan...
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-teal-700">
+                            <Check className="w-3 h-3" />
+                            <span>Aktif</span>
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs sm:text-sm font-extrabold text-slate-900 mt-1">{d.nama}</p>
+                      <p className="text-[11px] text-slate-500">
+                        PIC: {d.kontak || 'Bagian Retur'} • <span className="font-mono">{d.telepon || '-'}</span>
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleDeletePbf(d.id, d.nama)}
+                      className="w-10 h-10 min-w-[40px] flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition shrink-0"
+                      aria-label={`Hapus ${d.nama}`}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  <select
+                    value={d.aturan_retur_bulan}
+                    onChange={(e) => handleUpdateDistributorRule(d.id, parseInt(e.target.value, 10))}
+                    className="w-full text-xs h-10 px-3 rounded-xl border border-slate-200 bg-slate-50 font-bold text-slate-800"
+                  >
+                    <option value="0">0 Bulan (Tidak Terima Retur)</option>
+                    <option value="1">1 Bulan Sebelum Exp</option>
+                    <option value="2">2 Bulan Sebelum Exp</option>
+                    <option value="3">3 Bulan Sebelum Exp</option>
+                    <option value="4">4 Bulan Sebelum Exp</option>
+                    <option value="5">5 Bulan Sebelum Exp</option>
+                    <option value="6">6 Bulan Sebelum Exp</option>
+                  </select>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+
+      case 'kategori':
+        return (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-xs text-slate-500">
+                Atur stok aman minimum dan hari pantau per golongan obat.
+              </p>
+              <button
+                type="button"
+                onClick={() => setShowAddKatModal(true)}
+                className="btn-primary h-10 px-3.5 text-xs font-bold gap-1 shrink-0"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Tambah</span>
+              </button>
+            </div>
+
+            <div className="divide-y divide-slate-100 rounded-2xl border border-slate-200/80 overflow-hidden bg-white">
+              {kategoriList.map((kat) => (
+                <div key={kat.id} className="p-3.5 flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`text-[10px] font-extrabold px-2 py-0.5 rounded-md ${
+                          kat.jenis === 'Keras'
+                            ? 'bg-rose-100 text-rose-800'
+                            : kat.jenis === 'Bebas Terbatas'
+                            ? 'bg-sky-100 text-sky-800'
+                            : 'bg-blue-100 text-blue-800'
+                        }`}
+                      >
+                        {kat.jenis}
+                      </span>
+                      <p className="text-xs sm:text-sm font-bold text-slate-900 truncate">{kat.nama}</p>
+                    </div>
+                    <p className="text-[11px] text-slate-500 mt-1">
+                      Min. stok <strong className="text-slate-800">{kat.stok_minimum} unit</strong> • Pantau retur{' '}
+                      <strong className="text-slate-800">{kat.masa_pantau_hari} hari</strong>
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteKategori(kat.id, kat.nama)}
+                    className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition shrink-0"
+                    aria-label={`Hapus kategori ${kat.nama}`}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+
+      case 'preferensi':
+        return (
+          <div className="space-y-4">
+            <div className="divide-y divide-slate-100 rounded-2xl border border-slate-200/80 px-4 bg-white">
+              <SettingToggle
+                checked={privacyMode}
+                onChange={(val) => {
+                  setPrivacyMode(val);
+                  localStorage.setItem('simaaf_privacy_mode', String(val));
+                  flashSuccess(val ? 'Mode Privasi aktif secara default.' : 'Nominal Rupiah tampil otomatis.');
+                }}
+                label="Mode Privasi (Sembunyikan Nominal Otomatis)"
+                description="Tutupi angka Rupiah saat membuka Beranda di dekat pelanggan."
+              />
+              <SettingToggle
+                checked={mobileQueueFirst}
+                onChange={(val) => {
+                  setMobileQueueFirst(val);
+                  localStorage.setItem('simaaf_mobile_queue_first', String(val));
+                  flashSuccess('Urutan kartu Beranda mobile diperbarui.');
+                }}
+                label="Utamakan Antrean Tindakan di Beranda Mobile"
+                description="Tampilkan tugas retur prioritas lebih atas dari daftar pengawasan batch di HP."
+              />
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-xs font-bold text-slate-800">Halaman Awal Saat Masuk Aplikasi</p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {Object.entries(defaultPageLabels).map(([id, label]) => {
+                  const active = defaultPage === id;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => {
+                        setDefaultPage(id);
+                        localStorage.setItem('simaaf_default_page', id);
+                        flashSuccess(`Halaman awal diubah ke ${label}.`);
+                      }}
+                      className={`h-11 px-3 rounded-xl border text-xs font-bold flex items-center justify-between transition ${
+                        active
+                          ? 'bg-blue-50 border-blue-300 text-blue-800'
+                          : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                      }`}
+                    >
+                      <span className="truncate">{label}</span>
+                      {active && <CheckCircle2 className="w-3.5 h-3.5 text-blue-600 shrink-0" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'ai':
+        return (
+          <div className="space-y-4">
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Penyedia Layanan AI</label>
                 <select
                   value={aiConfig.provider}
                   onChange={(e) =>
@@ -341,7 +1080,7 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
                       model: e.target.value === 'openai' ? 'gpt-4o-mini' : 'gemini-2.5-flash',
                     })
                   }
-                  className="w-full text-xs h-10 px-3 rounded-xl border border-slate-200 bg-white font-semibold"
+                  className="w-full text-xs h-11 px-3 rounded-xl border border-slate-200 bg-white font-semibold"
                 >
                   <option value="gemini">Google Gemini (Vision + Dokumen)</option>
                   <option value="openai">OpenAI GPT (Vision + Dokumen)</option>
@@ -349,13 +1088,11 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Model Ekstraksi
-                </label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Model Ekstraksi</label>
                 <select
                   value={aiConfig.model}
                   onChange={(e) => setAiConfig({ ...aiConfig, model: e.target.value })}
-                  className="w-full text-xs h-10 px-3 rounded-xl border border-slate-200 bg-white font-mono font-semibold"
+                  className="w-full text-xs h-11 px-3 rounded-xl border border-slate-200 bg-white font-mono font-semibold"
                 >
                   {aiConfig.provider === 'gemini' ? (
                     <>
@@ -372,715 +1109,330 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  API Key / Token AI
-                </label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">API Key / Token AI</label>
                 <div className="relative">
+                  <KeyRound className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     type={showApiKey ? 'text' : 'password'}
                     value={aiConfig.apiKey}
                     onChange={(e) => setAiConfig({ ...aiConfig, apiKey: e.target.value })}
-                    placeholder="Masukkan token API Gemini atau OpenAI..."
-                    className="w-full text-xs h-10 pl-3 pr-10 rounded-xl border border-slate-200 font-mono"
+                    placeholder="Opsional — kosongkan untuk impor CSV/Excel lokal..."
+                    className="w-full text-xs h-11 pl-9 pr-11 rounded-xl border border-slate-200 font-mono"
                   />
                   <button
                     type="button"
                     onClick={() => setShowApiKey(!showApiKey)}
-                    className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600"
+                    className="absolute right-1.5 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center text-slate-400 hover:text-slate-700"
                     aria-label="Tampilkan atau sembunyikan token"
                   >
                     {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
-                <p className="text-[11px] text-slate-400 mt-1">
-                  Disimpan lokal di perangkat Anda. Jika dikosongkan, impor CSV/Excel tetap berjalan penuh secara lokal.
-                </p>
-              </div>
-
-              <div className="pt-1 flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    const saved = saveAiConfig(aiConfig);
-                    setAiConfig(saved);
-                    setSuccessMsg(
-                      saved.apiKey
-                        ? `Konfigurasi AI (${saved.provider.toUpperCase()}) berhasil disimpan!`
-                        : 'Token AI dikosongkan.'
-                    );
-                    setTimeout(() => setSuccessMsg(''), 3500);
-                  }}
-                  className="btn-primary h-10 px-4 text-xs"
-                >
-                  <Save className="w-3.5 h-3.5" />
-                  <span>Simpan Token AI</span>
-                </button>
               </div>
             </div>
-          </div>
 
-          <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-2xs space-y-4">
-            <div className="border-b border-slate-100 pb-3">
-              <h3 className="text-sm font-bold text-slate-900">
-                Halaman Awal & Format Impor
-              </h3>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Atur menu utama setelah masuk dan format berkas yang didukung.
+            <div className="p-3.5 rounded-xl bg-sky-50/70 border border-sky-200/80 text-xs text-slate-700 space-y-1">
+              <p className="font-bold text-sky-900">Format Berkas yang Langsung Didukung:</p>
+              <p className="text-[11px] text-slate-600">
+                CSV, TSV, Excel (.xlsx/.xls), Word (.docx), dan foto faktur fisik (.jpg/.png/.webp).
               </p>
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Halaman Awal Saat Aplikasi Dibuka
-              </label>
-              <select
-                value={defaultPage}
-                onChange={(e) => {
-                  setDefaultPage(e.target.value);
-                  localStorage.setItem('simaaf_default_page', e.target.value);
-                  setSuccessMsg('Halaman awal aplikasi berhasil diperbarui!');
-                  setTimeout(() => setSuccessMsg(''), 3000);
-                }}
-                className="w-full text-xs h-10 px-3 rounded-xl border border-slate-200 bg-white font-semibold"
-              >
-                <option value="dashboard">Beranda (Ringkasan Eksekutif)</option>
-                <option value="faktur">Input Faktur & Scan</option>
-                <option value="inventori">Stok & Batch Obat</option>
-                <option value="pengingat">Pengingat Retur & ED</option>
-                <option value="penyesuaian">Stok Opname Rak</option>
-                <option value="kalender">Kalender Tenggat PBF</option>
-              </select>
-            </div>
-
-            <div className="p-3.5 rounded-xl bg-blue-50/70 border border-blue-200/70 space-y-1.5 text-xs text-slate-700">
-              <p className="font-bold text-blue-900">Format Berkas Didukung:</p>
-              <ul className="list-disc pl-4 space-y-1 text-[11px] text-slate-600">
-                <li><strong>Excel / Spreadsheet (.csv, .tsv, .xlsx, .xls)</strong>: Impor langsung di halaman Input Faktur maupun Persediaan Obat.</li>
-                <li><strong>Dokumen Word (.docx, .txt, .json)</strong>: Ekstrak tabel & rincian obat secara otomatis.</li>
-                <li><strong>Foto Faktur Fisik (.jpg, .png, .webp)</strong>: Baca otomatis menggunakan Token AI atau simulasi demo.</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      )}
-
-      
-      {activeTab === 'identitas' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs space-y-3">
-            <div className="border-b border-slate-100 pb-3">
-              <h3 className="text-sm font-black text-slate-900 flex items-center gap-2">
-                <Building2 className="w-4 h-4 text-blue-600" />
-                <span>Identitas Resmi & Logo Apotek</span>
-              </h3>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Nama resmi, stempel, dan legalitas yang dicetak pada surat berita acara retur dan laporan.
-              </p>
-            </div>
-
-            <div className="space-y-3">
-              <label className="text-xs font-black text-slate-700 block">
-                Logo Resmi Apotek
-              </label>
-              
-              <div className="flex flex-col sm:flex-row sm:items-center gap-4 p-3.5 rounded-2xl bg-slate-50/70 border border-slate-200/80">
-                <div className="relative w-20 h-20 rounded-2xl border-2 border-blue-500/30 overflow-hidden bg-white shadow-xs flex items-center justify-center p-1.5 shrink-0">
-                  <BrandLogo
-                    logoUrl={profile.logo_url}
-                    className="w-full h-full"
-                    alt="Logo Apotek Asahan Farma"
-                  />
-                </div>
-
-                <div className="flex-1 space-y-2">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-xs font-black text-slate-800">
-                      {profile.logo_url && !profile.logo_url.startsWith('/logo-')
-                        ? 'Logo Apotek Terunggah'
-                        : 'Logo Standar Minimalis'}
-                    </span>
-                    <span className="text-[10px] px-2 py-0.5 rounded-md bg-blue-100 text-blue-800 font-extrabold">
-                      Aktif di Sistem
-                    </span>
-                  </div>
-
-                  <p className="text-[11px] text-slate-500">
-                    Unggah file logo resmi apotek (PNG, JPG, WebP, atau SVG, maks. 2 MB) untuk ditampilkan di sidebar, login, dan kop surat BAP.
-                  </p>
-
-                  <div className="flex items-center gap-2 flex-wrap pt-1">
-                    <input
-                      type="file"
-                      ref={fileInputRef}
-                      onChange={handleLogoUpload}
-                      accept="image/png, image/jpeg, image/webp, image/svg+xml"
-                      className="hidden"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="btn-primary h-11 sm:h-8 min-h-[44px] sm:min-h-0 px-3.5 text-xs font-bold gap-1.5"
-                    >
-                      <Upload className="w-3.5 h-3.5" />
-                      <span>Unggah Logo Apotek</span>
-                    </button>
-
-                    {profile.logo_url && !profile.logo_url.startsWith('/logo-') && (
-                      <button
-                        type="button"
-                        onClick={handleRemoveLogo}
-                        className="btn-outline h-11 sm:h-8 min-h-[44px] sm:min-h-0 px-2.5 text-xs text-slate-600 hover:bg-slate-100"
-                        title="Hapus Logo Unggahan"
-                      >
-                        <RotateCcw className="w-3.5 h-3.5" />
-                        <span>Hapus Logo</span>
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Form Fields Identitas */}
-            <div className="space-y-3 pt-2">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Nama Sarana Apotek
-                </label>
-                <input
-                  type="text"
-                  value={profile.nama_apotek}
-                  onChange={(e) => setProfile({ ...profile, nama_apotek: e.target.value })}
-                  className="w-full text-xs h-11 sm:h-9 px-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-bold"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Komisaris / Pemilik
-                  </label>
-                  <input
-                    type="text"
-                    value={profile.pimpinan}
-                    onChange={(e) => setProfile({ ...profile, pimpinan: e.target.value })}
-                    className="w-full text-xs h-11 sm:h-9 px-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-semibold"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Apoteker PJ (APJ)
-                  </label>
-                  <input
-                    type="text"
-                    value={profile.apoteker_pj}
-                    onChange={(e) => setProfile({ ...profile, apoteker_pj: e.target.value })}
-                    className="w-full text-xs h-11 sm:h-9 px-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-semibold"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Alamat Lengkap Apotek
-                </label>
-                <input
-                  type="text"
-                  value={profile.alamat}
-                  onChange={(e) => setProfile({ ...profile, alamat: e.target.value })}
-                  className="w-full text-xs h-11 sm:h-9 px-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-medium"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    No. Telepon / WhatsApp
-                  </label>
-                  <input
-                    type="text"
-                    value={profile.whatsapp}
-                    onChange={(e) => setProfile({ ...profile, whatsapp: e.target.value })}
-                    className="w-full text-xs h-11 sm:h-9 px-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-mono"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Jam Operasional
-                  </label>
-                  <input
-                    type="text"
-                    value={profile.jam_operasional}
-                    onChange={(e) => setProfile({ ...profile, jam_operasional: e.target.value })}
-                    className="w-full text-xs h-11 sm:h-9 px-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-medium"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Card Kanan: Nomor Legalitas Izin & Kepatuhan BPOM */}
-          <div className="space-y-4">
-            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
-              <div className="border-b border-slate-100 pb-3">
-                <h3 className="text-sm font-black text-slate-900 flex items-center gap-2">
-                  <Shield className="w-4 h-4 text-blue-600" />
-                  <span>Legalitas & Perizinan BPOM</span>
-                </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Nomor perizinan berusaha yang terintegrasi pada sistem OSS dan Dinas Kesehatan.
-                </p>
-              </div>
-
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Nomor Induk Berusaha (NIB)
-                  </label>
-                  <input
-                    type="text"
-                    value={profile.nib}
-                    onChange={(e) => setProfile({ ...profile, nib: e.target.value })}
-                    className="w-full text-xs h-11 sm:h-9 px-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-mono font-bold"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Surat Izin Apotek (SIA)
-                  </label>
-                  <input
-                    type="text"
-                    value={profile.sia}
-                    onChange={(e) => setProfile({ ...profile, sia: e.target.value })}
-                    className="w-full text-xs h-11 sm:h-9 px-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-mono"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Surat Izin Praktik Apoteker (SIPA)
-                  </label>
-                  <input
-                    type="text"
-                    value={profile.sipa}
-                    onChange={(e) => setProfile({ ...profile, sipa: e.target.value })}
-                    className="w-full text-xs h-11 sm:h-9 px-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-mono"
-                  />
-                </div>
-              </div>
-
-              <div className="p-3 rounded-xl bg-blue-50 border border-blue-200 text-xs text-blue-800 space-y-1">
-                <div className="flex items-center gap-1.5 font-bold">
-                  <CheckCircle2 className="w-4 h-4 text-blue-600" />
-                  <span>Status Kepatuhan Terverifikasi</span>
-                </div>
-                <p className="text-[11px] text-blue-700 leading-relaxed">
-                  Sarana apotek beroperasi aktif dengan izin resmi di wilayah Kabupaten Asahan, Sumatera Utara.
-                </p>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-black text-slate-900 flex items-center gap-1.5">
-                  <Calendar className="w-4 h-4 text-amber-500" />
-                  <span>Tanggal Acuan Sistem</span>
-                </span>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
-                  Tanggal Acuan
-                </span>
-              </div>
-              <input
-                type="date"
-                value={settings.tanggal_acuan}
-                onChange={(e) => setSettings({ ...settings, tanggal_acuan: e.target.value })}
-                className="w-full text-xs h-9 px-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-black text-blue-700"
-              />
-              <p className="text-[11px] text-slate-400">
-                Tanggal referensi untuk simulasi seluruh kalkulasi sisa hari kedaluwarsa & retur obat.
-              </p>
-            </div>
-
-            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-black text-slate-900 flex items-center gap-1.5">
-                  <Settings className="w-4 h-4 text-blue-600" />
-                  <span>Halaman Awal Default</span>
-                </span>
-              </div>
-              <select
-                value={localStorage.getItem('simaaf_default_page') || 'dashboard'}
-                onChange={(e) => {
-                  localStorage.setItem('simaaf_default_page', e.target.value);
-                  setSuccessMsg('Halaman awal default berhasil diubah!');
-                  setTimeout(() => setSuccessMsg(''), 4000);
-                }}
-                className="w-full text-xs h-9 px-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-slate-700"
-              >
-                <option value="dashboard">Dashboard</option>
-                <option value="faktur">Input Faktur</option>
-                <option value="inventori">Inventori</option>
-                <option value="pengingat">Pengingat Retur</option>
-                <option value="penyesuaian">Penyesuaian Stok</option>
-                <option value="kalender">Kalender Tenggat</option>
-              </select>
-              <p className="text-[11px] text-slate-400">
-                Halaman yang muncul pertama kali setelah login.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      
-      {activeTab === 'dokumen' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
-            <div className="border-b border-slate-100 pb-3">
-              <h3 className="text-sm font-black text-slate-900 flex items-center gap-2">
-                <FileText className="w-4 h-4 text-blue-600" />
-                <span>Format Dokumen Berita Acara Retur</span>
-              </h3>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Atur format penomoran surat retur resmi dan klausul penyerahan fisik ke distributor.
-              </p>
-            </div>
-
-            <div className="space-y-3">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Format Penomoran Surat Otomatis
-                </label>
-                <input
-                  type="text"
-                  value={profile.format_no_retur}
-                  onChange={(e) => setProfile({ ...profile, format_no_retur: e.target.value })}
-                  className="w-full text-xs h-9 px-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-mono font-bold"
-                />
-                <p className="text-[10px] text-slate-400 mt-1">
-                  Variabel didukung: {'{YYYY}'}, {'{MM}'}, {'{INDEX}'}
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Catatan Kaki Resmi pada Lembar Retur
-                </label>
-                <textarea
-                  rows={3}
-                  value={profile.catatan_kaki_surat}
-                  onChange={(e) => setProfile({ ...profile, catatan_kaki_surat: e.target.value })}
-                  className="w-full text-xs p-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-medium"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Pratinjau Lembar Kop Surat Resmi */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-3">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-              <span className="text-xs font-black text-slate-900 flex items-center gap-1.5">
-                <Printer className="w-4 h-4 text-slate-500" />
-                <span>Pratinjau KOP Resmi Cetak PDF</span>
-              </span>
-              <span className="text-[10px] text-blue-600 font-bold">Standar CDOB</span>
-            </div>
-
-            <div className="p-4 rounded-xl border border-slate-200 bg-white text-center space-y-1 shadow-xs">
-              <BrandLogo logoUrl={profile.logo_url} className="w-12 h-12 mx-auto mb-2 shadow-xs" />
-              <h4 className="text-sm font-black text-slate-900 uppercase tracking-wider">
-                {profile.nama_apotek}
-              </h4>
-              <p className="text-[11px] text-slate-600">{profile.alamat}</p>
-              <p className="text-[10px] font-mono text-slate-400">
-                SIA: {profile.sia} • NIB: {profile.nib} • APJ: {profile.apoteker_pj}
-              </p>
-              <div className="w-full h-0.5 bg-slate-900 mt-2" />
-            </div>
-
-            <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 text-[11px] text-slate-500 space-y-1">
-              <p className="font-bold text-slate-800">Dokumen Berita Acara Retur Fisik:</p>
-              <p>Memuat rincian nama obat, nomor batch, tanggal faktur beli, nama driver PBF pembawa, dan tanda tangan APJ.</p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      
-      {activeTab === 'kategori' && (
-        <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
-            <div>
-              <h3 className="text-sm font-black text-slate-900 flex items-center gap-2">
-                <Wallet className="w-4 h-4 text-blue-600" />
-                <span>Kategori Golongan Obat & Ambang Pengaman</span>
-              </h3>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Atur stok minimum pengaman stok dan jendela peringatan per kategori farmasi.
-              </p>
-            </div>
-
-            <button
-              onClick={() => setShowAddKatModal(true)}
-              className="btn-primary h-8 px-3 text-xs font-bold gap-1.5 self-start sm:self-auto"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>+ Tambah Kategori</span>
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            {kategoriList.map((kat) => (
-              <div
-                key={kat.id}
-                className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-white hover:border-slate-300 transition-all space-y-2 flex flex-col justify-between"
-              >
-                <div>
-                  <div className="flex items-center justify-between gap-1 mb-1">
-                    <span
-                      className={`text-[10px] font-extrabold px-1.5 py-0.2 rounded ${
-                        kat.jenis === 'Keras'
-                          ? 'bg-rose-100 text-rose-800'
-                          : kat.jenis === 'Bebas Terbatas'
-                          ? 'bg-sky-100 text-sky-800'
-                          : 'bg-blue-100 text-blue-800'
-                      }`}
-                    >
-                      {kat.jenis}
-                    </span>
-                    <button
-                      onClick={() => handleDeleteKategori(kat.id, kat.nama)}
-                      className="text-slate-400 hover:text-rose-600 p-1"
-                      title="Hapus Kategori"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                  <h4 className="text-xs font-black text-slate-900 leading-tight">
-                    {kat.nama}
-                  </h4>
-                </div>
-
-                <div className="pt-2 border-t border-slate-200/60 text-[11px] text-slate-500 space-y-0.5">
-                  <div className="flex justify-between">
-                    <span>Min. Stok:</span>
-                    <strong className="text-slate-900">{kat.stok_minimum} unit</strong>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Pantau Retur:</span>
-                    <strong className="text-slate-900">{kat.masa_pantau_hari} hari</strong>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      
-      {activeTab === 'rekanan' && (
-        <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
-            <div>
-              <h3 className="text-sm font-black text-slate-900 flex items-center gap-2">
-                <Building2 className="w-4 h-4 text-blue-600" />
-                <span>Master 14 Distributor PBF Mitra Apotek</span>
-              </h3>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Klausul tenggat pengembalian obat kedaluwarsa dan kontak langsung bagian retur PBF.
-              </p>
-            </div>
-
-            <div className="flex items-center gap-2 flex-wrap self-start sm:self-auto">
+            <div className="flex justify-end">
               <button
                 type="button"
                 onClick={() => {
-                  const headers = ['Kode PBF', 'Nama Distributor', 'Aturan Retur (Bulan)', 'Kontak PIC', 'Telepon'];
-                  const rows = distributors.map((d) => [d.kode, d.nama, d.aturan_retur_bulan, d.kontak || '-', d.telepon || '-']);
-                  exportToExcelCsv('daftar_pbf_apotek_asahan.csv', headers, rows);
+                  const saved = saveAiConfig(aiConfig);
+                  setAiConfig(saved);
+                  flashSuccess(
+                    saved.apiKey
+                      ? `Token AI (${saved.provider.toUpperCase()}) tersimpan di perangkat.`
+                      : 'Token AI dikosongkan.'
+                  );
                 }}
-                className="btn-outline h-11 sm:h-9 px-3 text-xs"
+                className="btn-primary h-11 px-5 text-xs font-bold"
               >
-                <Download className="w-3.5 h-3.5 text-blue-600" />
-                <span>Ekspor CSV</span>
+                <Save className="w-4 h-4" />
+                <span>Simpan Konfigurasi AI</span>
+              </button>
+            </div>
+          </div>
+        );
+
+      case 'cadangan':
+        return (
+          <div className="space-y-3">
+            <div className="p-3.5 rounded-xl bg-blue-50/70 border border-blue-200/80 text-xs text-blue-900 space-y-1">
+              <p className="font-bold">Portabilitas Data Tanpa Backend</p>
+              <p className="text-[11px] text-blue-800/80 leading-relaxed">
+                Seluruh transaksi tersimpan lokal di browser Anda. Unduh berkas cadangan (.json) untuk
+                memindahkan seluruh batch, aturan PBF, &amp; riwayat opname antar HP atau komputer apotek.
+              </p>
+            </div>
+
+            <div className="divide-y divide-slate-100 rounded-2xl border border-slate-200/80 bg-white overflow-hidden">
+              <button
+                type="button"
+                onClick={handleExportJsonBackup}
+                className="w-full p-3.5 flex items-center justify-between gap-3 hover:bg-slate-50 transition text-left"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <span className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                    <Download className="w-4 h-4" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-xs sm:text-sm font-bold text-slate-900">Unduh Cadangan Penuh (.JSON)</p>
+                    <p className="text-[11px] text-slate-500">Semua batch, PBF, profil, dan log opname</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
               </button>
 
               <button
                 type="button"
-                onClick={() => setShowAddPbfModal(true)}
-                className="btn-primary h-11 sm:h-9 px-3.5 text-xs font-bold gap-1.5 flex items-center justify-center"
+                onClick={() => backupInputRef.current?.click()}
+                className="w-full p-3.5 flex items-center justify-between gap-3 hover:bg-slate-50 transition text-left"
               >
-                <Plus className="w-4 h-4" />
-                <span>Tambah PBF</span>
+                <div className="flex items-center gap-3 min-w-0">
+                  <span className="w-9 h-9 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center shrink-0">
+                    <UploadCloud className="w-4 h-4" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-xs sm:text-sm font-bold text-slate-900">Pulihkan dari Berkas Cadangan (.JSON)</p>
+                    <p className="text-[11px] text-slate-500">Muat ulang data dari perangkat lain</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
+              </button>
+
+              <input
+                ref={backupInputRef}
+                type="file"
+                accept=".json,application/json"
+                onChange={handleImportJsonBackup}
+                className="hidden"
+              />
+
+              <button
+                type="button"
+                onClick={handleExportAllBatchesCsv}
+                className="w-full p-3.5 flex items-center justify-between gap-3 hover:bg-slate-50 transition text-left"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <span className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                    <FileText className="w-4 h-4" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-xs sm:text-sm font-bold text-slate-900">Ekspor Laporan Stok Excel (.CSV)</p>
+                    <p className="text-[11px] text-slate-500">Siap dibuka di Microsoft Excel / Google Sheets</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
+              </button>
+
+              <button
+                type="button"
+                onClick={handleResetDemo}
+                className="w-full p-3.5 flex items-center justify-between gap-3 hover:bg-rose-50/70 transition text-left"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <span className="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+                    <RefreshCw className="w-4 h-4" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-xs sm:text-sm font-bold text-rose-700">Reset ke Data Demo Awal</p>
+                    <p className="text-[11px] text-slate-500">Kembalikan contoh 8 batch & 14 PBF standar</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-rose-400 shrink-0" />
               </button>
             </div>
           </div>
+        );
 
-          {/* Mobile / Tablet Responsive PBF Cards (block md:hidden) */}
-          <div className="block md:hidden divide-y divide-slate-100">
-            {distributors.map((d) => (
-              <div key={d.id} className="p-4 space-y-3 bg-white">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-1.5 mb-0.5">
-                      <span className="font-mono font-bold text-xs text-blue-700 bg-blue-50 px-2 py-0.5 rounded">
-                        {d.kode}
-                      </span>
-                      {savingPbfId === d.id ? (
-                        <span className="text-blue-600 font-bold text-[11px] animate-pulse">
-                          Menyimpan...
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-600">
-                          <Check className="w-3 h-3" />
-                          <span>Aktif</span>
-                        </span>
-                      )}
-                    </div>
-                    <h4 className="font-extrabold text-sm text-slate-900 leading-snug">
-                      {d.nama}
-                    </h4>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleDeletePbf(d.id, d.nama)}
-                    className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition"
-                    title="Hapus PBF"
-                    aria-label={`Hapus ${d.nama}`}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 text-xs bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-                  <div>
-                    <span className="text-[10px] font-extrabold uppercase text-slate-400 block">
-                      Kontak PIC
-                    </span>
-                    <span className="font-semibold text-slate-700">
-                      {d.kontak || 'Bagian Retur'}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] font-extrabold uppercase text-slate-400 block">
-                      Telepon / WhatsApp
-                    </span>
-                    <span className="font-mono text-slate-700">
-                      {d.telepon || '-'}
-                    </span>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-extrabold uppercase text-slate-400 mb-1">
-                    Batas Waktu Retur Distributor
-                  </label>
-                  <select
-                    defaultValue={d.aturan_retur_bulan}
-                    onChange={(e) =>
-                      handleUpdateDistributorRule(d.id, parseInt(e.target.value, 10))
-                    }
-                    className="w-full text-xs h-11 min-h-[44px] px-3 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-bold"
-                  >
-                    <option value="0">0 Bulan (Tidak Terima Retur)</option>
-                    <option value="1">1 Bulan Sebelum Exp</option>
-                    <option value="2">2 Bulan Sebelum Exp</option>
-                    <option value="3">3 Bulan Sebelum Exp</option>
-                    <option value="4">4 Bulan Sebelum Exp</option>
-                    <option value="5">5 Bulan Sebelum Exp</option>
-                    <option value="6">6 Bulan Sebelum Exp</option>
-                  </select>
-                </div>
-              </div>
-            ))}
+      case 'bantuan':
+      default:
+        return (
+          <div className="space-y-4">
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3">
+              <p className="text-xs font-extrabold text-slate-900">
+                SOP Pengembalian Obat Kedaluwarsa ({profile.nama_apotek}):
+              </p>
+              <ol className="list-decimal pl-4 space-y-2 text-xs text-slate-600 leading-relaxed">
+                <li>
+                  Pantau daftar batch pada menu <strong>Retur</strong> sebelum tenggat H-{settings.batas_retur_warning_hari}.
+                </li>
+                <li>Pisahkan fisik kemasan utuh dari rak penjualan ke kotak karantina retur PBF.</li>
+                <li>Cetak formulir <strong>Dokumen BAP</strong> yang memuat nomor batch & tanda tangan APJ.</li>
+                <li>Hubungi PIC PBF mitra sebelum batas pengembalian bulanannya terlewati.</li>
+                <li>Lakukan penyesuaian di menu <strong>Opname</strong> setelah serah terima selesai.</li>
+              </ol>
+            </div>
           </div>
+        );
+    }
+  };
 
-          {/* Desktop Table View (hidden md:block) */}
-          <div className="overflow-x-auto hidden md:block">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="bg-slate-50 border-b border-slate-200 text-[10px] font-extrabold uppercase tracking-wider text-slate-500">
-                  <th className="py-2.5 px-3">Kode</th>
-                  <th className="py-2.5 px-3 font-extrabold">Nama Distributor (PBF)</th>
-                  <th className="py-2.5 px-3">Kontak PIC</th>
-                  <th className="py-2.5 px-3">Telepon / WhatsApp</th>
-                  <th className="py-2.5 px-3 text-center">Batas Waktu Retur</th>
-                  <th className="py-2.5 px-3 text-center">Status</th>
-                  <th className="py-2.5 px-3 text-center">Aksi</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {distributors.map((d) => (
-                  <tr key={d.id} className="hover:bg-slate-50/70 transition">
-                    <td className="py-2.5 px-3 font-mono font-bold text-slate-500">
-                      {d.kode}
-                    </td>
-                    <td className="py-2.5 px-3 font-black text-slate-900">
-                      {d.nama}
-                    </td>
-                    <td className="py-2.5 px-3 text-slate-600">
-                      {d.kontak || 'Bagian Retur'}
-                    </td>
-                    <td className="py-2.5 px-3 font-mono text-slate-500">
-                      {d.telepon || '-'}
-                    </td>
-                    <td className="py-2.5 px-3 text-center">
-                      <select
-                        defaultValue={d.aturan_retur_bulan}
-                        onChange={(e) =>
-                          handleUpdateDistributorRule(d.id, parseInt(e.target.value, 10))
-                        }
-                        className="text-xs h-8 px-2 rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-bold"
-                      >
-                        <option value="0">0 Bulan (Tidak Terima Retur)</option>
-                        <option value="1">1 Bulan Sebelum Exp</option>
-                        <option value="2">2 Bulan Sebelum Exp</option>
-                        <option value="3">3 Bulan Sebelum Exp</option>
-                        <option value="4">4 Bulan Sebelum Exp</option>
-                        <option value="5">5 Bulan Sebelum Exp</option>
-                        <option value="6">6 Bulan Sebelum Exp</option>
-                      </select>
-                    </td>
-                    <td className="py-2.5 px-3 text-center">
-                      {savingPbfId === d.id ? (
-                        <span className="text-blue-600 font-bold text-[11px] animate-pulse">
-                          Menyimpan...
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-600">
-                          <Check className="w-3 h-3" />
-                          <span>Aktif</span>
-                        </span>
-                      )}
-                    </td>
-                    <td className="py-2.5 px-3 text-center">
-                      <button
-                        type="button"
-                        onClick={() => handleDeletePbf(d.id, d.nama)}
-                        className="p-1 rounded-lg text-slate-400 hover:text-rose-600 transition"
-                        title="Hapus PBF"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+  return (
+    <div className="space-y-3">
+      {successMsg && (
+        <div className="p-3 rounded-xl bg-blue-50 border border-blue-200 text-blue-900 text-xs flex items-center gap-2.5 shadow-xs">
+          <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0" />
+          <span className="font-bold">{successMsg}</span>
         </div>
       )}
 
-      
+      {errorMsg && (
+        <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-900 text-xs flex items-center gap-2.5 shadow-xs">
+          <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+          <span className="font-bold">{errorMsg}</span>
+        </div>
+      )}
+
+      {/* Tampilan Instagram/WhatsApp Settings: Daftar Bertumpuk Kiri/Mobile + Sub-Halaman Detail Kanan/Drill-down */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+        {/* Panel Menu Vertikal Bertumpuk */}
+        <div
+          className={`${
+            selectedSection ? 'hidden lg:block' : 'block'
+          } lg:col-span-5 xl:col-span-4 space-y-3`}
+        >
+          {/* Kartu Akun Apotek Atas */}
+          <button
+            type="button"
+            onClick={() => setSelectedSection('identitas')}
+            className="w-full bg-white rounded-2xl border border-slate-200/90 p-3.5 shadow-2xs flex items-center justify-between gap-3 hover:border-blue-300 transition text-left cursor-pointer"
+          >
+            <div className="flex items-center gap-3 min-w-0">
+              <BrandLogo logoUrl={profile.logo_url} className="w-12 h-12 shrink-0" />
+              <div className="min-w-0">
+                <p className="text-sm font-black text-slate-950 truncate">{profile.nama_apotek}</p>
+                <p className="text-[11px] font-medium text-slate-500 truncate">
+                  {profile.apoteker_pj}
+                </p>
+                <span className="inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">
+                  NIB {profile.nib}
+                </span>
+              </div>
+            </div>
+            <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
+          </button>
+
+          {/* Pencarian Pengaturan Bergaya IG/WA */}
+          <div className="relative">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={menuSearch}
+              onChange={(e) => setMenuSearch(e.target.value)}
+              placeholder="Cari pengaturan (logo, PBF, privasi, cadangan)..."
+              className="w-full text-xs h-11 pl-10 pr-4 rounded-2xl border border-slate-200/90 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-medium shadow-2xs"
+            />
+          </div>
+
+          {/* Grup Kartu Bertumpuk ke Bawah */}
+          {filteredGroups.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-slate-200/80 p-6 text-center text-xs text-slate-400">
+              Pengaturan "{menuSearch}" tidak ditemukan.
+            </div>
+          ) : (
+            <div className="space-y-3.5">
+              {filteredGroups.map((group) => (
+                <div key={group.title} className="space-y-1.5">
+                  <p className="px-2 text-[10.5px] font-extrabold uppercase tracking-wider text-slate-400">
+                    {group.title}
+                  </p>
+                  <div className="bg-white rounded-2xl border border-slate-200/90 divide-y divide-slate-100 shadow-2xs overflow-hidden">
+                    {group.items.map((item) => {
+                      const Icon = item.icon;
+                      const isActiveDesktop = activeDetailId === item.id;
+                      return (
+                        <button
+                          key={item.id}
+                          type="button"
+                          data-testid={`setting-item-${item.id}`}
+                          onClick={() => setSelectedSection(item.id)}
+                          className={`w-full px-3.5 py-3 flex items-center justify-between gap-3 text-left transition cursor-pointer min-h-[56px] ${
+                            isActiveDesktop
+                              ? 'lg:bg-blue-50/75 hover:bg-blue-50'
+                              : 'hover:bg-slate-50 active:bg-slate-100/70'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            <span
+                              className={`w-9 h-9 rounded-xl border flex items-center justify-center shrink-0 ${item.iconClass}`}
+                            >
+                              <Icon className="w-4 h-4" strokeWidth={2.2} />
+                            </span>
+                            <div className="min-w-0">
+                              <p
+                                className={`text-[13px] font-bold truncate ${
+                                  isActiveDesktop ? 'lg:text-blue-700 text-slate-900' : 'text-slate-900'
+                                }`}
+                              >
+                                {item.label}
+                              </p>
+                              <p className="text-[11px] text-slate-500 truncate mt-0.5">
+                                {item.subtitle}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            {item.badge && (
+                              <span className="text-[11px] font-extrabold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 tabular-nums">
+                                {item.badge}
+                              </span>
+                            )}
+                            <ChevronRight className="w-4 h-4 text-slate-400" />
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Panel Detail Kanan (Desktop selalu tampil & menempel rapi saat scroll; Mobile tampil saat item diketuk) */}
+        <div
+          className={`${
+            selectedSection ? 'block' : 'hidden lg:block'
+          } lg:col-span-7 xl:col-span-8 lg:sticky lg:top-3 bg-white rounded-2xl border border-slate-200/90 shadow-2xs overflow-hidden`}
+        >
+          <div className="px-4 py-3.5 border-b border-slate-100 flex items-center gap-3 bg-slate-50/60">
+            <button
+              type="button"
+              onClick={() => setSelectedSection(null)}
+              className="lg:hidden w-10 h-10 min-w-[40px] rounded-xl bg-white border border-slate-200 text-slate-700 flex items-center justify-center active:scale-95 transition shrink-0"
+              aria-label="Kembali ke daftar pengaturan"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </button>
+            <div className="min-w-0">
+              <h2 className="text-sm sm:text-base font-black text-slate-950 truncate">
+                {activeDetailMeta?.label}
+              </h2>
+              <p className="text-[11px] text-slate-500 truncate">{activeDetailMeta?.subtitle}</p>
+            </div>
+          </div>
+
+          <div className="p-4 sm:p-5">{renderDetailContent(activeDetailId)}</div>
+        </div>
+      </div>
+
+      {/* Modal Tambah Distributor PBF */}
       {showAddPbfModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-5 space-y-4 shadow-xl border border-slate-200 animate-in fade-in zoom-in-95">
+          <div className="bg-white rounded-2xl max-w-md w-full p-5 space-y-4 shadow-xl border border-slate-200">
             <div className="flex items-center justify-between border-b border-slate-100 pb-2">
               <h4 className="text-sm font-black text-slate-900">Daftarkan PBF Mitra Baru</h4>
               <button
+                type="button"
                 onClick={() => setShowAddPbfModal(false)}
-                className="text-slate-400 hover:text-slate-600 text-xs font-bold"
+                className="w-8 h-8 rounded-lg text-slate-400 hover:text-slate-700 text-xs font-bold"
               >
                 ✕
               </button>
@@ -1095,10 +1447,9 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
                   placeholder="Contoh: PBF Kimia Farma TD Medan"
                   value={newPbf.nama}
                   onChange={(e) => setNewPbf({ ...newPbf, nama: e.target.value })}
-                  className="w-full text-xs h-9 px-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-bold"
+                  className="w-full text-xs h-10 px-3 rounded-xl border border-slate-200 font-bold"
                 />
               </div>
-
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">Kode PBF</label>
@@ -1107,7 +1458,7 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
                     placeholder="DST-015"
                     value={newPbf.kode}
                     onChange={(e) => setNewPbf({ ...newPbf, kode: e.target.value })}
-                    className="w-full text-xs h-9 px-3 rounded-xl border border-slate-200 focus:outline-none font-mono"
+                    className="w-full text-xs h-10 px-3 rounded-xl border border-slate-200 font-mono"
                   />
                 </div>
                 <div>
@@ -1115,8 +1466,9 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
                   <select
                     value={newPbf.aturan_retur_bulan}
                     onChange={(e) => setNewPbf({ ...newPbf, aturan_retur_bulan: Number(e.target.value) })}
-                    className="w-full text-xs h-9 px-2 rounded-xl border border-slate-200 bg-white font-bold"
+                    className="w-full text-xs h-10 px-2 rounded-xl border border-slate-200 bg-white font-bold"
                   >
+                    <option value="0">0 Bulan (Tanpa Retur)</option>
                     <option value="1">1 Bulan Sebelum Exp</option>
                     <option value="2">2 Bulan Sebelum Exp</option>
                     <option value="3">3 Bulan Sebelum Exp</option>
@@ -1124,38 +1476,37 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
                   </select>
                 </div>
               </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Kontak Person / PIC</label>
-                <input
-                  type="text"
-                  placeholder="Nama PIC Bagian Retur"
-                  value={newPbf.kontak}
-                  onChange={(e) => setNewPbf({ ...newPbf, kontak: e.target.value })}
-                  className="w-full text-xs h-9 px-3 rounded-xl border border-slate-200"
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">PIC Retur</label>
+                  <input
+                    type="text"
+                    placeholder="Nama PIC"
+                    value={newPbf.kontak}
+                    onChange={(e) => setNewPbf({ ...newPbf, kontak: e.target.value })}
+                    className="w-full text-xs h-10 px-3 rounded-xl border border-slate-200"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Telepon / WA</label>
+                  <input
+                    type="text"
+                    placeholder="0812xxxx"
+                    value={newPbf.telepon}
+                    onChange={(e) => setNewPbf({ ...newPbf, telepon: e.target.value })}
+                    className="w-full text-xs h-10 px-3 rounded-xl border border-slate-200 font-mono"
+                  />
+                </div>
               </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">No. Telepon / WhatsApp</label>
-                <input
-                  type="text"
-                  placeholder="061-xxxxxxx / 0812xxxx"
-                  value={newPbf.telepon}
-                  onChange={(e) => setNewPbf({ ...newPbf, telepon: e.target.value })}
-                  className="w-full text-xs h-9 px-3 rounded-xl border border-slate-200 font-mono"
-                />
-              </div>
-
               <div className="pt-2 flex justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setShowAddPbfModal(false)}
-                  className="btn-outline h-8 px-3 text-xs"
+                  className="btn-outline h-10 px-3.5 text-xs"
                 >
                   Batal
                 </button>
-                <button type="submit" className="btn-primary h-8 px-4 text-xs font-bold">
+                <button type="submit" className="btn-primary h-10 px-4 text-xs font-bold">
                   Simpan PBF
                 </button>
               </div>
@@ -1164,15 +1515,16 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
         </div>
       )}
 
-      
+      {/* Modal Tambah Kategori Obat */}
       {showAddKatModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-sm w-full p-5 space-y-4 shadow-xl border border-slate-200 animate-in fade-in zoom-in-95">
+          <div className="bg-white rounded-2xl max-w-sm w-full p-5 space-y-4 shadow-xl border border-slate-200">
             <div className="flex items-center justify-between border-b border-slate-100 pb-2">
               <h4 className="text-sm font-black text-slate-900">Tambah Golongan Kategori</h4>
               <button
+                type="button"
                 onClick={() => setShowAddKatModal(false)}
-                className="text-slate-400 hover:text-slate-600 text-xs font-bold"
+                className="w-8 h-8 rounded-lg text-slate-400 hover:text-slate-700 text-xs font-bold"
               >
                 ✕
               </button>
@@ -1187,10 +1539,9 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
                   placeholder="Contoh: Kortikosteroid"
                   value={newKat.nama}
                   onChange={(e) => setNewKat({ ...newKat, nama: e.target.value })}
-                  className="w-full text-xs h-9 px-3 rounded-xl border border-slate-200 font-bold"
+                  className="w-full text-xs h-10 px-3 rounded-xl border border-slate-200 font-bold"
                 />
               </div>
-
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">Stok Min (Unit)</label>
@@ -1198,7 +1549,7 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
                     type="number"
                     value={newKat.stok_minimum}
                     onChange={(e) => setNewKat({ ...newKat, stok_minimum: Number(e.target.value) })}
-                    className="w-full text-xs h-9 px-3 rounded-xl border border-slate-200 font-bold"
+                    className="w-full text-xs h-10 px-3 rounded-xl border border-slate-200 font-bold"
                   />
                 </div>
                 <div>
@@ -1206,7 +1557,7 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
                   <select
                     value={newKat.jenis}
                     onChange={(e) => setNewKat({ ...newKat, jenis: e.target.value })}
-                    className="w-full text-xs h-9 px-2 rounded-xl border border-slate-200 bg-white font-bold"
+                    className="w-full text-xs h-10 px-2 rounded-xl border border-slate-200 bg-white font-bold"
                   >
                     <option value="Keras">Obat Keras</option>
                     <option value="Bebas Terbatas">Bebas Terbatas</option>
@@ -1214,62 +1565,19 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
                   </select>
                 </div>
               </div>
-
               <div className="pt-2 flex justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setShowAddKatModal(false)}
-                  className="btn-outline h-8 px-3 text-xs"
+                  className="btn-outline h-10 px-3.5 text-xs"
                 >
                   Batal
                 </button>
-                <button type="submit" className="btn-primary h-8 px-4 text-xs font-bold">
+                <button type="submit" className="btn-primary h-10 px-4 text-xs font-bold">
                   Simpan Kategori
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
-
-      
-      {showSupportModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-4 space-y-4 shadow-xl border border-slate-200 animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-              <h4 className="text-sm font-black text-slate-900 flex items-center gap-2">
-                <LifeBuoy className="w-4 h-4 text-blue-600" />
-                <span>Bantuan & SOP Retur Apotek</span>
-              </h4>
-              <button
-                onClick={() => setShowSupportModal(false)}
-                className="text-slate-400 hover:text-slate-600 text-xs font-bold"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="text-xs text-slate-600 space-y-2.5 leading-relaxed">
-              <p>
-                <strong>SOP Pengembalian Obat Kedaluwarsa (Apotek Asahan Farma):</strong>
-              </p>
-              <ol className="list-decimal pl-4 space-y-1.5 text-[11px]">
-                <li>Periksa daftar batch di tab <em>Pengingat & Retur</em> secara berkala.</li>
-                <li>Pisahkan fisik obat dari rak etalase ke area karantina retur.</li>
-                <li>Cetak formulir Berita Acara Retur Fisik yang mencantumkan nomor faktur beli.</li>
-                <li>Hubungi PIC PBF via telepon/WhatsApp sebelum tenggat retur habis.</li>
-                <li>Lakukan Stock Opname penyesuaian stok di SIMAAF setelah obat diserahterimakan.</li>
-              </ol>
-            </div>
-
-            <div className="pt-3 border-t border-slate-100 flex justify-end">
-              <button
-                onClick={() => setShowSupportModal(false)}
-                className="btn-primary h-8 px-4 text-xs font-bold"
-              >
-                Mengerti
-              </button>
-            </div>
           </div>
         </div>
       )}

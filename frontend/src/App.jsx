@@ -17,6 +17,7 @@ function MainApp() {
   const [tanggalAcuan, setTanggalAcuan] = useState('2026-10-31');
   const [urgentReturCount, setUrgentReturCount] = useState(0);
   const [preselectedBatch, setPreselectedBatch] = useState(null);
+  const [focusedQuery, setFocusedQuery] = useState('');
   const [logoUrl, setLogoUrl] = useState(() => {
     const saved = localStorage.getItem('simaaf_logo_url') || '';
     return saved.startsWith('/logo-') ? '' : saved;
@@ -75,7 +76,13 @@ function MainApp() {
   // Navigasi dengan context data
   const handleSelectBatchForAdjustment = (batch) => {
     setPreselectedBatch(batch);
+    setFocusedQuery('');
     setActivePage('penyesuaian');
+  };
+
+  const handleNavigateMenu = (pageId, query = '') => {
+    setFocusedQuery(typeof query === 'string' ? query : '');
+    setActivePage(pageId);
   };
 
   const getPageTitle = () => {
@@ -98,7 +105,7 @@ function MainApp() {
   return (
     <Layout
       activePage={currentPage}
-      setActivePage={setActivePage}
+      setActivePage={(pageId) => handleNavigateMenu(pageId)}
       activePageTitle={getPageTitle()}
       tanggalAcuan={tanggalAcuan}
       urgentCount={urgentReturCount}
@@ -106,12 +113,14 @@ function MainApp() {
     >
       {currentPage === 'dashboard' && (
         <DashboardPage
-          onNavigateToPengingat={() => setActivePage('pengingat')}
-          onNavigateToInventori={() => setActivePage('inventori')}
-          onNavigateToFaktur={() => setActivePage('faktur')}
-          onNavigateToKalender={() => setActivePage('kalender')}
-          onNavigateToPenyesuaian={() => setActivePage('penyesuaian')}
-          onNavigateToPengaturan={() => setActivePage('pengaturan')}
+          onNavigateToPengingat={(q) => handleNavigateMenu('pengingat', q)}
+          onNavigateToInventori={(q) => handleNavigateMenu('inventori', q)}
+          onNavigateToFaktur={() => handleNavigateMenu('faktur')}
+          onNavigateToKalender={() => handleNavigateMenu('kalender')}
+          onNavigateToPenyesuaian={(batch) =>
+            batch && batch.id ? handleSelectBatchForAdjustment(batch) : handleNavigateMenu('penyesuaian')
+          }
+          onNavigateToPengaturan={() => handleNavigateMenu('pengaturan')}
           tanggalAcuan={tanggalAcuan}
         />
       )}
@@ -120,19 +129,25 @@ function MainApp() {
         <FakturInputPage
           onBatchSaved={() => {
             refreshBadgeAndSettings();
-            setActivePage('inventori');
+            handleNavigateMenu('inventori');
           }}
         />
       )}
 
       {currentPage === 'inventori' && (
         <InventoriBatchPage
+          initialSearch={focusedQuery}
+          onClearInitialSearch={() => setFocusedQuery('')}
           onSelectBatchForAdjustment={handleSelectBatchForAdjustment}
+          onNavigateToFaktur={() => handleNavigateMenu('faktur')}
+          onNavigateToPengingat={(q) => handleNavigateMenu('pengingat', q)}
         />
       )}
 
       {currentPage === 'pengingat' && (
         <PengingatReturPage
+          initialSearch={focusedQuery}
+          onClearInitialSearch={() => setFocusedQuery('')}
           onNavigateToPenyesuaian={handleSelectBatchForAdjustment}
         />
       )}

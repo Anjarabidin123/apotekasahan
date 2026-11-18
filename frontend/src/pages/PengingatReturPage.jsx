@@ -18,17 +18,34 @@ import {
   LayoutGrid,
   CheckSquare,
   Square,
-  Download
+  Download,
+  MessageCircle,
 } from 'lucide-react';
 
-export function PengingatReturPage({ onNavigateToPenyesuaian }) {
+/**
+ * Mengonversi nomor telepon lokal (08xx / 061-xxx) menjadi format tautan WhatsApp internasional.
+ */
+function buildWhatsAppUrl(phone, text) {
+  const digits = String(phone || '').replace(/\D/g, '');
+  if (!digits) return null;
+  const intl = digits.startsWith('0') ? `62${digits.slice(1)}` : digits;
+  return `https://wa.me/${intl}?text=${encodeURIComponent(text)}`;
+}
+
+export function PengingatReturPage({
+  onNavigateToPenyesuaian,
+  initialSearch = '',
+  onClearInitialSearch,
+}) {
   const [data, setData] = useState(null);
+  const [distributors, setDistributors] = useState([]);
+  const [apotekProfile, setApotekProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('retur');
   const [viewMode, setViewMode] = useState(() =>
     typeof window !== 'undefined' && window.innerWidth < 768 ? 'cards' : 'table'
   );
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(initialSearch || '');
   const [filterPbf, setFilterPbf] = useState('semua');
   const [sortBy, setSortBy] = useState('urgensi');
   const [selectedBatchIds, setSelectedBatchIds] = useState([]);
@@ -38,11 +55,35 @@ export function PengingatReturPage({ onNavigateToPenyesuaian }) {
     loadPengingat();
   }, []);
 
+  useEffect(() => {
+    if (!initialSearch) return;
+    setSearchQuery(initialSearch);
+    if (!data?.data) return;
+    const q = initialSearch.toLowerCase();
+    const matchFn = (b) =>
+      (b.nama_obat || '').toLowerCase().includes(q) ||
+      (b.nomor_batch || '').toLowerCase().includes(q);
+    if (data.data.mendesakRetur?.some(matchFn)) {
+      setActiveTab('retur');
+    } else if (data.data.mendekatiKedaluwarsa?.some(matchFn)) {
+      setActiveTab('kedaluwarsa');
+    } else if (data.data.stokMenipis?.some(matchFn)) {
+      setActiveTab('menipis');
+    }
+    if (onClearInitialSearch) onClearInitialSearch();
+  }, [initialSearch, data]);
+
   const loadPengingat = async () => {
     setLoading(true);
     try {
-      const res = await api.getPengingat();
+      const [res, distList, prof] = await Promise.all([
+        api.getPengingat(),
+        api.getDistributors(),
+        api.getProfile(),
+      ]);
       setData(res);
+      setDistributors(distList || []);
+      setApotekProfile(prof || null);
     } catch (e) {
       console.error(e);
     } finally {
@@ -291,59 +332,52 @@ export function PengingatReturPage({ onNavigateToPenyesuaian }) {
       </div>
 
       
-      <div className="bg-white rounded-2xl border border-slate-200/80 p-3 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
-        {/* Kiri: Search Input */}
-        <div className="relative flex-1 max-w-md w-full">
+      {/* Bilah Pencarian & Filter Bersih (Tanpa Pemotongan di Mobile) */}
+      <div className="bg-white rounded-2xl border border-slate-200/80 p-3 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-2.5">
+        <div className="relative flex-1 md:max-w-md w-full">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Cari nama obat, nomor batch, atau distributor..."
+            placeholder="Cari obat, nomor batch, atau PBF..."
             className="w-full text-xs h-11 sm:h-9 pl-9 pr-3 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
           />
         </div>
 
-        {/* Kanan: Filter PBF, Sorting, & Toggle Table/Cards */}
-        <div className="flex items-center gap-2 flex-wrap w-full md:w-auto">
-          {/* Dropdown Filter PBF */}
-          <div className="flex items-center gap-1.5 text-xs text-slate-600 flex-1 sm:flex-initial">
-            <Filter className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-            <select
-              value={filterPbf}
-              onChange={(e) => setFilterPbf(e.target.value)}
-              className="text-xs h-11 sm:h-9 px-2.5 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-medium w-full sm:w-auto"
-            >
-              <option value="semua">Semua PBF ({uniquePbfs.length})</option>
-              {uniquePbfs.map((pbf, idx) => (
-                <option key={idx} value={pbf}>
-                  {pbf}
-                </option>
-              ))}
-            </select>
-          </div>
+        <div className="grid grid-cols-2 md:flex items-center gap-2 w-full md:w-auto">
+          <select
+            value={filterPbf}
+            onChange={(e) => setFilterPbf(e.target.value)}
+            aria-label="Filter distributor PBF"
+            className="text-xs h-11 sm:h-9 px-2.5 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-medium w-full md:w-44"
+          >
+            <option value="semua">Semua PBF ({uniquePbfs.length})</option>
+            {uniquePbfs.map((pbf, idx) => (
+              <option key={idx} value={pbf}>
+                {pbf}
+              </option>
+            ))}
+          </select>
 
-          {/* Sorting */}
-          <div className="flex items-center gap-1.5 text-xs text-slate-600 flex-1 sm:flex-initial">
-            <ArrowUpDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="text-xs h-11 sm:h-9 px-2.5 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-medium w-full sm:w-auto"
-            >
-              <option value="urgensi">Tenggat Terdekat</option>
-              <option value="nilai_desc">Nilai Terbesar (Rp)</option>
-              <option value="nama_asc">Nama Obat (A-Z)</option>
-              <option value="stok_asc">Sisa Stok Sedikit</option>
-            </select>
-          </div>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            aria-label="Urutkan daftar"
+            className="text-xs h-11 sm:h-9 px-2.5 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-medium w-full md:w-40"
+          >
+            <option value="urgensi">Tenggat Terdekat</option>
+            <option value="nilai_desc">Nilai Terbesar (Rp)</option>
+            <option value="nama_asc">Nama Obat (A-Z)</option>
+            <option value="stok_asc">Stok Paling Sedikit</option>
+          </select>
 
-          {/* View Mode Switcher (with >= 44x44px touch targets on mobile) */}
-          <div className="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200">
+          {/* View Mode Switcher hanya muncul di Tablet/Desktop agar mobile selalu memakai Kartu Rapi */}
+          <div className="hidden md:flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200 shrink-0">
             <button
               type="button"
               onClick={() => setViewMode('table')}
-              className={`w-11 h-11 sm:w-8 sm:h-8 min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 flex items-center justify-center rounded-lg text-xs transition ${
+              className={`w-8 h-8 flex items-center justify-center rounded-lg text-xs transition ${
                 viewMode === 'table'
                   ? 'bg-white text-blue-600 font-bold shadow-xs'
                   : 'text-slate-500 hover:text-slate-800'
@@ -356,7 +390,7 @@ export function PengingatReturPage({ onNavigateToPenyesuaian }) {
             <button
               type="button"
               onClick={() => setViewMode('cards')}
-              className={`w-11 h-11 sm:w-8 sm:h-8 min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 flex items-center justify-center rounded-lg text-xs transition ${
+              className={`w-8 h-8 flex items-center justify-center rounded-lg text-xs transition ${
                 viewMode === 'cards'
                   ? 'bg-white text-blue-600 font-bold shadow-xs'
                   : 'text-slate-500 hover:text-slate-800'
@@ -403,8 +437,9 @@ export function PengingatReturPage({ onNavigateToPenyesuaian }) {
       )}
 
       
-      {viewMode === 'table' ? (
-        <div className="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-xs">
+      {/* Tabel Desktop (hanya di >= md saat viewMode === 'table') */}
+      {viewMode === 'table' && (
+        <div className="hidden md:block bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-xs">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
@@ -566,102 +601,137 @@ export function PengingatReturPage({ onNavigateToPenyesuaian }) {
             <span>SIMAAF Apotek Asahan Farma • Kepatuhan Standar CDOB BPOM</span>
           </div>
         </div>
-      ) : (
-        /* Mobile / Cards View with Full Feature Parity */
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
-          {filteredAndSortedList.map((item) => (
-            <div
-              key={item.id}
-              className={`bg-white rounded-2xl border p-4 shadow-xs transition-all space-y-3 ${
-                selectedBatchIds.includes(item.id)
-                  ? 'border-blue-400 ring-2 ring-blue-500/20 bg-blue-50/20'
-                  : 'border-slate-200/80 hover:border-slate-300'
-              }`}
-            >
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex items-start gap-2 min-w-0">
-                  <button
-                    type="button"
-                    onClick={() => toggleSelectOne(item.id)}
-                    className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-blue-600 transition -ml-2 -mt-2 shrink-0"
-                    title={selectedBatchIds.includes(item.id) ? 'Batalkan pilihan' : 'Pilih batch'}
-                    aria-label={`Pilih batch ${item.nomor_batch}`}
-                  >
-                    {selectedBatchIds.includes(item.id) ? (
-                      <CheckSquare className="w-5 h-5 text-blue-600" />
-                    ) : (
-                      <Square className="w-5 h-5 text-slate-400" />
-                    )}
-                  </button>
-                  <div className="min-w-0">
-                    <h4 className="text-xs font-bold text-slate-900 line-clamp-1">
-                      {item.nama_obat}
-                    </h4>
-                    <span className="font-mono text-[10px] text-slate-500 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded font-semibold mt-0.5 inline-block">
-                      {item.nomor_batch}
+      )}
+
+      {/* Tampilan Kartu: Selalu tampil di Mobile (< md), dan tampil di Desktop saat viewMode === 'cards' */}
+      <div
+        className={`${
+          viewMode === 'cards' ? 'grid' : 'grid md:hidden'
+        } grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3`}
+      >
+        {filteredAndSortedList.length === 0 ? (
+          <div className="col-span-full bg-white rounded-2xl border border-slate-200/80 py-10 text-center text-xs text-slate-400">
+            Tidak ada batch yang cocok dengan filter saat ini.
+          </div>
+        ) : (
+          filteredAndSortedList.map((item) => {
+            const pbfMeta = distributors.find(
+              (d) =>
+                Number(d.id) === Number(item.distributor_id) ||
+                d.nama === item.nama_distributor
+            );
+            const waText = `Halo ${pbfMeta?.kontak || 'Tim Retur'} (${item.nama_distributor}), kami dari ${
+              apotekProfile?.nama_apotek || 'Apotek Asahan Farma'
+            } ingin mengajukan retur ${item.nama_obat} (Batch ${item.nomor_batch}, ${
+              item.jumlah_saat_ini
+            } unit, batas retur ${item.batas_retur || '-'}). Mohon arahan penjemputannya. Terima kasih.`;
+            const waUrl = buildWhatsAppUrl(pbfMeta?.telepon, waText);
+
+            return (
+              <div
+                key={item.id}
+                className={`bg-white rounded-2xl border p-3.5 sm:p-4 shadow-xs transition-all space-y-2.5 ${
+                  selectedBatchIds.includes(item.id)
+                    ? 'border-blue-400 ring-2 ring-blue-500/20 bg-blue-50/20'
+                    : 'border-slate-200/80 hover:border-slate-300'
+                }`}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-start gap-2 min-w-0">
+                    <button
+                      type="button"
+                      onClick={() => toggleSelectOne(item.id)}
+                      className="w-10 h-10 min-w-[40px] flex items-center justify-center text-slate-400 hover:text-blue-600 transition -ml-1.5 -mt-1.5 shrink-0"
+                      title={selectedBatchIds.includes(item.id) ? 'Batalkan pilihan' : 'Pilih batch'}
+                      aria-label={`Pilih batch ${item.nomor_batch}`}
+                    >
+                      {selectedBatchIds.includes(item.id) ? (
+                        <CheckSquare className="w-5 h-5 text-blue-600" />
+                      ) : (
+                        <Square className="w-5 h-5 text-slate-400" />
+                      )}
+                    </button>
+                    <div className="min-w-0">
+                      <h4 className="text-[13px] font-bold text-slate-900 line-clamp-1">
+                        {item.nama_obat}
+                      </h4>
+                      <span className="font-mono text-[10px] text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded font-semibold mt-0.5 inline-block">
+                        {item.nomor_batch}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <span className="text-xs font-black text-slate-900 block tabular-nums">
+                      {formatRupiah(item.nilai_total)}
+                    </span>
+                    <span className="text-[11px] font-medium text-slate-500">
+                      {item.jumlah_saat_ini} unit
                     </span>
                   </div>
                 </div>
-                <div className="text-right shrink-0">
-                  <span className="text-xs font-black text-slate-900 block">
-                    {formatRupiah(item.nilai_total)}
-                  </span>
-                  <span className="text-[10px] text-slate-400">
-                    {item.jumlah_saat_ini} tersisa
-                  </span>
-                </div>
-              </div>
 
-              {/* Status Badges Parity */}
-              <div className="flex flex-wrap items-center gap-1.5">
-                <StatusReturBadge status={item.status_retur} batasRetur={item.batas_retur} />
-                <StatusRisikoBadge status={item.status_risiko} skor={item.skor_risiko} />
-              </div>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <StatusReturBadge
+                    status={item.status_retur}
+                    sisaHari={item.sisa_hari_retur}
+                    batasRetur={item.batas_retur}
+                  />
+                  <StatusRisikoBadge status={item.status_risiko} skor={item.skor_risiko} />
+                </div>
 
-              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-[11px] space-y-1">
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Distributor:</span>
-                  <span className="font-bold text-slate-800 truncate max-w-[150px]">
-                    {item.nama_distributor}
-                  </span>
+                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-[11px] space-y-1">
+                  <div className="flex justify-between gap-2">
+                    <span className="text-slate-400 shrink-0">Distributor:</span>
+                    <span className="font-bold text-slate-800 truncate">{item.nama_distributor}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Batas Retur:</span>
+                    <span className="font-bold text-rose-600">{item.batas_retur || '-'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Tgl Kedaluwarsa:</span>
+                    <span className="text-slate-700">{item.tanggal_kedaluwarsa}</span>
+                  </div>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Batas Retur:</span>
-                  <span className="font-bold text-rose-600">{item.batas_retur || '-'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Tgl Kedaluwarsa:</span>
-                  <span className="text-slate-700">{item.tanggal_kedaluwarsa}</span>
-                </div>
-              </div>
 
-              {/* Action Buttons with >=44px touch targets on mobile */}
-              <div className="flex items-center gap-2 pt-1 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => handleOpenSingleBap(item)}
-                  className="btn-outline h-11 min-h-[44px] px-3 text-xs font-bold text-slate-700 flex-1 flex items-center justify-center gap-1.5"
-                  title="Buat Berita Acara Retur"
-                >
-                  <FileText className="w-3.5 h-3.5 text-blue-600" />
-                  <span>Dokumen BAP</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    onNavigateToPenyesuaian && onNavigateToPenyesuaian(item)
-                  }
-                  className="btn-primary h-11 min-h-[44px] px-3 text-xs font-bold flex-1 flex items-center justify-center gap-1.5"
-                  title="Cek Fisik Rak & Penyesuaian Stok"
-                >
-                  <span>Cek Rak</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
+                {/* Tombol Aksi Cepat Mobile-Friendly */}
+                <div className="flex items-center gap-1.5 pt-1 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => handleOpenSingleBap(item)}
+                    className="btn-outline h-11 min-h-[44px] px-2.5 text-xs font-bold text-slate-700 flex-1 flex items-center justify-center gap-1"
+                    title="Buat Berita Acara Retur"
+                  >
+                    <FileText className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                    <span>Dokumen BAP</span>
+                  </button>
+                  {waUrl && (
+                    <a
+                      href={waUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="h-11 min-h-[44px] w-11 shrink-0 rounded-xl border border-teal-200 bg-teal-50 hover:bg-teal-100 text-teal-700 flex items-center justify-center transition"
+                      title={`Hubungi PIC PBF (${pbfMeta?.kontak || pbfMeta?.telepon})`}
+                      aria-label={`Hubungi PBF ${item.nama_distributor}`}
+                    >
+                      <MessageCircle className="w-4 h-4" />
+                    </a>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => onNavigateToPenyesuaian && onNavigateToPenyesuaian(item)}
+                    className="btn-primary h-11 min-h-[44px] px-2.5 text-xs font-bold flex-1 flex items-center justify-center gap-1"
+                    title="Cek Fisik Rak & Penyesuaian Stok"
+                  >
+                    <span>Cek Rak</span>
+                    <ArrowRight className="w-3.5 h-3.5 shrink-0" />
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
-      )}
+            );
+          })
+        )}
+      </div>
 
       {/* Modal Dokumen Berita Acara Retur (BAP) */}
       {bapModalData.isOpen && (
@@ -696,16 +766,16 @@ export function PengingatReturPage({ onNavigateToPenyesuaian }) {
 
             {/* Scrollable Content */}
             <div className="p-3 sm:p-4 overflow-y-auto space-y-3 text-xs flex-1">
-              {/* Pharmacy Letterhead */}
+              {/* Kop Surat Apotek dari Profil */}
               <div className="text-center pb-4 border-b border-slate-200">
-                <h2 className="text-base font-black text-slate-950 tracking-tight">
-                  APOTEK ASAHAN FARMA
+                <h2 className="text-base font-black text-slate-950 tracking-tight uppercase">
+                  {apotekProfile?.nama_apotek || 'APOTEK ASAHAN FARMA'}
                 </h2>
                 <p className="text-slate-600 text-[11px] font-medium">
-                  Jl. Imam Bonjol No.331, Kisaran Timur, Kab. Asahan, Sumatera Utara
+                  {apotekProfile?.alamat || 'Jl. Imam Bonjol No.331, Kisaran Timur, Kab. Asahan, Sumatera Utara'}
                 </p>
                 <p className="text-slate-400 text-[10px] font-mono">
-                  NIB: 1210210063257 • SIA: 442/012/SIA/DPMPTSP/2022 • APJ: Ibu Anni, S.Farm., Apt.
+                  NIB: {apotekProfile?.nib || '1210210063257'} • SIA: {apotekProfile?.sia || '503/SIA/042/DPMPTSP/2021'} • APJ: {apotekProfile?.apoteker_pj || 'apt. Nurul Hasanah, S.Farm'}
                 </p>
               </div>
 

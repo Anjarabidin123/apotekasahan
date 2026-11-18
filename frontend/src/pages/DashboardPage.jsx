@@ -41,7 +41,12 @@ export function DashboardPage({
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
-  const [hideValue, setHideValue] = useState(false);
+  const [hideValue, setHideValue] = useState(
+    () => localStorage.getItem('simaaf_privacy_mode') === 'true'
+  );
+  const [mobileQueueFirst] = useState(
+    () => localStorage.getItem('simaaf_mobile_queue_first') !== 'false'
+  );
   const [activeTab, setActiveTab] = useState('semua');
   const [searchQuery, setSearchQuery] = useState('');
   const [defaultPage, setDefaultPage] = useState(
@@ -206,6 +211,10 @@ export function DashboardPage({
   const countRisikoRetur = summary?.jumlah_batch_berisiko ?? mendesakList.length;
   const countAman = Math.max(0, totalBatch - countRisikoRetur);
   const pctAman = Math.round((countAman / totalBatch) * 100);
+  const countLewatBatas = batches.filter((b) => b.status_retur === 'lewat_batas').length;
+  const countSegeraRetur = mendesakList.length;
+  const countTerkendali = Math.max(0, batches.length - countLewatBatas - countSegeraRetur);
+  const totalDistCount = Math.max(batches.length, 1);
 
   const handleExportTableCsv = () => {
     const source =
@@ -274,15 +283,28 @@ export function DashboardPage({
       {/* Kartu Ringkasan Khusus Mobile Bergaya Native FinTech-Health */}
       <section className="md:hidden rounded-2xl bg-gradient-to-br from-[#F4F6FF] via-[#EAEFFD] to-[#DDE6FE] border border-[#D4DFFB] p-4 shadow-[0_6px_20px_rgba(37,99,235,0.07)] space-y-3">
         <div className="flex items-center justify-between gap-2">
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/90 border border-blue-200/80 text-[11px] font-bold text-blue-700 shadow-2xs">
+          <button
+            type="button"
+            onClick={onNavigateToPengaturan}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/90 border border-blue-200/80 text-[11px] font-bold text-blue-700 shadow-2xs active:scale-95 transition"
+            title="Ubah tanggal acuan di Pengaturan"
+          >
             <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse" />
             <span>Acuan {refDate}</span>
-          </div>
+          </button>
 
           <div className="flex items-center gap-1.5">
             <button
               type="button"
-              onClick={() => setHideValue(!hideValue)}
+              onClick={() => {
+                const next = !hideValue;
+                setHideValue(next);
+                try {
+                  localStorage.setItem('simaaf_privacy_mode', String(next));
+                } catch {
+                  // abaikan jika storage dibatasi
+                }
+              }}
               className="w-8 h-8 rounded-lg bg-white/90 border border-white text-slate-600 flex items-center justify-center shadow-2xs active:scale-95 transition"
               aria-label={hideValue ? 'Tampilkan Nominal' : 'Sembunyikan Nominal'}
             >
@@ -309,6 +331,33 @@ export function DashboardPage({
             <span className="text-[11px] font-semibold text-slate-500 shrink-0">
               {summary?.total_batch_aktif || batches.length} batch
             </span>
+          </div>
+        </div>
+
+        {/* Bilah Segmen Sebaran Kondisi Batch */}
+        <div className="space-y-1">
+          <div className="h-2 w-full rounded-full bg-white/85 overflow-hidden flex gap-0.5 p-0.5">
+            {countLewatBatas > 0 && (
+              <div
+                className="h-full rounded-full bg-rose-500"
+                style={{ width: `${(countLewatBatas / totalDistCount) * 100}%` }}
+              />
+            )}
+            {countSegeraRetur > 0 && (
+              <div
+                className="h-full rounded-full bg-amber-400"
+                style={{ width: `${(countSegeraRetur / totalDistCount) * 100}%` }}
+              />
+            )}
+            <div
+              className="h-full rounded-full bg-teal-500 flex-1"
+              style={{ width: `${(countTerkendali / totalDistCount) * 100}%` }}
+            />
+          </div>
+          <div className="flex items-center justify-between text-[10px] font-semibold text-slate-600">
+            <span>{countLewatBatas} lewat batas</span>
+            <span>{countSegeraRetur} wajib retur</span>
+            <span>{countTerkendali} aman</span>
           </div>
         </div>
 
@@ -586,7 +635,8 @@ export function DashboardPage({
 
       {/* Workspace Utama: Tabel Kerja Inventori (8 Kolom) + Antrean Tindakan Cepat (4 Kolom) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 items-start">
-        <section className="lg:col-span-8 surface-elevated overflow-hidden">
+        <div className={`contents lg:block lg:col-span-8 lg:order-1 ${mobileQueueFirst ? 'order-2' : 'order-1'}`}>
+          <section className={`${mobileQueueFirst ? 'order-2' : 'order-1'} surface-elevated overflow-hidden`}>
           <div className="p-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <h3 className="text-sm font-extrabold text-slate-900">
@@ -711,11 +761,15 @@ export function DashboardPage({
               </div>
 
               <div className="sm:hidden divide-y divide-slate-100">
-                {filteredTableItems.map((item) => (
+                {filteredTableItems.slice(0, 5).map((item) => (
                   <button
                     key={item.id}
                     type="button"
-                    onClick={activeTab === 'stok' ? onNavigateToInventori : onNavigateToPengingat}
+                    onClick={() =>
+                      activeTab === 'stok' || item.status_retur === 'lewat_batas'
+                        ? onNavigateToInventori(item.nomor_batch)
+                        : onNavigateToPengingat(item.nomor_batch)
+                    }
                     className="w-full px-3.5 py-3 text-left hover:bg-slate-50 active:bg-slate-100/70 flex items-center justify-between gap-3 transition"
                   >
                     <div className="min-w-0 space-y-1">
@@ -750,22 +804,30 @@ export function DashboardPage({
 
           <div className="px-4 py-3 border-t border-slate-200 bg-slate-50/70 flex items-center justify-between text-xs text-slate-500">
             <span>
-              Menampilkan <strong className="text-slate-900">{filteredTableItems.length}</strong> batch
+              Menampilkan{' '}
+              <strong className="text-slate-900 sm:hidden">
+                {Math.min(5, filteredTableItems.length)}
+              </strong>
+              <strong className="text-slate-900 hidden sm:inline">
+                {filteredTableItems.length}
+              </strong>{' '}
+              dari {batches.length} batch
             </span>
             <button
               type="button"
-              onClick={onNavigateToInventori}
+              onClick={() => onNavigateToInventori()}
               className="font-bold text-blue-600 hover:text-blue-800 inline-flex items-center gap-1 transition"
             >
               <span>Kelola Semua Batch</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
-        </section>
+          </section>
+        </div>
 
         {/* Kolom Kanan: Antrean Tindakan Cepat + Eksposur PBF + Halaman Awal */}
-        <div className="lg:col-span-4 space-y-3">
-          <section className="surface-elevated p-4 space-y-3">
+        <div className="contents lg:block lg:col-span-4 lg:order-2 lg:space-y-3">
+          <section className={`${mobileQueueFirst ? 'order-1' : 'order-2'} surface-elevated p-4 space-y-3`}>
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-extrabold text-slate-900">
                 Antrean Tindakan
@@ -813,14 +875,18 @@ export function DashboardPage({
                     <div className="flex items-center gap-2 pt-0.5">
                       <button
                         type="button"
-                        onClick={onNavigateToPengingat}
+                        onClick={() =>
+                          q.status_retur === 'lewat_batas'
+                            ? onNavigateToInventori(q.nomor_batch)
+                            : onNavigateToPengingat(q.nomor_batch)
+                        }
                         className="flex-1 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold transition shadow-xs"
                       >
                         Proses Retur
                       </button>
                       <button
                         type="button"
-                        onClick={onNavigateToPenyesuaian}
+                        onClick={() => onNavigateToPenyesuaian(q)}
                         className="px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 text-[11px] font-bold transition"
                       >
                         Cek Rak
@@ -832,7 +898,7 @@ export function DashboardPage({
             )}
           </section>
 
-          <section className="surface-elevated p-4 space-y-3">
+          <section className="order-3 surface-elevated p-4 space-y-3">
             <div className="flex items-center justify-between gap-2">
               <h3 className="text-sm font-extrabold text-slate-900">
                 Eksposur Risiko PBF
@@ -885,7 +951,7 @@ export function DashboardPage({
             )}
           </section>
 
-          <section className="hidden md:block surface-elevated p-4 space-y-2.5">
+          <section className="hidden md:block lg:order-4 surface-elevated p-4 space-y-2.5">
             <div className="flex items-center justify-between gap-2">
               <h3 className="text-sm font-extrabold text-slate-900">
                 Halaman Awal Aplikasi
