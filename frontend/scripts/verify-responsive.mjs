@@ -135,43 +135,13 @@ async function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
-async function openMobileDrawer(cdp) {
-  for (let attempt = 0; attempt < 8; attempt++) {
-    const state = await cdp.evaluate(`
-      (() => {
-        const drawer = document.querySelector('[data-testid="mobile-drawer"]');
-        if (drawer && drawer.classList.contains('translate-x-0')) return true;
-        const btn = document.querySelector('button[aria-label="Buka menu navigasi"]');
-        if (btn) btn.click();
-        return false;
-      })()
-    `);
-    if (state) return true;
-    await sleep(200);
-  }
-  return false;
-}
-
-async function closeMobileDrawer(cdp) {
-  for (let attempt = 0; attempt < 8; attempt++) {
-    const state = await cdp.evaluate(`
-      (() => {
-        const drawer = document.querySelector('[data-testid="mobile-drawer"]');
-        if (drawer && drawer.classList.contains('-translate-x-full')) return true;
-        const backdrop = document.querySelector('[data-testid="mobile-drawer-backdrop"]');
-        if (backdrop) {
-          backdrop.click();
-        } else {
-          const closeBtn = document.querySelector('[data-testid="mobile-drawer-close"]');
-          if (closeBtn) closeBtn.click();
-        }
-        return false;
-      })()
-    `);
-    if (state) return true;
-    await sleep(200);
-  }
-  return false;
+async function navigateMobileBottomNav(cdp, pageId) {
+  await cdp.evaluate(`
+    (() => {
+      const btn = document.querySelector('[data-testid="bottom-nav-${pageId}"]');
+      if (btn) btn.click();
+    })()
+  `);
 }
 
 async function run() {
@@ -298,24 +268,29 @@ async function run() {
       `scrollWidth: ${overflowCheck.docScroll}px vs clientWidth: ${overflowCheck.winWidth}px`
     );
 
-    // Test A2: Mobile Hamburger Button touch target (>= 44x44px)
-    const hamburgerInfo = await cdpClient.evaluate(`
+    // Test A2: Hamburger-free Mobile Header & BottomNav Touch Targets (>= 44x44px)
+    const mobileNavInfo = await cdpClient.evaluate(`
       (() => {
-        const btn = document.querySelector('button[aria-label="Buka menu navigasi"]');
-        if (!btn) return null;
-        const rect = btn.getBoundingClientRect();
+        const hamburger = document.querySelector('[data-testid="mobile-hamburger"]') || document.querySelector('button[aria-label="Buka menu navigasi"]');
+        const drawer = document.querySelector('[data-testid="mobile-drawer"]');
+        const tabBtns = Array.from(document.querySelectorAll('[data-testid^="bottom-nav-"]'));
+        const rects = tabBtns.map(b => {
+          const r = b.getBoundingClientRect();
+          return { id: b.getAttribute('data-testid'), w: Math.round(r.width), h: Math.round(r.height) };
+        });
+        const allTouchOk = rects.length === 5 && rects.every(r => r.w >= 44 && r.h >= 44);
         return {
-          exists: true,
-          width: Math.round(rect.width),
-          height: Math.round(rect.height),
-          visible: rect.width > 0 && rect.height > 0
+          hamburgerRemoved: hamburger === null && drawer === null,
+          tabCount: rects.length,
+          allTouchOk,
+          sampleRect: rects[0] || null
         };
       })()
     `);
     recordResult(
-      'Mobile Hamburger Button Touch Target (>= 44x44px)',
-      hamburgerInfo && hamburgerInfo.width >= 44 && hamburgerInfo.height >= 44,
-      hamburgerInfo ? `${hamburgerInfo.width}x${hamburgerInfo.height}px` : 'Not found'
+      'Mobile Hamburger Removed & BottomNav Touch Targets (>= 44x44px)',
+      mobileNavInfo && mobileNavInfo.hamburgerRemoved && mobileNavInfo.allTouchOk,
+      mobileNavInfo ? `tabs: ${mobileNavInfo.tabCount}, sample: ${mobileNavInfo.sampleRect?.w}x${mobileNavInfo.sampleRect?.h}px` : 'Not found'
     );
 
     // Test A3: Header Role Toggle touch target (>= 44px height)
@@ -337,77 +312,17 @@ async function run() {
       roleBtnInfo ? `Height: ${roleBtnInfo.height}px, Width: ${roleBtnInfo.width}px` : 'Not found'
     );
 
-    // Test A4: Off-Canvas Drawer Open & Backdrop
-    await openMobileDrawer(cdpClient);
-    await sleep(350);
+    // Test A4: Navigation to "Pengingat & Retur" via BottomNav
+    await navigateMobileBottomNav(cdpClient, 'pengingat');
 
-    const drawerOpenState = await cdpClient.evaluate(`
-      (() => {
-        const drawer = document.querySelector('[data-testid="mobile-drawer"]');
-        const backdrop = document.querySelector('[data-testid="mobile-drawer-backdrop"]');
-        if (!drawer) return { error: 'Drawer not found' };
-        const hasOpenClass = drawer.classList.contains('translate-x-0');
-        const backdropVisible = backdrop !== null;
-        return { hasOpenClass, backdropVisible };
-      })()
-    `);
-    recordResult(
-      'Off-Canvas Mobile Drawer Opens with Backdrop',
-      drawerOpenState.hasOpenClass && drawerOpenState.backdropVisible,
-      'translate-x-0 active, backdrop present'
-    );
-
-    // Test A5: Backdrop tap closes drawer
-    await cdpClient.evaluate(`
-      (() => {
-        const backdrop = document.querySelector('[data-testid="mobile-drawer-backdrop"]');
-        if (backdrop) backdrop.click();
-      })()
-    `);
-    await sleep(400);
-
-    const drawerClosedState = await cdpClient.evaluate(`
-      (() => {
-        const drawer = document.querySelector('[data-testid="mobile-drawer"]');
-        const backdrop = document.querySelector('[data-testid="mobile-drawer-backdrop"]');
-        return {
-          isClosed: drawer && drawer.classList.contains('-translate-x-full'),
-          backdropRemoved: backdrop === null
-        };
-      })()
-    `);
-    recordResult(
-      'Tapping Backdrop Closes Mobile Drawer',
-      drawerClosedState.isClosed && drawerClosedState.backdropRemoved,
-      '-translate-x-full active, backdrop removed'
-    );
-
-    // Test A6: Navigation to "Pengingat & Retur" via Drawer
-    await cdpClient.evaluate(`
-      (() => {
-        const btn = document.querySelector('[data-testid="mobile-hamburger"]') || document.querySelector('button[aria-label="Buka menu navigasi"]');
-        if (btn) btn.click();
-      })()
-    `);
-    await sleep(400);
-
-    await cdpClient.evaluate(`
-      (() => {
-        const navBtn = document.querySelector('[data-testid="mobile-nav-pengingat"]');
-        if (navBtn) navBtn.click();
-      })()
-    `);
-
-    let pengingatNavState = { isClosed: false, pageTitle: '' };
+    let pengingatNavState = { pageTitle: '' };
     for (let i = 0; i < 15; i++) {
       await sleep(150);
       pengingatNavState = await cdpClient.evaluate(`
         (() => {
-          const drawer = document.querySelector('[data-testid="mobile-drawer"]');
-          const isClosed = drawer && drawer.classList.contains('-translate-x-full');
           const h1 = document.querySelector('[data-testid="page-title"]') || document.querySelector('header h1');
           const pageTitle = h1 ? h1.textContent.trim() : '';
-          return { isClosed, pageTitle };
+          return { pageTitle };
         })()
       `);
       if (pengingatNavState && pengingatNavState.pageTitle.includes('Pengingat')) {
@@ -416,12 +331,12 @@ async function run() {
     }
 
     recordResult(
-      'Drawer Link Navigation (Pengingat & Retur)',
-      pengingatNavState.isClosed && pengingatNavState.pageTitle.includes('Pengingat'),
+      'BottomNav Navigation (Pengingat & Retur)',
+      pengingatNavState.pageTitle.includes('Pengingat'),
       `Page title: "${pengingatNavState.pageTitle}"`
     );
 
-    // Test A7: Scrollable BAP Modal on Mobile
+    // Test A5: Scrollable BAP Modal on Mobile
     for (let i = 0; i < 15; i++) {
       const hasBapBtn = await cdpClient.evaluate(`
         (() => {
@@ -433,27 +348,29 @@ async function run() {
       await sleep(150);
     }
 
-    const bapModalTest = await cdpClient.evaluate(`
-      (async () => {
-        // Find Dokumen BAP button in card or table
-        const bapBtns = Array.from(document.querySelectorAll('button')).filter(b => 
+    await cdpClient.evaluate(`
+      (() => {
+        const bapBtns = Array.from(document.querySelectorAll('button')).filter(b =>
           b.textContent.includes('Dokumen BAP') || b.title?.includes('Berita Acara') || b.getAttribute('aria-label')?.includes('Berita Acara')
         );
-        if (bapBtns.length > 0) {
-          bapBtns[0].click();
-        }
-        
+        if (bapBtns.length > 0) bapBtns[0].click();
+      })()
+    `);
+    await sleep(300);
+
+    const bapModalTest = await cdpClient.evaluate(`
+      (() => {
         const modal = document.querySelector('[data-testid="bap-modal"]');
         if (!modal) {
           return { success: false, reason: 'Modal not opened' };
         }
-        
+
         const modalBox = modal.querySelector('div[class*="max-h"]') || modal.querySelector('.max-w-2xl');
-        
+
         // Close modal
         const closeBtn = document.querySelector('[data-testid="bap-modal-close"]') || modal.querySelector('button');
         if (closeBtn) closeBtn.click();
-        
+
         return {
           success: true,
           hasModal: true,
@@ -463,28 +380,32 @@ async function run() {
     `);
     recordResult(
       'BAP Modal Dialog Responsiveness & Vertical Constraint',
-      bapModalTest.success && bapModalTest.hasModal,
+      bapModalTest.success && bapModalTest.hasModal && bapModalTest.maxHeightConstrained,
       'max-h-[90vh] with scrollable body'
     );
 
-    // Test A8: Navigate through remaining core pages and test zero horizontal scroll
+    // Test A6: Navigate through remaining core pages via BottomNav & Beranda Quick Actions
     const pagesToTest = [
-      { id: 'faktur', name: 'Penerimaan Faktur' },
-      { id: 'inventori', name: 'Persediaan Obat' },
-      { id: 'penyesuaian', name: 'Penyesuaian Stok (Opname)' },
-      { id: 'kalender', name: 'Kalender Tenggat PBF' },
-      { id: 'pengaturan', name: 'Pengaturan Apotek' },
+      { via: 'bottom-nav', id: 'faktur', name: 'Penerimaan Faktur' },
+      { via: 'bottom-nav', id: 'inventori', name: 'Persediaan Obat' },
+      { via: 'bottom-nav', id: 'penyesuaian', name: 'Penyesuaian Stok (Opname)' },
+      { via: 'quick-action', id: 'kalender', name: 'Kalender Tenggat PBF' },
+      { via: 'quick-action', id: 'pengaturan', name: 'Pengaturan Apotek' },
     ];
 
     for (const page of pagesToTest) {
-      await openMobileDrawer(cdpClient);
-      await sleep(250);
-      await cdpClient.evaluate(`
-        (() => {
-          const navBtn = document.querySelector('[data-testid="mobile-nav-${page.id}"]');
-          if (navBtn) navBtn.click();
-        })()
-      `);
+      if (page.via === 'quick-action') {
+        await navigateMobileBottomNav(cdpClient, 'dashboard');
+        await sleep(350);
+        await cdpClient.evaluate(`
+          (() => {
+            const btn = document.querySelector('[data-testid="quick-action-${page.id}"]');
+            if (btn) btn.click();
+          })()
+        `);
+      } else {
+        await navigateMobileBottomNav(cdpClient, page.id);
+      }
       await sleep(500);
 
       const check = await cdpClient.evaluate(`
@@ -561,9 +482,8 @@ async function run() {
     const desktopCheck = await cdpClient.evaluate(`
       (() => {
         const doc = document.documentElement;
-        const body = document.body;
         const sidebar = document.querySelector('[data-testid="desktop-sidebar"]') || document.querySelector('aside.hidden');
-        const hamburger = document.querySelector('[data-testid="mobile-hamburger"]') || document.querySelector('button[aria-label="Buka menu navigasi"]');
+        const bottomNav = document.querySelector('[data-testid="mobile-bottom-nav"]') || document.querySelector('nav[aria-label="Navigasi Bawah"]');
         const winWidth = window.innerWidth;
         const docScroll = doc.scrollWidth;
         return {
@@ -571,7 +491,7 @@ async function run() {
           docScroll,
           overflow: docScroll > winWidth + 1,
           sidebarVisible: sidebar !== null && window.getComputedStyle(sidebar).display !== 'none',
-          hamburgerHidden: hamburger !== null && window.getComputedStyle(hamburger).display === 'none'
+          bottomNavHidden: bottomNav !== null && window.getComputedStyle(bottomNav).display === 'none'
         };
       })()
     `);
@@ -582,8 +502,8 @@ async function run() {
     );
     recordResult(
       'Desktop Navigation Shell Visibility Parity',
-      desktopCheck.sidebarVisible && desktopCheck.hamburgerHidden,
-      'Desktop sidebar visible, mobile hamburger hidden'
+      desktopCheck.sidebarVisible && desktopCheck.bottomNavHidden,
+      'Desktop sidebar visible, mobile bottom nav hidden'
     );
 
     // ===================================================================

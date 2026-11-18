@@ -1,12 +1,14 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { Calendar, LogOut, Menu, PanelLeft, ArrowRightLeft } from 'lucide-react';
+import { BrandLogo } from '../common/BrandLogo';
+import { Calendar, LogOut, PanelLeft, ArrowRightLeft } from 'lucide-react';
 
 export function Header({
   onToggleSidebar,
-  onOpenMobile,
+  onSelectPage,
   activePageTitle,
   tanggalAcuan,
+  logoUrl,
 }) {
   const { login, logout, isAdmin } = useAuth();
 
@@ -20,17 +22,16 @@ export function Header({
 
   return (
     <header className="h-14 bg-[#f8faff]/95 backdrop-blur-md sticky top-0 z-30 flex items-center justify-between px-3 sm:px-4 lg:px-5 w-full max-w-full border-b border-slate-200/90 shadow-[0_4px_14px_-4px_rgba(15,23,42,0.06)]">
-      <div className="flex items-center gap-2 min-w-0">
-        {/* Tombol Hamburger Mobile */}
+      <div className="flex items-center gap-2.5 min-w-0">
+        {/* Identitas Ringkas Mobile (Tanpa Hamburger Menu) */}
         <button
           type="button"
-          data-testid="mobile-hamburger"
-          onClick={onOpenMobile}
-          className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl hover:bg-white text-slate-700 active:scale-95 transition md:hidden shrink-0"
-          aria-label="Buka menu navigasi"
-          title="Buka menu navigasi"
+          onClick={() => onSelectPage && onSelectPage(isAdmin ? 'dashboard' : 'inventori')}
+          className="md:hidden flex items-center justify-center rounded-xl active:scale-95 transition shrink-0 cursor-pointer"
+          aria-label="Kembali ke halaman utama"
+          title="Apotek Asahan Farma - SIMAAF"
         >
-          <Menu className="w-5 h-5 text-slate-800" />
+          <BrandLogo logoUrl={logoUrl} className="w-8 h-8" />
         </button>
 
         {/* Tombol Lipat Sidebar Desktop */}
@@ -44,13 +45,16 @@ export function Header({
           <PanelLeft className="w-4 h-4" />
         </button>
 
-        <div className="min-w-0 flex items-center gap-2 pl-0.5">
+        <div className="min-w-0 flex flex-col md:flex-row md:items-center md:gap-2">
+          <span className="md:hidden text-[10px] font-bold text-blue-600 leading-none tracking-tight">
+            SIMAAF
+          </span>
           <span className="hidden md:inline text-xs font-semibold text-slate-400">
             SIMAAF /
           </span>
           <h1
             data-testid="page-title"
-            className="text-sm sm:text-[15px] font-extrabold text-slate-950 tracking-tight leading-tight truncate"
+            className="text-[14px] sm:text-[15px] font-extrabold text-slate-950 tracking-tight leading-tight truncate"
           >
             {activePageTitle}
           </h1>

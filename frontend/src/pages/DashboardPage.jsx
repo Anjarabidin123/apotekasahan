@@ -233,24 +233,28 @@ export function DashboardPage({
 
   const quickActions = [
     {
+      id: 'faktur',
       label: 'Faktur Baru',
       icon: Plus,
       action: onNavigateToFaktur,
       iconStyle: 'bg-blue-50 text-blue-600 border-blue-200/80'
     },
     {
+      id: 'ekspor',
       label: 'Ekspor CSV',
       icon: Download,
       action: () => handleExportTableCsv(),
       iconStyle: 'bg-teal-50 text-teal-600 border-teal-200/80'
     },
     {
+      id: 'kalender',
       label: 'Kalender ED',
       icon: Calendar,
       action: onNavigateToKalender,
       iconStyle: 'bg-amber-50 text-amber-600 border-amber-200/80'
     },
     {
+      id: 'pengaturan',
       label: 'Pengaturan',
       icon: Settings,
       action: onNavigateToPengaturan,
@@ -558,8 +562,9 @@ export function DashboardPage({
           const Icon = item.icon;
           return (
             <button
-              key={idx}
+              key={item.id}
               type="button"
+              data-testid={`quick-action-${item.id}`}
               onClick={item.action}
               className="relative flex flex-col items-center justify-center gap-1.5 py-2.5 px-1.5 rounded-2xl bg-white border border-slate-200/85 shadow-[0_2px_8px_rgba(15,23,42,0.04)] active:scale-[0.97] transition"
             >

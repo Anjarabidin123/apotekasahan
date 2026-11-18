@@ -13,12 +13,6 @@ export function Layout({
   logoUrl,
 }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isMobileOpen, setIsMobileOpen] = useState(false);
-
-  const handleSelectPage = (pageId) => {
-    setActivePage(pageId);
-    setIsMobileOpen(false);
-  };
 
   return (
     <div className="flex h-[100dvh] w-full max-w-full bg-[#eef1f9] overflow-hidden font-sans relative">
@@ -29,10 +23,8 @@ export function Layout({
       />
       <Sidebar
         activePage={activePage}
-        setActivePage={handleSelectPage}
+        setActivePage={setActivePage}
         isCollapsed={isCollapsed}
-        isMobileOpen={isMobileOpen}
-        onCloseMobile={() => setIsMobileOpen(false)}
         urgentCount={urgentCount}
         logoUrl={logoUrl}
       />
@@ -40,7 +32,7 @@ export function Layout({
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative z-10 w-full max-w-full">
         <Header
           onToggleSidebar={() => setIsCollapsed(!isCollapsed)}
-          onOpenMobile={() => setIsMobileOpen(true)}
+          onSelectPage={setActivePage}
           activePageTitle={activePageTitle}
           tanggalAcuan={tanggalAcuan}
           logoUrl={logoUrl}
@@ -54,7 +46,7 @@ export function Layout({
 
         <BottomNav
           activePage={activePage}
-          setActivePage={handleSelectPage}
+          setActivePage={setActivePage}
           urgentCount={urgentCount}
         />
       </div>

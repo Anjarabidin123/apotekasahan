@@ -1,5 +1,12 @@
 import React from 'react';
-import { LayoutDashboard, FileSpreadsheet, Boxes, BellRing, ClipboardCheck } from 'lucide-react';
+import {
+  LayoutDashboard,
+  FileSpreadsheet,
+  Boxes,
+  BellRing,
+  ClipboardCheck,
+  CalendarDays,
+} from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 export function BottomNav({ activePage, setActivePage, urgentCount = 0 }) {
@@ -11,10 +18,12 @@ export function BottomNav({ activePage, setActivePage, urgentCount = 0 }) {
     { id: 'inventori', label: 'Stok', icon: Boxes },
     { id: 'pengingat', label: 'Retur', icon: BellRing, badge: urgentCount },
     { id: 'penyesuaian', label: 'Opname', icon: ClipboardCheck },
+    ...(!isAdmin ? [{ id: 'kalender', label: 'Kalender', icon: CalendarDays }] : []),
   ];
 
   return (
     <nav
+      data-testid="mobile-bottom-nav"
       aria-label="Navigasi Bawah"
       className="fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-[0_-4px_16px_rgba(15,23,42,0.05)] z-30 md:hidden"
     >
@@ -27,6 +36,7 @@ export function BottomNav({ activePage, setActivePage, urgentCount = 0 }) {
             <button
               key={item.id}
               type="button"
+              data-testid={`bottom-nav-${item.id}`}
               onClick={() => setActivePage(item.id)}
               className={`relative flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors ${
                 isActive ? 'text-blue-600' : 'text-slate-500 hover:text-slate-800'
