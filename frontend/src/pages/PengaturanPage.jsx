@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { api, DEFAULT_PROFILE, DEFAULT_KATEGORI, DEFAULT_SOP_STEPS } from '../services/api';
 import { BrandLogo } from '../components/common/BrandLogo';
+import { SettingToggle } from '../components/pengaturan/SettingToggle';
+import { SopEditorPanel } from '../components/pengaturan/SopEditorPanel';
+import { AddPbfModal, AddKategoriModal } from '../components/pengaturan/PengaturanModals';
 import { getAiConfig, saveAiConfig, exportToExcelCsv } from '../utils/fileTools';
 import {
   Building2,
@@ -13,8 +16,6 @@ import {
   Database,
   LifeBuoy,
   ChevronRight,
-  ChevronUp,
-  ChevronDown,
   ArrowLeft,
   Search,
   Save,
@@ -33,43 +34,7 @@ import {
   EyeOff,
   KeyRound,
   RefreshCw,
-  Edit3,
 } from 'lucide-react';
-
-/**
- * Sakelar toggle bersih bergaya pengaturan WhatsApp / Instagram.
- */
-function SettingToggle({ checked, onChange, label, description }) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      onClick={() => onChange(!checked)}
-      className="w-full flex items-center justify-between gap-3 py-3 text-left cursor-pointer group"
-    >
-      <div className="min-w-0">
-        <p className="text-xs sm:text-[13px] font-bold text-slate-900 group-hover:text-blue-700 transition-colors">
-          {label}
-        </p>
-        {description && (
-          <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">{description}</p>
-        )}
-      </div>
-      <span
-        className={`relative inline-flex h-6 w-11 shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ${
-          checked ? 'bg-blue-600' : 'bg-slate-200'
-        }`}
-      >
-        <span
-          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition duration-200 ${
-            checked ? 'translate-x-5' : 'translate-x-0'
-          }`}
-        />
-      </span>
-    </button>
-  );
-}
 
 export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange }) {
   // Null pada mobile berarti menampilkan daftar menu utama bertumpuk; desktop otomatis memilih item aktif
@@ -380,7 +345,7 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
     kalender: 'Kalender PBF',
   };
 
-  // Struktur grup menu bertumpuk vertikal bergaya Instagram / WhatsApp Settings
+  // Pengelompokan item pengaturan sidebar & mobile list
   const menuGroups = useMemo(
     () => [
       {
@@ -1260,14 +1225,6 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
 
       case 'bantuan':
       default: {
-        const handleMoveSop = (index, delta) => {
-          const targetIdx = index + delta;
-          if (targetIdx < 0 || targetIdx >= sopSteps.length) return;
-          const copy = [...sopSteps];
-          [copy[index], copy[targetIdx]] = [copy[targetIdx], copy[index]];
-          setSopSteps(copy);
-        };
-
         const handleSaveSop = async () => {
           const cleaned = sopSteps.filter((s) => s.teks && s.teks.trim());
           setSopSteps(cleaned);
@@ -1283,131 +1240,17 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
         };
 
         return (
-          <div className="space-y-3">
-            <div className="flex items-center justify-between gap-2 flex-wrap">
-              <p className="text-xs font-extrabold text-slate-900">
-                SOP Retur &amp; Pengawasan ({profile.nama_apotek})
-              </p>
-              <div className="flex items-center gap-1.5">
-                {isEditingSop ? (
-                  <>
-                    <button
-                      type="button"
-                      onClick={handleResetSop}
-                      className="btn-outline h-9 px-2.5 text-[11px] font-bold text-slate-600"
-                    >
-                      <RotateCcw className="w-3.5 h-3.5" />
-                      <span>Reset</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleSaveSop}
-                      className="btn-primary h-9 px-3 text-xs font-bold"
-                    >
-                      <Save className="w-3.5 h-3.5" />
-                      <span>Simpan SOP</span>
-                    </button>
-                  </>
-                ) : (
-                  <button
-                    type="button"
-                    data-testid="edit-sop-btn"
-                    onClick={() => setIsEditingSop(true)}
-                    className="btn-outline h-9 px-3 text-xs font-bold text-blue-700 border-blue-200 bg-blue-50/70 hover:bg-blue-100"
-                  >
-                    <Edit3 className="w-3.5 h-3.5" />
-                    <span>Edit SOP</span>
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {isEditingSop ? (
-              <div className="space-y-2.5">
-                <div className="space-y-2">
-                  {sopSteps.map((step, idx) => (
-                    <div
-                      key={step.id || idx}
-                      className="p-2.5 rounded-xl border border-slate-200 bg-slate-50/70 flex items-start gap-2"
-                    >
-                      <span className="w-6 h-6 rounded-lg bg-blue-600 text-white text-[11px] font-black flex items-center justify-center shrink-0 mt-1">
-                        {idx + 1}
-                      </span>
-                      <textarea
-                        rows={3}
-                        value={step.teks}
-                        onChange={(e) => {
-                          const next = [...sopSteps];
-                          next[idx] = { ...step, teks: e.target.value };
-                          setSopSteps(next);
-                        }}
-                        className="flex-1 text-xs p-2 rounded-lg border border-slate-200 bg-white font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                      />
-                      <div className="flex flex-col gap-1 shrink-0">
-                        <button
-                          type="button"
-                          onClick={() => handleMoveSop(idx, -1)}
-                          disabled={idx === 0}
-                          className="w-7 h-7 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 disabled:opacity-40 flex items-center justify-center"
-                          title="Geser ke atas"
-                        >
-                          <ChevronUp className="w-3.5 h-3.5 text-slate-600" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleMoveSop(idx, 1)}
-                          disabled={idx === sopSteps.length - 1}
-                          className="w-7 h-7 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 disabled:opacity-40 flex items-center justify-center"
-                          title="Geser ke bawah"
-                        >
-                          <ChevronDown className="w-3.5 h-3.5 text-slate-600" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setSopSteps(sopSteps.filter((_, i) => i !== idx))}
-                          className="w-7 h-7 rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-600 flex items-center justify-center"
-                          title="Hapus langkah"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Tambah Langkah SOP Baru */}
-                <div className="flex items-center gap-2 pt-1">
-                  <input
-                    type="text"
-                    value={newSopStepText}
-                    onChange={(e) => setNewSopStepText(e.target.value)}
-                    placeholder="Tambah langkah SOP baru apotek Anda..."
-                    className="flex-1 text-xs h-10 px-3 rounded-xl border border-slate-200 bg-white font-medium"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (!newSopStepText.trim()) return;
-                      setSopSteps([...sopSteps, { id: Date.now(), teks: newSopStepText.trim() }]);
-                      setNewSopStepText('');
-                    }}
-                    className="btn-primary h-10 px-3.5 text-xs font-bold shrink-0"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span>Tambah</span>
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="p-3.5 sm:p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2.5">
-                <ol className="list-decimal pl-4 space-y-2 text-xs text-slate-700 leading-relaxed">
-                  {sopSteps.map((step, idx) => (
-                    <li key={step.id || idx}>{step.teks}</li>
-                  ))}
-                </ol>
-              </div>
-            )}
-          </div>
+          <SopEditorPanel
+            namaApotek={profile.nama_apotek}
+            sopSteps={sopSteps}
+            setSopSteps={setSopSteps}
+            isEditingSop={isEditingSop}
+            setIsEditingSop={setIsEditingSop}
+            newSopStepText={newSopStepText}
+            setNewSopStepText={setNewSopStepText}
+            onSaveSop={handleSaveSop}
+            onResetSop={handleResetSop}
+          />
         );
       }
     }
@@ -1429,15 +1272,13 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
         </div>
       )}
 
-      {/* Tampilan Instagram/WhatsApp Settings: Daftar Bertumpuk Kiri/Mobile + Sub-Halaman Detail Kanan/Drill-down */}
+      {/* Daftar Kategori Pengaturan & Sub-halaman Detail */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
-        {/* Panel Menu Vertikal Bertumpuk */}
         <div
           className={`${
             selectedSection ? 'hidden lg:block' : 'block'
           } lg:col-span-5 xl:col-span-4 space-y-3`}
         >
-          {/* Kartu Akun Apotek Atas */}
           <button
             type="button"
             onClick={() => setSelectedSection('identitas')}
@@ -1458,7 +1299,6 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
             <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
           </button>
 
-          {/* Pencarian Pengaturan Bergaya IG/WA */}
           <div className="relative">
             <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
@@ -1470,7 +1310,6 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
             />
           </div>
 
-          {/* Grup Kartu Bertumpuk ke Bawah */}
           {filteredGroups.length === 0 ? (
             <div className="bg-white rounded-2xl border border-slate-200/80 p-6 text-center text-xs text-slate-400">
               Pengaturan "{menuSearch}" tidak ditemukan.
@@ -1563,164 +1402,21 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
         </div>
       </div>
 
-      {/* Modal Tambah Distributor PBF */}
-      {showAddPbfModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-5 space-y-4 shadow-xl border border-slate-200">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-              <h4 className="text-sm font-black text-slate-900">Daftarkan PBF Mitra Baru</h4>
-              <button
-                type="button"
-                onClick={() => setShowAddPbfModal(false)}
-                className="w-8 h-8 rounded-lg text-slate-400 hover:text-slate-700 text-xs font-bold"
-              >
-                ✕
-              </button>
-            </div>
+      <AddPbfModal
+        isOpen={showAddPbfModal}
+        newPbf={newPbf}
+        setNewPbf={setNewPbf}
+        onSubmit={handleAddPbf}
+        onClose={() => setShowAddPbfModal(false)}
+      />
 
-            <form onSubmit={handleAddPbf} className="space-y-3">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Nama PBF Distributor</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Contoh: PBF Kimia Farma TD Medan"
-                  value={newPbf.nama}
-                  onChange={(e) => setNewPbf({ ...newPbf, nama: e.target.value })}
-                  className="w-full text-xs h-10 px-3 rounded-xl border border-slate-200 font-bold"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Kode PBF</label>
-                  <input
-                    type="text"
-                    placeholder="DST-015"
-                    value={newPbf.kode}
-                    onChange={(e) => setNewPbf({ ...newPbf, kode: e.target.value })}
-                    className="w-full text-xs h-10 px-3 rounded-xl border border-slate-200 font-mono"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Aturan Retur</label>
-                  <select
-                    value={newPbf.aturan_retur_bulan}
-                    onChange={(e) => setNewPbf({ ...newPbf, aturan_retur_bulan: Number(e.target.value) })}
-                    className="w-full text-xs h-10 px-2 rounded-xl border border-slate-200 bg-white font-bold"
-                  >
-                    <option value="0">0 Bulan (Tanpa Retur)</option>
-                    <option value="1">1 Bulan Sebelum Exp</option>
-                    <option value="2">2 Bulan Sebelum Exp</option>
-                    <option value="3">3 Bulan Sebelum Exp</option>
-                    <option value="6">6 Bulan Sebelum Exp</option>
-                  </select>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">PIC Retur</label>
-                  <input
-                    type="text"
-                    placeholder="Nama PIC"
-                    value={newPbf.kontak}
-                    onChange={(e) => setNewPbf({ ...newPbf, kontak: e.target.value })}
-                    className="w-full text-xs h-10 px-3 rounded-xl border border-slate-200"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Telepon / WA</label>
-                  <input
-                    type="text"
-                    placeholder="0812xxxx"
-                    value={newPbf.telepon}
-                    onChange={(e) => setNewPbf({ ...newPbf, telepon: e.target.value })}
-                    className="w-full text-xs h-10 px-3 rounded-xl border border-slate-200 font-mono"
-                  />
-                </div>
-              </div>
-              <div className="pt-2 flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowAddPbfModal(false)}
-                  className="btn-outline h-10 px-3.5 text-xs"
-                >
-                  Batal
-                </button>
-                <button type="submit" className="btn-primary h-10 px-4 text-xs font-bold">
-                  Simpan PBF
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Modal Tambah Kategori Obat */}
-      {showAddKatModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-sm w-full p-5 space-y-4 shadow-xl border border-slate-200">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-              <h4 className="text-sm font-black text-slate-900">Tambah Golongan Kategori</h4>
-              <button
-                type="button"
-                onClick={() => setShowAddKatModal(false)}
-                className="w-8 h-8 rounded-lg text-slate-400 hover:text-slate-700 text-xs font-bold"
-              >
-                ✕
-              </button>
-            </div>
-
-            <form onSubmit={handleAddKategori} className="space-y-3">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Nama Kategori</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Contoh: Kortikosteroid"
-                  value={newKat.nama}
-                  onChange={(e) => setNewKat({ ...newKat, nama: e.target.value })}
-                  className="w-full text-xs h-10 px-3 rounded-xl border border-slate-200 font-bold"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Stok Min (Unit)</label>
-                  <input
-                    type="number"
-                    value={newKat.stok_minimum}
-                    onChange={(e) => setNewKat({ ...newKat, stok_minimum: Number(e.target.value) })}
-                    className="w-full text-xs h-10 px-3 rounded-xl border border-slate-200 font-bold"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Golongan</label>
-                  <select
-                    value={newKat.jenis}
-                    onChange={(e) => setNewKat({ ...newKat, jenis: e.target.value })}
-                    className="w-full text-xs h-10 px-2 rounded-xl border border-slate-200 bg-white font-bold"
-                  >
-                    <option value="Keras">Obat Keras</option>
-                    <option value="Bebas Terbatas">Bebas Terbatas</option>
-                    <option value="Bebas">Obat Bebas</option>
-                  </select>
-                </div>
-              </div>
-              <div className="pt-2 flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowAddKatModal(false)}
-                  className="btn-outline h-10 px-3.5 text-xs"
-                >
-                  Batal
-                </button>
-                <button type="submit" className="btn-primary h-10 px-4 text-xs font-bold">
-                  Simpan Kategori
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <AddKategoriModal
+        isOpen={showAddKatModal}
+        newKat={newKat}
+        setNewKat={setNewKat}
+        onSubmit={handleAddKategori}
+        onClose={() => setShowAddKatModal(false)}
+      />
     </div>
   );
 }

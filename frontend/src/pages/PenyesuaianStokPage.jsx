@@ -23,7 +23,6 @@ import {
   UploadCloud,
   Camera,
   FileSpreadsheet,
-  Sparkles,
   Trash2,
 } from 'lucide-react';
 
@@ -583,27 +582,6 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
           ) : (
             /* Mode Impor Massal & Migrasi Stok Awal Apotek Lama */
             <div className="space-y-3">
-              {/* Panduan Migrasi Cepat untuk Apotek yang Sudah Berjalan */}
-              <div className="bg-blue-50/80 border border-blue-200/80 rounded-2xl p-3.5 space-y-2">
-                <p className="text-xs font-extrabold text-blue-950 flex items-center gap-1.5">
-                  <Sparkles className="w-4 h-4 text-blue-600 shrink-0" />
-                  <span>Cara Cepat Masukkan Data Apotek Lama (Sekali Impor):</span>
-                </p>
-                <ol className="list-decimal pl-4 space-y-1 text-[11px] text-blue-900/90 leading-relaxed">
-                  <li>
-                    Ekspor stok dari Excel/POS lama ke <strong>CSV/Excel</strong> (atau unduh{' '}
-                    <strong>Templat Migrasi</strong> lalu salin tempel ratusan baris sekaligus).
-                  </li>
-                  <li>
-                    Atau foto catatan rak / unggah file <strong>Word (.docx), PDF, TXT, JSON</strong>{' '}
-                    apa saja langsung di kotak unggah di bawah.
-                  </li>
-                  <li>
-                    Batch yang sudah ada otomatis di-<em>update stok</em>-nya, dan obat lama yang belum
-                    tercatat otomatis dibuatkan batch awal secara massal.
-                  </li>
-                </ol>
-              </div>
 
               {/* Kotak Unggah Multi-Format */}
               <div className="bg-white rounded-2xl border border-slate-200/80 p-3.5 sm:p-4 shadow-2xs space-y-3">

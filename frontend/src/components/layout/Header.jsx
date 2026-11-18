@@ -231,7 +231,7 @@ export function Header({
           )}
         </div>
 
-        {/* Pengalih Peran Cepat Bergaya Kapsul Profil */}
+        {/* Pengalih peran cepat Admin / Karyawan */}
         <button
           type="button"
           onClick={handleQuickSwitchRole}

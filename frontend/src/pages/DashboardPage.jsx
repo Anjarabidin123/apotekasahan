@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { api } from '../services/api';
 import { StatusReturBadge } from '../components/common/StatusBadge';
 import { exportToExcelCsv } from '../utils/fileTools';
+import { formatRupiah } from '../utils/formatters';
 import {
   AlertTriangle,
   Boxes,
@@ -85,14 +86,6 @@ export function DashboardPage({
       setLoading(false);
       setRefreshing(false);
     }
-  };
-
-  const formatRupiah = (val) => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      maximumFractionDigits: 0
-    }).format(val || 0);
   };
 
   const refDate = summary?.tanggal_acuan || tanggalAcuan || '2026-10-31';
@@ -406,28 +399,23 @@ export function DashboardPage({
         </div>
       </section>
 
-      {/* Showcase Ringkasan Berilustrasi Ringkas ala Orely Studio (Desktop) */}
+      {/* Banner Ringkasan Desktop */}
       <div className="hidden md:block relative overflow-hidden rounded-2xl border border-[#DCE3FB] bg-gradient-to-br from-[#F4F6FF] via-[#ECEFFD] to-[#E2E9FC] px-4 sm:px-5 py-3.5 sm:py-4 shadow-[0_4px_18px_rgba(37,99,235,0.06)]">
-        {/* Elemen vektor pemandangan apotek & daun botani di latar kanan/bawah */}
         <svg
           aria-hidden="true"
           viewBox="0 0 600 180"
           preserveAspectRatio="xMidYMax slice"
           className="pointer-events-none absolute inset-0 w-full h-full opacity-55 sm:opacity-90"
         >
-          {/* Awan halus atmosfer */}
           <ellipse cx="470" cy="36" rx="85" ry="15" fill="#FFFFFF" fillOpacity="0.6" />
           <ellipse cx="300" cy="28" rx="52" ry="11" fill="#FFFFFF" fillOpacity="0.45" />
-          {/* Perbukitan berlapis */}
           <path d="M0 155 Q160 128 320 148 T600 138 L600 180 L0 180 Z" fill="#D5DDFB" fillOpacity="0.7" />
           <path d="M220 180 Q390 132 600 150 L600 180 Z" fill="#C4D0FA" fillOpacity="0.75" />
-          {/* Daun botani herbal sudut kanan */}
           <g transform="translate(510, 100)" opacity="0.9">
             <path d="M22 80 C20 48 24 22 38 6" stroke="#0D9488" strokeWidth="2.4" fill="none" strokeLinecap="round" />
             <path d="M23 58 C4 52 -2 38 10 32 C20 27 25 43 23 58 Z" fill="#14B8A6" />
             <path d="M25 40 C44 36 52 22 40 16 C29 11 24 28 25 40 Z" fill="#2DD4BF" />
           </g>
-          {/* Ikon apotek/gudang minimalis */}
           <g transform="translate(415, 118)">
             <rect x="4" y="20" width="52" height="34" rx="4" fill="#FFFFFF" stroke="#C7D2FE" strokeWidth="1.5" />
             <path d="M0 22 L30 4 L60 22 Z" fill="#3B82F6" />
@@ -486,7 +474,6 @@ export function DashboardPage({
             </div>
           </div>
 
-          {/* Kartu Mengambang Interaktif Bergaya Cropconex di Sisi Kanan Desktop */}
           <div className="hidden lg:flex items-center gap-2.5 shrink-0">
             <button
               type="button"

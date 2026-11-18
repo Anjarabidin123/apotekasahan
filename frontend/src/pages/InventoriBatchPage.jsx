@@ -2,6 +2,13 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { api } from '../services/api';
 import { StatusReturBadge, StatusRisikoBadge } from '../components/common/StatusBadge';
 import { exportToExcelCsv, parseUploadedDocument } from '../utils/fileTools';
+import { formatRupiah, readJsonStorage, writeJsonStorage } from '../utils/formatters';
+import {
+  DEFAULT_RACK_FOLDERS,
+  FOLDER_TONE_STYLES,
+  resolveBatchFolder,
+  groupBatchesIntoProducts,
+} from '../utils/inventoryGrouping';
 import {
   Boxes,
   Search,
@@ -21,163 +28,6 @@ import {
   BellRing,
   X,
 } from 'lucide-react';
-
-const DEFAULT_RACK_FOLDERS = [
-  { id: 'rak-utama', name: 'Etalase Depan & Bebas', tone: 'blue' },
-  { id: 'rak-keras', name: 'Rak Obat Keras & Antibiotik', tone: 'rose' },
-  { id: 'rak-topikal', name: 'Sirup Anak, Salep & Tetes', tone: 'teal' },
-  { id: 'rak-karantina', name: 'Karantina & Wajib Retur PBF', tone: 'amber' },
-];
-
-const FOLDER_TONE_STYLES = {
-  blue: 'bg-blue-50 text-blue-600 border-blue-200/80',
-  rose: 'bg-rose-50 text-rose-600 border-rose-200/80',
-  amber: 'bg-amber-50 text-amber-600 border-amber-200/80',
-  teal: 'bg-teal-50 text-teal-600 border-teal-200/80',
-  violet: 'bg-violet-50 text-violet-600 border-violet-200/80',
-  slate: 'bg-slate-100 text-slate-600 border-slate-200',
-};
-
-function readJsonStorage(key, fallback) {
-  try {
-    const raw = localStorage.getItem(key);
-    return raw ? JSON.parse(raw) : fallback;
-  } catch {
-    return fallback;
-  }
-}
-
-/**
- * Menentukan kategori obat untuk folder pengelompokan otomatis meski item berasal dari impor baru.
- */
-function inferMedicineCategory(batch, obatMap) {
-  const fromMaster = obatMap.get(Number(batch.obat_id))?.kategori;
-  if (fromMaster) return fromMaster;
-  const nama = (batch.nama_obat || '').toLowerCase();
-  if (/amox|cefix|cipro|azith|cefad|kloram|antibiot/.test(nama)) return 'Antibiotik';
-  if (/paracet|ibuprof|mefenam|antalgin|ketopro|aspir/.test(nama)) return 'Analgesik & Antipiretik';
-  if (/omepra|antasid|ranitid|lansopra/.test(nama)) return 'Saluran Lambung';
-  if (/salep|krim|tetes|gel|topikal/.test(nama)) return 'Topikal & Kulit';
-  if (/sirup|obh|batuk|cetiriz|salbut/.test(nama)) return 'Batuk, Flu & Napas';
-  if (/vit|curcuma|suplemen|zinc/.test(nama)) return 'Suplemen & Vitamin';
-  return 'Lainnya';
-}
-
-/**
- * Menentukan ID, label, dan warna folder untuk satu batch berdasarkan mode pengelompokan aktif.
- */
-function resolveBatchFolder(batch, groupMode, obatMap, rackFolders, batchFolderMap) {
-  if (groupMode === 'pbf') {
-    const name = batch.nama_distributor || 'PBF Lainnya';
-    return {
-      id: `pbf:${batch.distributor_id || name}`,
-      name,
-      tone: 'blue',
-    };
-  }
-
-  if (groupMode === 'status') {
-    if (batch.status_retur === 'lewat_batas') {
-      return { id: 'st:lewat_batas', name: 'Lewat Batas Retur', tone: 'rose' };
-    }
-    if (batch.status_risiko === 'tinggi') {
-      return { id: 'st:risiko_tinggi', name: 'Risiko Tinggi / Wajib Retur', tone: 'amber' };
-    }
-    if (batch.status_risiko === 'sedang') {
-      return { id: 'st:sedang', name: 'Perlu Dipantau (Waspada)', tone: 'violet' };
-    }
-    return { id: 'st:aman', name: 'Stok Aman Terkendali', tone: 'teal' };
-  }
-
-  if (groupMode === 'abjad') {
-    const ch = (batch.nama_obat || 'Z').trim().charAt(0).toUpperCase();
-    if (ch >= 'A' && ch <= 'E') return { id: 'az:a-e', name: 'Obat Awalan A – E', tone: 'blue' };
-    if (ch >= 'F' && ch <= 'K') return { id: 'az:f-k', name: 'Obat Awalan F – K', tone: 'teal' };
-    if (ch >= 'L' && ch <= 'P') return { id: 'az:l-p', name: 'Obat Awalan L – P', tone: 'violet' };
-    return { id: 'az:q-z', name: 'Obat Awalan Q – Z', tone: 'amber' };
-  }
-
-  if (groupMode === 'rak') {
-    const mappedId = batchFolderMap[String(batch.id)];
-    if (mappedId) {
-      const found = rackFolders.find((f) => f.id === mappedId);
-      if (found) return found;
-    }
-    if (batch.status_retur === 'lewat_batas') {
-      return rackFolders.find((f) => f.id === 'rak-karantina') || rackFolders[0];
-    }
-    const cat = inferMedicineCategory(batch, obatMap).toLowerCase();
-    if (cat.includes('antibiotik') || cat.includes('hipertensi') || cat.includes('diabetes')) {
-      return rackFolders.find((f) => f.id === 'rak-keras') || rackFolders[0];
-    }
-    if (cat.includes('topikal') || cat.includes('batuk') || cat.includes('sirup')) {
-      return rackFolders.find((f) => f.id === 'rak-topikal') || rackFolders[0];
-    }
-    return rackFolders[0];
-  }
-
-  const catName = inferMedicineCategory(batch, obatMap);
-  const lower = catName.toLowerCase();
-  let tone = 'blue';
-  if (lower.includes('antibiotik')) tone = 'rose';
-  else if (lower.includes('topikal') || lower.includes('anak')) tone = 'teal';
-  else if (lower.includes('lambung') || lower.includes('batuk')) tone = 'amber';
-  else if (lower.includes('suplemen') || lower.includes('vitamin')) tone = 'violet';
-
-  return {
-    id: `cat:${catName}`,
-    name: catName,
-    tone,
-  };
-}
-
-/**
- * Mengelompokkan daftar batch menjadi tingkat Produk Obat dengan pengurutan FEFO internal.
- */
-function groupBatchesIntoProducts(batchList) {
-  const map = new Map();
-  batchList.forEach((b) => {
-    const key = b.obat_id ? `obat:${b.obat_id}` : `nama:${(b.nama_obat || '').toLowerCase()}`;
-    if (!map.has(key)) {
-      map.set(key, {
-        key,
-        nama_obat: b.nama_obat,
-        categoryLabel: b._folderName || '-',
-        folderId: b._folderId,
-        folderName: b._folderName,
-        totalStok: 0,
-        totalNilai: 0,
-        batches: [],
-        earliestEd: b.tanggal_kedaluwarsa || '9999-12-31',
-        hasOverdueRetur: false,
-        hasHighRisk: false,
-      });
-    }
-    const prod = map.get(key);
-    prod.batches.push(b);
-    prod.totalStok += b.jumlah_saat_ini ?? 0;
-    prod.totalNilai += b.nilai_total || 0;
-    if (b.tanggal_kedaluwarsa && b.tanggal_kedaluwarsa < prod.earliestEd) {
-      prod.earliestEd = b.tanggal_kedaluwarsa;
-    }
-    if (b.status_retur === 'lewat_batas') prod.hasOverdueRetur = true;
-    if (b.status_risiko === 'tinggi') prod.hasHighRisk = true;
-  });
-
-  // Urutkan batch internal FEFO (ED tercepat di urutan pertama)
-  const products = Array.from(map.values());
-  products.forEach((p) => {
-    p.batches.sort((a, b) =>
-      String(a.tanggal_kedaluwarsa || '').localeCompare(String(b.tanggal_kedaluwarsa || ''))
-    );
-  });
-
-  return products.sort((a, b) => {
-    if (b.hasOverdueRetur !== a.hasOverdueRetur) return b.hasOverdueRetur ? 1 : -1;
-    if (b.hasHighRisk !== a.hasHighRisk) return b.hasHighRisk ? 1 : -1;
-    return String(a.earliestEd).localeCompare(String(b.earliestEd));
-  });
-}
 
 export function InventoriBatchPage({
   onSelectBatchForAdjustment,
@@ -397,11 +247,7 @@ export function InventoriBatchPage({
   const handleMoveBatchToRack = (batchId, folderId) => {
     const next = { ...batchFolderMap, [String(batchId)]: folderId };
     setBatchFolderMap(next);
-    try {
-      localStorage.setItem('simaaf_batch_folder_map', JSON.stringify(next));
-    } catch {
-      // abaikan
-    }
+    writeJsonStorage('simaaf_batch_folder_map', next);
   };
 
   const handleCreateCustomFolder = (e) => {
@@ -414,11 +260,7 @@ export function InventoriBatchPage({
     };
     const next = [...rackFolders, item];
     setRackFolders(next);
-    try {
-      localStorage.setItem('simaaf_rack_folders', JSON.stringify(next));
-    } catch {
-      // abaikan
-    }
+    writeJsonStorage('simaaf_rack_folders', next);
     setGroupMode('rak');
     setActiveFolderId(null);
     setSelectedProductKey(null);
@@ -490,13 +332,6 @@ export function InventoriBatchPage({
       if (fileImportRef.current) fileImportRef.current.value = '';
     }
   };
-
-  const formatRupiah = (val) =>
-    new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      maximumFractionDigits: 0,
-    }).format(val || 0);
 
   const groupModes = [
     { id: 'kategori', label: 'Kategori Obat' },
@@ -844,7 +679,6 @@ export function InventoriBatchPage({
 
   return (
     <div className="space-y-3">
-      {/* Toolbar Ramping & Hemat Tempat (Tidak Boros Ruang) */}
       <div className="bg-white rounded-2xl border border-slate-200/80 p-3 sm:p-4 shadow-2xs space-y-2.5">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2.5 min-w-0">
@@ -918,7 +752,6 @@ export function InventoriBatchPage({
           </div>
         )}
 
-        {/* Bar Pencarian + Pilih Kelompok Folder + Tombol Filter Popover (1 Baris Padat!) */}
         <div className="flex items-center gap-1.5 sm:gap-2 pt-0.5">
           <div className="relative flex-1 min-w-0">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -1207,7 +1040,7 @@ export function InventoriBatchPage({
         </div>
       )}
 
-      {/* Sheet / Modal Filter Lanjutan (Hemat Ruang di Layar Utama) */}
+      {/* Filter lanjutan */}
       {showFilterModal && (
         <div
           className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4"
@@ -1358,9 +1191,10 @@ export function InventoriBatchPage({
               <button
                 type="button"
                 onClick={() => setShowCreateFolderModal(false)}
-                className="w-8 h-8 rounded-lg text-slate-400 hover:text-slate-700 text-xs font-bold"
+                aria-label="Tutup modal folder"
+                className="w-8 h-8 rounded-lg text-slate-400 hover:text-slate-700 flex items-center justify-center cursor-pointer"
               >
-                ✕
+                <X className="w-4 h-4" />
               </button>
             </div>
 

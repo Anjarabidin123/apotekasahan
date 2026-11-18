@@ -6,21 +6,18 @@
 
 | | |
 |---|---|
-| **Versi Dokumen** | 1.0 |
+| **Versi Dokumen** | 1.1 |
 | **Tanggal Dibuat** | 16 November 2026 |
-| **Terakhir Direvisi** | 18 November 2026 |
-| **Disusun Oleh** | Charlene Silver, Dio Stania Adinata, Fachri Abdullah Shiddiq |
-| **Basis URL Utama** | `/api/v1` (Express.js Backend - Render) |
-| **Basis URL AI Service** | Internal Backend-to-FastAPI (`http://127.0.0.1:8000` / Private Render Service) |
-| **Status** | Disepakati Tim Full-Stack & AI Engineer |
+| **Terakhir Direvisi** | 19 November 2026 |
+| **Disusun Oleh** | Tim Pengembang A26-CS114 |
+| **Basis URL Utama** | `/api/v1` |
+| **Status** | Acuan Integrasi Frontend & Backend |
 
-### Catatan Kesepakatan Tim
+### Catatan Umum Integrasi
 
-> **PENTING UNTUK FRONTEND (Nugroho & Tim):**
-> 1. Frontend **TIDAK PERNAH** memanggil endpoint FastAPI langsung. Semua request lewat backend Node.js (`/api/v1/...`). API key Gemini dan model inferensi tersimpan aman di server.
-> 2. Semua kalkulasi tanggal pengingat dan batas retur dihitung di sisi backend berdasarkan `tanggal_acuan`. Frontend tinggal me-render data yang dikembalikan.
-> 3. Format tanggal request/response selalu `YYYY-MM-DD` (ISO string tanpa jam), kecuali field timestamp (`created_at`, `updated_at`) yang berformat ISO 8601 UTC.
-> 4. Jika microservice prediksi risiko sedang *cold-start* atau error, backend tetap menyimpan batch dengan `skor_risiko: null` dan `status_risiko: "belum_tersedia"`. Frontend harus menangani badge fallback ini dengan baik.
+- Seluruh komunikasi ke layanan AI (OCR maupun inferensi risiko) melalui gateway backend (`/api/v1/...`), kecuali apabila petugas memilih pengisian token AI sementara di sisi klien saat pembacaan berkas lokal.
+- Format tanggal request/response standar memakai `YYYY-MM-DD`, sedangkan field log aktivitas / audit turut menyertakan informasi jam (`YYYY-MM-DD HH:mm`).
+- Apabila layanan inferensi risiko belum merespons, batch tetap dapat diproses dengan `skor_risiko: null` dan `status_risiko: "belum_tersedia"`.
 
 ---
 
@@ -768,36 +765,20 @@ Struktur JSON terstandarisasi yang berisi nomor faktur, distributor, dan array i
 
 ---
 
-## BAB 10: PEMBARUAN INTEGRASI FRONTEND (IMPOR MULTI-FORMAT, TOKEN AI OPSIONAL, EKSPOR EXCEL/CSV & .ICS)
+## BAB 10: INTEGRASI MODUL TAMBAHAN & PENYESUAIAN FRONTEND TERBARU
 
-Bagian ini mendokumentasikan kebutuhan backend tambahan seiring pembaruan modul frontend (`frontend/src/utils/fileTools.js`, `FakturInputPage.jsx`, `InventoriBatchPage.jsx`, `PenyesuaianStokPage.jsx`, dan `KalenderTenggatPage.jsx`):
+Bagian ini merangkum titik data tambahan yang saat ini dipakai modul frontend (`api.js`, `fileTools.js`, dan halaman operasional terkait):
 
-### 10.1 Ekstraksi Dokumen Multi-Format & Pass-Through Token AI Opsional
-* **Method & URL:** `POST /api/v1/faktur/ekstraksi`
-* **Headers Opsional dari Frontend:**
-  * `X-AI-Provider`: `"gemini"` | `"openai"` (jika petugas apotek mengisi token AI kustom di pengaturan frontend)
-  * `X-AI-Model`: contoh `"gemini-2.5-flash"`, `"gpt-4o-mini"`
-  * `X-AI-Key`: token API sementara (wajib diteruskan tanpa disimpan permanen di log server bila digunakan)
-* **Format Berkas Didukung (`multipart/form-data` field `file`):**
-  * Gambar faktur fisik: `.jpg`, `.jpeg`, `.png`, `.webp`
-  * Spreadsheet / Excel: `.csv`, `.tsv`, `.xlsx`, `.xls`
-  * Dokumen Word / Teks: `.docx`, `.doc`, `.txt`, `.json`
-* **Fallback Client-Side:** Saat berkas CSV/Excel/Word atau JSON berhasil diurai langsung di browser oleh `parseUploadedDocument()`, frontend akan langsung mengirimkan array item final ke `POST /api/v1/faktur/simpan-batch`.
+### 10.1 Impor Multi-Format, Batch Kustom & Opname Massal
+- `POST /api/v1/faktur/ekstraksi`: Mendukung unggah gambar, Excel/CSV, Word (`.docx`), PDF, TXT, dan JSON dengan dukungan header opsional `X-AI-Provider`, `X-AI-Model`, dan `X-AI-Key` bila dikonfigurasi pengguna.
+- `POST /api/v1/faktur/simpan-batch` dan `POST /api/v1/inventori/impor-batch`: Menerima item dengan `obat_id` maupun item baru yang hanya membawa `nama_obat` dan `satuan` hasil impor dokumen apotek lama.
+- `POST /api/v1/penyesuaian-stok/massal`: Menerima daftar penyesuaian stok fisik hasil impor dokumen (memperbarui batch yang sudah ada berdasarkan `batch_id`/`nomor_batch`, atau membuat batch awal baru untuk item yang belum tercatat) beserta pencatatan field `waktu` pada log audit.
 
-### 10.2 Impor Massal & Ekspor CSV Persediaan Batch
-1. **`POST /api/v1/inventori/impor-batch`** *(Bulk Import)*:
-   * Menerima JSON array `items` berisi `{ obat_id, distributor_id, nomor_batch, tanggal_masuk, tanggal_kedaluwarsa, jumlah, harga_beli_satuan, satuan, keterangan }`.
-   * Backend melakukan validasi dalam satu transaksi ACID, menghitung `batas_retur` dan `skor_risiko` untuk seluruh baris, lalu mengembalikan total batch tersimpan.
-2. **`GET /api/v1/inventori/ekspor-csv`**:
-   * Mendukung query filter yang sama dengan `GET /api/v1/inventori` (`search`, `distributor_id`, `status_risiko`, `status_retur`).
-   * Mengembalikan berkas `text/csv; charset=utf-8` dengan awalan UTF-8 BOM (`\uFEFF`) agar langsung terbaca rapi di Microsoft Excel Indonesia.
+### 10.2 Notifikasi Header & Kalender Operasional
+- `GET /api/v1/pengingat/notifikasi` (atau derivasi dari `/pengingat`): Menyediakan daftar peringatan ringkas untuk dropdown lonceng di header (`id`, `title`, `nama_obat`, `nomor_batch`, `detail`, `tone`, `targetPage`).
+- Catatan / pengingat harian pada halaman Kalender (`{ id, date, text, category, done }`) serta ekspor `.ics` (`GET /api/v1/kalender/ekspor-ics?bulan=YYYY-MM`) dan `.csv`.
 
-### 10.3 Ekspor Log Audit Opname & Feed Kalender iCalendar (.ICS)
-1. **`GET /api/v1/penyesuaian-stok/ekspor-csv`**:
-   * Mengembalikan riwayat buku audit penyesuaian stok fisik rak (`Waktu`, `Nama Obat`, `Nomor Batch`, `Stok Sebelum`, `Stok Sesudah`, `Selisih`, `Alasan`, `Petugas`) berformat CSV UTF-8 BOM.
-2. **`GET /api/v1/kalender/ekspor-ics?bulan=YYYY-MM`**:
-   * Mengembalikan feed kalender berstandar RFC 5545 (`Content-Type: text/calendar; charset=utf-8`) berisi blok `BEGIN:VCALENDAR` dan `VEVENT` untuk setiap tenggat batas retur PBF serta tanggal kedaluwarsa batch di bulan target.
-
----
-
-*Dokumen ini menjadi kontrak sah antar tim pengembang A26-CS114. Jika ada perubahan nama field atau endpoint, harap hubungi Charlene atau Dio terlebih dahulu.*
+### 10.3 Pengaturan Profil, Master Kategori, SOP, Folder Rak & Ekspor
+- Profil sarana apotek (`nama_apotek`, `apoteker_pj`, `nib`, `sia`, `sipa`, `alamat`, `telepon`, `whatsapp`, `logo_url`).
+- Pengelolaan master distributor PBF (tambah & hapus), daftar kategori obat (`nama`, `jenis`, `stok_minimum`), folder lokasi rak & pemetaan rak per batch (`lokasi_rak`), serta daftar urutan langkah panduan SOP CDOB (`[{ id, teks }]`).
+- Endpoint ekspor CSV UTF-8 BOM pada daftar batch (`/inventori/ekspor-csv`) dan riwayat opname (`/penyesuaian-stok/ekspor-csv`), serta bundel cadangan/pemulihan JSON pada menu Pengaturan.

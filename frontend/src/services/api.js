@@ -661,7 +661,7 @@ export const api = {
     return { sukses: true, data: updated };
   },
 
-  // Cadangkan, pulihkan, dan reset data lokal (100% frontend)
+  // Cadangan dan pemulihan data lokal
   async exportFullBackup() {
     return {
       aplikasi: 'SIMAAF Apotek Asahan Farma',

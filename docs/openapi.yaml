@@ -1,8 +1,8 @@
 openapi: "3.0.3"
 info:
   title: "SIMAAF REST API"
-  description: "Sistem Pemantauan Stok dan Kedaluwarsa (SIMAAF) — Apotek Asahan Farma. Spesifikasi kontrak antarmuka pemrograman aplikasi (REST API) murni agnostik bahasa dan kerangka kerja untuk integrasi frontend React dan gateway backend."
-  version: "1.0.0"
+  description: "Kontrak REST API untuk Sistem Pemantauan Stok dan Kedaluwarsa (SIMAAF) Apotek Asahan Farma."
+  version: "1.1.0"
   contact:
     name: "Tim Pengembang Apotek Asahan Farma"
     email: "apotek.asahanfarma@gmail.com"

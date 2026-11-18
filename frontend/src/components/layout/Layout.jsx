@@ -16,7 +16,6 @@ export function Layout({
 
   return (
     <div className="flex h-[100dvh] w-full max-w-full bg-[#eef1f9] overflow-hidden font-sans relative">
-      {/* Latar atmosfer halus terinspirasi desain Orely */}
       <div
         aria-hidden="true"
         className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(ellipse_at_top_right,rgba(199,210,254,0.4),transparent_55%),radial-gradient(ellipse_at_bottom_left,rgba(191,219,254,0.35),transparent_55%)]"
