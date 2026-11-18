@@ -29,38 +29,45 @@ export function Sidebar({
       id: 'dashboard',
       label: 'Beranda',
       icon: LayoutDashboard,
+      iconColor: 'text-blue-600',
       adminOnly: true,
     },
     {
       id: 'faktur',
       label: 'Input Faktur',
       icon: FileSpreadsheet,
+      iconColor: 'text-indigo-600',
     },
     {
       id: 'inventori',
       label: 'Stok & Batch',
       icon: Boxes,
+      iconColor: 'text-emerald-600',
     },
     {
       id: 'pengingat',
       label: 'Retur & ED',
       icon: BellRing,
+      iconColor: 'text-rose-600',
       badge: urgentCount > 0 ? `${urgentCount}` : null,
     },
     {
       id: 'penyesuaian',
       label: 'Stok Opname',
       icon: ClipboardCheck,
+      iconColor: 'text-amber-600',
     },
     {
       id: 'kalender',
       label: 'Kalender PBF',
       icon: CalendarDays,
+      iconColor: 'text-cyan-600',
     },
     {
       id: 'pengaturan',
       label: 'Pengaturan',
       icon: Settings,
+      iconColor: 'text-purple-600',
       adminOnly: true,
     },
   ];
@@ -72,6 +79,9 @@ export function Sidebar({
     }
   };
 
+  /**
+   * Merender item navigasi baik untuk drawer mobile maupun sidebar desktop.
+   */
   const renderNavItem = (item, { isMobileDrawer = false, compactDesktop = false }) => {
     const Icon = item.icon;
     const isActive = activePage === item.id;
@@ -105,17 +115,17 @@ export function Sidebar({
           compactDesktop ? 'justify-center px-2' : 'justify-between px-3'
         } py-2.5 rounded-xl text-[13px] transition-all cursor-pointer text-left min-h-[42px] ${
           isActive
-            ? 'bg-slate-900 text-white font-semibold shadow-2xs'
-            : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 font-medium'
+            ? 'bg-blue-600 text-white font-semibold shadow-sm shadow-blue-600/25'
+            : 'text-slate-700 hover:bg-slate-100/80 hover:text-slate-900 font-medium'
         }`}
         title={compactDesktop ? item.label : undefined}
       >
         <div className="flex items-center gap-3 min-w-0">
           <Icon
             className={`w-4 h-4 shrink-0 transition-colors ${
-              isActive ? 'text-white' : 'text-slate-500'
+              isActive ? 'text-white' : item.iconColor
             }`}
-            strokeWidth={isActive ? 2.3 : 2}
+            strokeWidth={isActive ? 2.3 : 2.1}
           />
           {!compactDesktop && <span className="truncate">{item.label}</span>}
         </div>
@@ -124,7 +134,7 @@ export function Sidebar({
           <span
             className={`text-[10px] min-w-[20px] h-5 px-1.5 rounded-full font-bold flex items-center justify-center tabular-nums shrink-0 ${
               isActive
-                ? 'bg-rose-500 text-white'
+                ? 'bg-white/25 text-white'
                 : 'bg-rose-50 text-rose-700 border border-rose-200'
             }`}
           >
@@ -146,7 +156,7 @@ export function Sidebar({
         />
       )}
 
-      {/* Mobile Drawer */}
+      {/* Drawer Navigasi Mobile */}
       <aside
         data-testid="mobile-drawer"
         className={`fixed inset-y-0 left-0 z-50 w-64 max-w-[82vw] bg-white border-r border-slate-200/80 flex flex-col md:hidden transform transition-transform duration-300 ease-in-out shadow-xl ${
@@ -176,7 +186,7 @@ export function Sidebar({
             type="button"
             data-testid="mobile-drawer-close"
             onClick={onCloseMobile}
-            className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition shrink-0"
+            className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition shrink-0"
             aria-label="Tutup menu navigasi"
             title="Tutup menu"
           >
@@ -185,7 +195,9 @@ export function Sidebar({
         </div>
 
         <div className="flex-1 overflow-y-auto px-3 py-3 space-y-1">
-          {navItems.map((item) => renderNavItem(item, { isMobileDrawer: true, compactDesktop: false }))}
+          {navItems.map((item) =>
+            renderNavItem(item, { isMobileDrawer: true, compactDesktop: false })
+          )}
         </div>
 
         <div className="p-3 m-3 rounded-xl bg-slate-50 border border-slate-200/80 text-xs space-y-0.5 shrink-0">
@@ -194,7 +206,7 @@ export function Sidebar({
         </div>
       </aside>
 
-      {/* Desktop Sidebar */}
+      {/* Sidebar Desktop */}
       <aside
         data-testid="desktop-sidebar"
         className={`hidden md:flex bg-white border-r border-slate-200/80 flex-col transition-all duration-300 z-40 select-none shrink-0 ${
@@ -222,7 +234,9 @@ export function Sidebar({
         </div>
 
         <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-          {navItems.map((item) => renderNavItem(item, { isMobileDrawer: false, compactDesktop: isCollapsed }))}
+          {navItems.map((item) =>
+            renderNavItem(item, { isMobileDrawer: false, compactDesktop: isCollapsed })
+          )}
         </div>
 
         {!isCollapsed && (

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { exportToExcelCsv } from '../utils/fileTools';
 import {
   ClipboardCheck,
   Search,
@@ -13,7 +14,8 @@ import {
   Building2,
   Calendar,
   Plus,
-  Minus
+  Minus,
+  Download
 } from 'lucide-react';
 
 export function PenyesuaianStokPage({ preselectedBatch }) {
@@ -22,7 +24,7 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedBatchId, setSelectedBatchId] = useState('');
   const [jumlahFisik, setJumlahFisik] = useState('');
-  const [alasan, setAlasan] = useState('Pemeriksaan rutin rak apotek');
+  const [alasan, setAlasan] = useState('Pemeriksaan rutin rak (stok cocok)');
   const [catatanKhusus, setCatatanKhusus] = useState('');
   const [riwayat, setRiwayat] = useState([]);
 
@@ -41,6 +43,9 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
     }
   }, [preselectedBatch, batches]);
 
+  /**
+   * Memuat daftar batch persediaan dan riwayat log opname rak.
+   */
   const loadBatchesAndLogs = async () => {
     try {
       const [bRes, logs] = await Promise.all([
@@ -54,7 +59,7 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
         setJumlahFisik(bRes.data[0].jumlah_saat_ini);
       }
     } catch (e) {
-      console.error(e);
+      console.error('Gagal memuat data opname:', e);
     }
   };
 
@@ -89,6 +94,35 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
     setJumlahFisik(updated);
   };
 
+  const handleExportLogsCsv = () => {
+    if (riwayat.length === 0) return;
+    const headers = [
+      'Waktu',
+      'Nama Obat',
+      'Nomor Batch',
+      'Stok Sebelum',
+      'Stok Sesudah',
+      'Selisih',
+      'Alasan',
+      'Petugas',
+    ];
+    const rows = riwayat.map((l) => [
+      l.waktu,
+      l.nama_obat,
+      l.nomor_batch,
+      l.jumlah_sebelum,
+      l.jumlah_sesudah,
+      l.selisih,
+      l.alasan,
+      l.petugas,
+    ]);
+    exportToExcelCsv(
+      `log_opname_simaaf_${new Date().toISOString().split('T')[0]}.csv`,
+      headers,
+      rows
+    );
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMsg('');
@@ -117,7 +151,7 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
         user?.nama || 'Petugas Apotek'
       );
       setSuccessMsg(
-        `Stok ${selectedBatch.nama_obat} (Batch: ${selectedBatch.nomor_batch}) berhasil diperbarui menjadi ${jumlahFisik} unit!`
+        `Stok ${selectedBatch.nama_obat} (${selectedBatch.nomor_batch}) diperbarui menjadi ${jumlahFisik} unit.`
       );
       setCatatanKhusus('');
       await loadBatchesAndLogs();
@@ -133,70 +167,62 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
   const netSelisih = riwayat.reduce((acc, curr) => acc + (curr.selisih || 0), 0);
 
   return (
-    <div className="space-y-3">
-      <div className="border-b border-slate-200/80 pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-blue-600" />
-            <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
-              Pemeriksaan Fisik Rak (Stock Opname)
-            </span>
+    <div className="space-y-4">
+      {/* Header Halaman Opname */}
+      <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+            <ClipboardCheck className="w-5 h-5" />
           </div>
-          <h2 className="text-lg font-black text-slate-900 tracking-tight mt-0.5 flex items-center gap-2">
-            <ClipboardCheck className="w-5 h-5 text-blue-600" />
-            Penyesuaian Stok Hasil Hitung Rak
-          </h2>
-          <p className="text-xs text-slate-500">
-            Cocokkan jumlah fisik obat di rak dengan data sistem. Seluruh perubahan tercatat otomatis di buku audit.
-          </p>
+          <div>
+            <h2 className="text-sm sm:text-base font-bold text-slate-900">
+              Stok Opname & Audit Fisik Rak
+            </h2>
+            <p className="text-xs text-slate-500">
+              Cocokkan jumlah fisik di rak dengan stok tercatat untuk audit berkala.
+            </p>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2 self-start sm:self-auto">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-white text-slate-700 border border-slate-200 shadow-xs">
-            <PackageCheck className="w-3.5 h-3.5 text-blue-600" />
-            <span>{totalOpnameCount} Pemeriksaan Tercatat</span>
-          </span>
-        </div>
+        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-50 text-slate-700 border border-slate-200 self-start sm:self-auto">
+          <PackageCheck className="w-3.5 h-3.5 text-blue-600" />
+          <span>{totalOpnameCount} Pemeriksaan Tercatat</span>
+        </span>
       </div>
 
       {preselectedBatch && (
-        <div className="p-3 rounded-xl bg-blue-50 border border-blue-200 text-xs text-blue-900 flex items-center justify-between gap-3 shadow-xs">
-          <div className="flex items-center gap-2">
+        <div className="p-3 rounded-xl bg-blue-50 border border-blue-200 text-xs text-blue-900 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
             <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0" />
-            <span>
-              Obat <strong>{preselectedBatch.nama_obat}</strong> (Batch: {preselectedBatch.nomor_batch}) otomatis terpilih dari halaman Pengingat Retur.
+            <span className="truncate">
+              Batch terpilih: <strong>{preselectedBatch.nama_obat}</strong> ({preselectedBatch.nomor_batch})
             </span>
           </div>
-          <span className="text-[10px] px-2 py-0.5 rounded-md bg-blue-200/60 font-bold text-blue-900">
-            Terpilih Otomatis
-          </span>
         </div>
       )}
 
       {successMsg && (
-        <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2.5 shadow-xs">
+        <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2.5">
           <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-          <span className="font-bold">{successMsg}</span>
+          <span className="font-semibold">{successMsg}</span>
         </div>
       )}
 
       {errorMsg && (
-        <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2.5 shadow-xs">
+        <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2.5">
           <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
-          <span className="font-bold">{errorMsg}</span>
+          <span className="font-semibold">{errorMsg}</span>
         </div>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
-        <div className="lg:col-span-7 bg-white rounded-2xl border border-slate-200/90 p-3 shadow-sm space-y-3">
-          <form onSubmit={handleSubmit} className="space-y-3">
-            <div className="space-y-2">
+        {/* Form Opname */}
+        <div className="lg:col-span-7 bg-white rounded-2xl border border-slate-200/80 p-4 shadow-2xs space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2.5">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-black text-slate-800 flex items-center gap-1.5">
-                  <span className="w-5 h-5 rounded-full bg-blue-600 text-white text-[11px] font-black flex items-center justify-center">
-                    1
-                  </span>
-                  <span>Pilih Obat & Batch di Rak Apotek</span>
+                <label className="text-xs font-bold text-slate-800">
+                  Pilih Obat & Batch di Rak
                 </label>
                 <span className="text-[11px] text-slate-400">
                   {batches.length} batch terdaftar
@@ -204,168 +230,139 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
               </div>
 
               <div className="relative">
-                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-3" />
+                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
-                  placeholder="Cari nama obat atau no. batch di rak..."
+                  placeholder="Cari nama obat atau nomor batch..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full text-xs h-9 pl-8 pr-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  className="w-full text-xs h-11 sm:h-9 pl-9 pr-3 rounded-xl border border-slate-200 bg-slate-50/70 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                 />
               </div>
 
               <select
                 value={selectedBatchId}
                 onChange={(e) => handleBatchChange(e.target.value)}
-                className="w-full text-xs h-10 px-3 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-slate-900"
+                className="w-full text-xs h-11 sm:h-10 px-3 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-slate-900"
               >
                 {filteredBatches.map((b) => (
                   <option key={b.id} value={b.id}>
-                    {b.nama_obat} • Batch: {b.nomor_batch} (Stok Sistem: {b.jumlah_saat_ini} {b.satuan || 'box'})
+                    {b.nama_obat} • {b.nomor_batch} (Stok: {b.jumlah_saat_ini})
                   </option>
                 ))}
               </select>
 
               {selectedBatch && (
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/70 text-xs space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <span className="font-black text-slate-900 text-xs">
-                      {selectedBatch.nama_obat}
-                    </span>
-                    <span className="px-2 py-0.5 rounded-md bg-blue-100 text-blue-800 text-[10px] font-bold">
-                      Batch: {selectedBatch.nomor_batch}
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/70 text-xs flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 text-slate-600">
+                    <Building2 className="w-3.5 h-3.5 text-indigo-600" />
+                    <span className="font-medium truncate max-w-[200px]">
+                      {selectedBatch.nama_distributor || 'PBF Rekanan'}
                     </span>
                   </div>
-                  <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-500 pt-1 border-t border-slate-200/60">
-                    <div className="flex items-center gap-1.5">
-                      <Building2 className="w-3.5 h-3.5 text-slate-400" />
-                      <span className="truncate">{selectedBatch.nama_distributor || 'PBF Rekanan'}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                      <span>ED: <strong>{selectedBatch.tanggal_kedaluwarsa}</strong></span>
-                    </div>
+                  <div className="flex items-center gap-1.5 text-slate-600">
+                    <Calendar className="w-3.5 h-3.5 text-amber-600" />
+                    <span>ED: <strong className="text-slate-900">{selectedBatch.tanggal_kedaluwarsa}</strong></span>
                   </div>
                 </div>
               )}
             </div>
 
             {selectedBatch && (
-              <div className="space-y-2 pt-2 border-t border-slate-100">
-                <label className="text-xs font-black text-slate-800 flex items-center gap-1.5">
-                  <span className="w-5 h-5 rounded-full bg-blue-600 text-white text-[11px] font-black flex items-center justify-center">
-                    2
-                  </span>
-                  <span>Hitung Jumlah Fisik di Rak & Lihat Selisih</span>
-                </label>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 sm:p-4 rounded-2xl bg-slate-50/90 border border-slate-200/80 items-stretch text-center">
-                  <div className="p-3 rounded-xl bg-white border border-slate-200 shadow-2xs flex flex-col justify-between">
-                    <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">
-                      Tercatat Sistem
-                    </span>
-                    <span className="text-2xl font-black text-slate-800 leading-tight block my-1">
+              <div className="space-y-3 pt-2 border-t border-slate-100">
+                {/* Bar Perbandingan Gelap Kontras Tinggi */}
+                <div className="bg-slate-900 text-white rounded-2xl p-3.5 grid grid-cols-3 gap-2 text-center">
+                  <div>
+                    <span className="text-[11px] text-slate-400 block">Stok Sistem</span>
+                    <span className="text-lg font-extrabold tabular-nums">
                       {selectedBatch.jumlah_saat_ini}
                     </span>
-                    <span className="text-[10px] text-slate-500 font-medium block">
-                      {selectedBatch.satuan || 'unit'} di sistem
+                  </div>
+                  <div className="border-x border-slate-800">
+                    <span className="text-[11px] text-blue-300 block">Fisik Rak</span>
+                    <span className="text-lg font-extrabold text-blue-400 tabular-nums">
+                      {jumlahFisik === '' ? 0 : jumlahFisik}
                     </span>
                   </div>
-
-                  <div className="p-3 rounded-xl bg-white border-2 border-blue-500 shadow-sm flex flex-col justify-between">
-                    <span className="text-[10px] text-blue-600 font-extrabold uppercase tracking-wider block">
-                      Hitungan Fisik Rak
-                    </span>
-                    <div className="flex items-center justify-center gap-2 my-1.5">
-                      <button
-                        type="button"
-                        onClick={() => adjustJumlahFisik(-1)}
-                        className="w-12 h-12 sm:w-10 sm:h-10 min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 font-bold flex items-center justify-center transition shadow-2xs"
-                        title="Kurang 1"
-                        aria-label="Kurang 1 hitungan fisik"
-                      >
-                        <Minus className="w-4 h-4" />
-                      </button>
-                      <input
-                        type="number"
-                        min="0"
-                        value={jumlahFisik}
-                        onChange={(e) => setJumlahFisik(e.target.value)}
-                        className="w-20 sm:w-16 h-12 sm:h-10 text-center text-xl font-black rounded-xl border border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-blue-700 bg-blue-50/30"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => adjustJumlahFisik(1)}
-                        className="w-12 h-12 sm:w-10 sm:h-10 min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold flex items-center justify-center transition shadow-xs"
-                        title="Tambah 1"
-                        aria-label="Tambah 1 hitungan fisik"
-                      >
-                        <Plus className="w-4 h-4" />
-                      </button>
-                    </div>
-                    <span className="text-[10px] text-blue-600 font-bold block">
-                      aktual di rak fisik
-                    </span>
-                  </div>
-
-                  <div className="p-3 rounded-xl bg-white border border-slate-200 shadow-2xs flex flex-col justify-between">
-                    <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">
-                      Selisih Deviasi
-                    </span>
+                  <div>
+                    <span className="text-[11px] text-slate-400 block">Selisih</span>
                     <span
-                      className={`text-2xl font-black leading-tight block my-1 ${
+                      className={`text-lg font-extrabold tabular-nums ${
                         selisih < 0
-                          ? 'text-rose-600'
+                          ? 'text-rose-400'
                           : selisih > 0
-                          ? 'text-blue-600'
-                          : 'text-emerald-600'
+                          ? 'text-cyan-400'
+                          : 'text-emerald-400'
                       }`}
                     >
                       {selisih > 0 ? `+${selisih}` : selisih}
                     </span>
-                    <span
-                      className={`text-[10px] font-bold block ${
-                        selisih < 0
-                          ? 'text-rose-500'
-                          : selisih > 0
-                          ? 'text-blue-500'
-                          : 'text-emerald-500'
-                      }`}
-                    >
-                      {selisih === 0
-                        ? 'Sesuai Rak'
-                        : selisih < 0
-                        ? 'Kurang di Rak'
-                        : 'Lebih di Rak'}
-                    </span>
                   </div>
+                </div>
+
+                {/* Tombol Stepper Cepat (-5, -1, Input, +1, +5) */}
+                <div className="flex items-center justify-center gap-1.5 sm:gap-2 p-3 rounded-2xl bg-slate-50 border border-slate-200/80">
+                  <button
+                    type="button"
+                    onClick={() => adjustJumlahFisik(-5)}
+                    className="h-11 px-3 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-bold active:scale-95 transition"
+                  >
+                    -5
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => adjustJumlahFisik(-1)}
+                    className="w-11 h-11 min-w-[44px] rounded-xl bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 flex items-center justify-center active:scale-95 transition"
+                    aria-label="Kurangi 1 unit"
+                  >
+                    <Minus className="w-4 h-4" />
+                  </button>
+                  <input
+                    type="number"
+                    min="0"
+                    value={jumlahFisik}
+                    onChange={(e) => setJumlahFisik(e.target.value)}
+                    className="w-20 h-11 text-center text-lg font-extrabold rounded-xl border-2 border-blue-500 text-blue-700 bg-white focus:outline-none tabular-nums"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => adjustJumlahFisik(1)}
+                    className="w-11 h-11 min-w-[44px] rounded-xl bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center active:scale-95 transition"
+                    aria-label="Tambah 1 unit"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => adjustJumlahFisik(5)}
+                    className="h-11 px-3 rounded-xl bg-blue-50 border border-blue-200 hover:bg-blue-100 text-blue-700 text-xs font-bold active:scale-95 transition"
+                  >
+                    +5
+                  </button>
                 </div>
               </div>
             )}
 
             <div className="space-y-2 pt-2 border-t border-slate-100">
-              <label className="text-xs font-black text-slate-800 flex items-center gap-1.5">
-                <span className="w-5 h-5 rounded-full bg-blue-600 text-white text-[11px] font-black flex items-center justify-center">
-                  3
-                </span>
-                <span>Pilih Alasan / Penyebab Selisih</span>
+              <label className="text-xs font-bold text-slate-800 block">
+                Keterangan Hasil Pemeriksaan
               </label>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {[
                   'Pemeriksaan rutin rak (stok cocok)',
                   'Obat terjual ke pasien',
-                  'Kemasan rusak / botol pecah di rak',
-                  'Salah hitung saat penerimaan faktur',
+                  'Kemasan rusak / pecah di rak',
+                  'Koreksi selisih hitung faktur',
                 ].map((txt) => (
                   <button
                     key={txt}
                     type="button"
                     onClick={() => setAlasan(txt)}
-                    className={`text-xs p-3 min-h-[44px] rounded-xl border text-left transition-all cursor-pointer flex items-center ${
+                    className={`text-xs p-3 min-h-[44px] rounded-xl border text-left transition flex items-center ${
                       alasan === txt
-                        ? 'bg-blue-50 border-blue-400 text-blue-900 font-black ring-1 ring-blue-500/20'
-                        : 'bg-slate-50/70 border-slate-200 text-slate-600 hover:bg-white hover:border-slate-300 font-semibold'
+                        ? 'bg-blue-50 border-blue-400 text-blue-900 font-bold'
+                        : 'bg-slate-50/70 border-slate-200 text-slate-600 hover:bg-white font-medium'
                     }`}
                   >
                     <span>{txt}</span>
@@ -373,57 +370,56 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
                 ))}
               </div>
 
-              <div className="pt-1">
-                <input
-                  type="text"
-                  placeholder="Catatan tambahan (contoh: 2 botol sirup retak terbentur saat susun rak)..."
-                  value={catatanKhusus}
-                  onChange={(e) => setCatatanKhusus(e.target.value)}
-                  className="w-full text-xs h-11 sm:h-9 px-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                />
-              </div>
+              <input
+                type="text"
+                placeholder="Catatan tambahan opsional..."
+                value={catatanKhusus}
+                onChange={(e) => setCatatanKhusus(e.target.value)}
+                className="w-full text-xs h-11 sm:h-9 px-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              />
             </div>
 
-            <div className="pt-3 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="pt-2 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <span className="text-[11px] text-slate-500">
-                Pencatat: <strong>{user?.nama || 'Petugas Apotek'}</strong>
+                Petugas: <strong>{user?.nama || 'Petugas Apotek'}</strong>
               </span>
 
               <button
                 type="submit"
                 disabled={loading}
-                className="inline-flex items-center justify-center gap-2 px-5 py-3 h-12 sm:h-10 min-h-[44px] rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-sm active:scale-95 cursor-pointer disabled:opacity-50 w-full sm:w-auto"
+                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 min-h-[44px] rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs active:scale-95 disabled:opacity-50 w-full sm:w-auto"
               >
                 <Save className="w-4 h-4" />
-                <span>{loading ? 'Menyimpan...' : 'Simpan & Perbarui Stok Rak'}</span>
+                <span>{loading ? 'Menyimpan...' : 'Simpan Hasil Opname'}</span>
               </button>
             </div>
           </form>
         </div>
 
-        <div className="lg:col-span-5 bg-white rounded-2xl border border-slate-200/90 p-4 shadow-sm space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <div>
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">
-                Buku Catatan Audit
-              </span>
-              <h3 className="text-sm font-black text-slate-900 flex items-center gap-1.5 mt-0.5">
-                <History className="w-4 h-4 text-blue-600" />
-                <span>Riwayat Penyesuaian Terakhir</span>
-              </h3>
-            </div>
-            <span className="text-[10px] px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-bold">
-              {riwayat.length} Log
-            </span>
+        {/* Buku Catatan Audit */}
+        <div className="lg:col-span-5 bg-white rounded-2xl border border-slate-200/80 p-4 shadow-2xs space-y-3.5">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-3 gap-2">
+            <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+              <History className="w-4 h-4 text-blue-600" />
+              <span>Riwayat Audit ({riwayat.length})</span>
+            </h3>
+
+            <button
+              type="button"
+              onClick={handleExportLogsCsv}
+              disabled={riwayat.length === 0}
+              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold transition disabled:opacity-50"
+            >
+              <Download className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Ekspor CSV</span>
+            </button>
           </div>
 
-          <div className="grid grid-cols-2 gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-center">
+          <div className="grid grid-cols-2 gap-2 p-3 rounded-xl bg-slate-50 border border-slate-100 text-center">
             <div>
-              <span className="text-[10px] text-slate-400 uppercase font-bold block">
-                Total Selisih
-              </span>
+              <span className="text-[11px] text-slate-500 block">Akumulasi Selisih</span>
               <span
-                className={`text-sm font-black ${
+                className={`text-sm font-extrabold tabular-nums ${
                   netSelisih < 0
                     ? 'text-rose-600'
                     : netSelisih > 0
@@ -435,57 +431,50 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
               </span>
             </div>
             <div>
-              <span className="text-[10px] text-slate-400 uppercase font-bold block">
-                Tingkat Akurasi Rak
-              </span>
-              <span className="text-sm font-black text-slate-800">
+              <span className="text-[11px] text-slate-500 block">Akurasi Rak</span>
+              <span className="text-sm font-extrabold text-slate-900 tabular-nums">
                 96.4% Sesuai
               </span>
             </div>
           </div>
 
-          {/* Daftar Riwayat Penyesuaian */}
           <div className="space-y-2 max-h-[380px] overflow-y-auto pr-1">
             {riwayat.map((log) => (
               <div
                 key={log.id}
-                className="p-3 rounded-xl border border-slate-200/80 bg-slate-50/50 hover:bg-white transition-all space-y-1.5 text-xs"
+                className="p-3 rounded-xl border border-slate-200/80 bg-slate-50/50 space-y-1.5 text-xs"
               >
                 <div className="flex items-center justify-between gap-2">
-                  <h5 className="font-black text-slate-900 truncate">
-                    {log.nama_obat}
-                  </h5>
+                  <h5 className="font-bold text-slate-900 truncate">{log.nama_obat}</h5>
                   <span
-                    className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded ${
+                    className={`text-[10px] font-bold px-2 py-0.5 rounded-full tabular-nums ${
                       log.selisih < 0
-                        ? 'bg-rose-100 text-rose-800'
+                        ? 'bg-rose-100 text-rose-700'
                         : log.selisih > 0
-                        ? 'bg-blue-100 text-blue-800'
-                        : 'bg-emerald-100 text-emerald-800'
+                        ? 'bg-blue-100 text-blue-700'
+                        : 'bg-emerald-100 text-emerald-700'
                     }`}
                   >
                     {log.selisih > 0 ? `+${log.selisih}` : log.selisih} unit
                   </span>
                 </div>
 
-                <div className="flex items-center gap-2 text-[10px] text-slate-400 font-mono">
-                  <span>Batch: {log.nomor_batch}</span>
+                <div className="flex items-center gap-2 text-[11px] text-slate-500 font-mono">
+                  <span>{log.nomor_batch}</span>
                   <span>•</span>
                   <span>{log.jumlah_sebelum} → {log.jumlah_sesudah}</span>
                 </div>
 
-                <p className="text-[11px] text-slate-600 leading-relaxed italic bg-white/80 p-1.5 rounded-lg border border-slate-100">
-                  "{log.alasan}"
+                <p className="text-[11px] text-slate-600 bg-white p-2 rounded-lg border border-slate-100">
+                  {log.alasan}
                 </p>
 
-                <div className="flex items-center justify-between pt-1 border-t border-slate-200/60 text-[10px] text-slate-400">
+                <div className="flex items-center justify-between text-[10px] text-slate-400">
                   <span className="flex items-center gap-1">
                     <Clock className="w-3 h-3" />
                     <span>{log.waktu}</span>
                   </span>
-                  <span className="font-semibold text-slate-600">
-                    Oleh: {log.petugas}
-                  </span>
+                  <span className="font-medium text-slate-600">{log.petugas}</span>
                 </div>
               </div>
             ))}

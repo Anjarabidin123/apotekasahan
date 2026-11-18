@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { BrandLogo } from '../components/common/BrandLogo';
+import { getAiConfig, saveAiConfig, exportToExcelCsv } from '../utils/fileTools';
 import {
   Building2,
   FileText,
@@ -11,30 +12,32 @@ import {
   Loader2,
   Upload,
   Trash2,
-  Image as ImageIcon,
   CheckCircle2,
   AlertTriangle,
   LifeBuoy,
-  Users,
   Plus,
-  ArrowLeft,
-  Phone,
-  MapPin,
-  Mail,
   Shield,
-  Sliders,
   Check,
   RotateCcw,
-  ExternalLink,
   Printer,
-  Calendar
+  Calendar,
+  KeyRound,
+  Eye,
+  EyeOff,
+  Download,
+  Sparkles
 } from 'lucide-react';
 
 export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange }) {
   const { isAdmin, user } = useAuth();
-  const [activeTab, setActiveTab] = useState('identitas'); // 'identitas' | 'dokumen' | 'kategori' | 'rekanan'
+  const [activeTab, setActiveTab] = useState('identitas');
   const [loading, setLoading] = useState(false);
   const [showSupportModal, setShowSupportModal] = useState(false);
+  const [aiConfig, setAiConfig] = useState(() => getAiConfig());
+  const [showApiKey, setShowApiKey] = useState(false);
+  const [defaultPage, setDefaultPage] = useState(
+    () => localStorage.getItem('simaaf_default_page') || 'dashboard'
+  );
 
   // Profil Apotek State
   const [profile, setProfile] = useState({
@@ -287,12 +290,13 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
       )}
 
       
-      <div className="flex items-center gap-2 overflow-x-auto pb-1">
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
         {[
-          { id: 'identitas', label: 'Identitas & Legalitas', icon: Building2 },
-          { id: 'dokumen', label: 'Format Dokumen & PDF', icon: FileText },
-          { id: 'kategori', label: `Kategori & Ambang Stok (${kategoriList.length})`, icon: Wallet },
-          { id: 'rekanan', label: `Master PBF (${distributors.length} Rekanan)`, icon: Building2 },
+          { id: 'identitas', label: 'Identitas Apotek', icon: Building2 },
+          { id: 'ai', label: 'Integrasi AI & Impor', icon: Sparkles },
+          { id: 'dokumen', label: 'Format Dokumen', icon: FileText },
+          { id: 'kategori', label: `Kategori (${kategoriList.length})`, icon: Wallet },
+          { id: 'rekanan', label: `Master PBF (${distributors.length})`, icon: Building2 },
         ].map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -301,10 +305,10 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
               key={tab.id}
               type="button"
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-3.5 py-2.5 min-h-[44px] rounded-xl text-xs sm:text-sm font-black whitespace-nowrap transition-all cursor-pointer ${
+              className={`flex items-center gap-2 px-3.5 py-2.5 min-h-[44px] rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
                 isActive
-                  ? 'bg-slate-900 text-white shadow-sm'
-                  : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100 font-extrabold'
+                  ? 'bg-blue-600 text-white shadow-xs'
+                  : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
               }`}
             >
               <Icon className="w-4 h-4" />
@@ -313,6 +317,160 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
           );
         })}
       </div>
+
+      {activeTab === 'ai' && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-2xs space-y-4">
+            <div className="border-b border-slate-100 pb-3 flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+                <KeyRound className="w-4 h-4" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">
+                  Token API AI Pembaca Dokumen
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Digunakan saat membaca foto faktur, file Word (.docx), atau Excel secara cerdas.
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Penyedia Layanan AI
+                </label>
+                <select
+                  value={aiConfig.provider}
+                  onChange={(e) =>
+                    setAiConfig({
+                      ...aiConfig,
+                      provider: e.target.value,
+                      model: e.target.value === 'openai' ? 'gpt-4o-mini' : 'gemini-2.5-flash',
+                    })
+                  }
+                  className="w-full text-xs h-10 px-3 rounded-xl border border-slate-200 bg-white font-semibold"
+                >
+                  <option value="gemini">Google Gemini (Vision + Dokumen)</option>
+                  <option value="openai">OpenAI GPT (Vision + Dokumen)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Model Ekstraksi
+                </label>
+                <select
+                  value={aiConfig.model}
+                  onChange={(e) => setAiConfig({ ...aiConfig, model: e.target.value })}
+                  className="w-full text-xs h-10 px-3 rounded-xl border border-slate-200 bg-white font-mono font-semibold"
+                >
+                  {aiConfig.provider === 'gemini' ? (
+                    <>
+                      <option value="gemini-2.5-flash">gemini-2.5-flash (Cepat & Akurat)</option>
+                      <option value="gemini-2.5-pro">gemini-2.5-pro (Faktur Kompleks)</option>
+                    </>
+                  ) : (
+                    <>
+                      <option value="gpt-4o-mini">gpt-4o-mini (Hemat)</option>
+                      <option value="gpt-4o">gpt-4o (Akurasi Tinggi)</option>
+                    </>
+                  )}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  API Key / Token AI
+                </label>
+                <div className="relative">
+                  <input
+                    type={showApiKey ? 'text' : 'password'}
+                    value={aiConfig.apiKey}
+                    onChange={(e) => setAiConfig({ ...aiConfig, apiKey: e.target.value })}
+                    placeholder="Masukkan token API Gemini atau OpenAI..."
+                    className="w-full text-xs h-10 pl-3 pr-10 rounded-xl border border-slate-200 font-mono"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowApiKey(!showApiKey)}
+                    className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600"
+                    aria-label="Tampilkan atau sembunyikan token"
+                  >
+                    {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                <p className="text-[11px] text-slate-400 mt-1">
+                  Disimpan lokal di perangkat Anda. Jika dikosongkan, impor CSV/Excel tetap berjalan penuh secara lokal.
+                </p>
+              </div>
+
+              <div className="pt-1 flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const saved = saveAiConfig(aiConfig);
+                    setAiConfig(saved);
+                    setSuccessMsg(
+                      saved.apiKey
+                        ? `Konfigurasi AI (${saved.provider.toUpperCase()}) berhasil disimpan!`
+                        : 'Token AI dikosongkan.'
+                    );
+                    setTimeout(() => setSuccessMsg(''), 3500);
+                  }}
+                  className="btn-primary h-10 px-4 text-xs"
+                >
+                  <Save className="w-3.5 h-3.5" />
+                  <span>Simpan Token AI</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-2xs space-y-4">
+            <div className="border-b border-slate-100 pb-3">
+              <h3 className="text-sm font-bold text-slate-900">
+                Halaman Awal & Format Impor
+              </h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Atur menu utama setelah masuk dan format berkas yang didukung.
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Halaman Awal Saat Aplikasi Dibuka
+              </label>
+              <select
+                value={defaultPage}
+                onChange={(e) => {
+                  setDefaultPage(e.target.value);
+                  localStorage.setItem('simaaf_default_page', e.target.value);
+                  setSuccessMsg('Halaman awal aplikasi berhasil diperbarui!');
+                  setTimeout(() => setSuccessMsg(''), 3000);
+                }}
+                className="w-full text-xs h-10 px-3 rounded-xl border border-slate-200 bg-white font-semibold"
+              >
+                <option value="dashboard">Beranda (Ringkasan Eksekutif)</option>
+                <option value="faktur">Input Faktur & Scan</option>
+                <option value="inventori">Stok & Batch Obat</option>
+                <option value="pengingat">Pengingat Retur & ED</option>
+                <option value="penyesuaian">Stok Opname Rak</option>
+                <option value="kalender">Kalender Tenggat PBF</option>
+              </select>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-blue-50/70 border border-blue-200/70 space-y-1.5 text-xs text-slate-700">
+              <p className="font-bold text-blue-900">Format Berkas Didukung:</p>
+              <ul className="list-disc pl-4 space-y-1 text-[11px] text-slate-600">
+                <li><strong>Excel / Spreadsheet (.csv, .tsv, .xlsx, .xls)</strong>: Impor langsung di halaman Input Faktur maupun Persediaan Obat.</li>
+                <li><strong>Dokumen Word (.docx, .txt, .json)</strong>: Ekstrak tabel & rincian obat secara otomatis.</li>
+                <li><strong>Foto Faktur Fisik (.jpg, .png, .webp)</strong>: Baca otomatis menggunakan Token AI atau simulasi demo.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
 
       
       {activeTab === 'identitas' && (
@@ -800,14 +958,29 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
               </p>
             </div>
 
-            <button
-              type="button"
-              onClick={() => setShowAddPbfModal(true)}
-              className="btn-primary h-11 sm:h-8 min-h-[44px] sm:min-h-0 px-3.5 text-xs font-bold gap-1.5 self-start sm:self-auto flex items-center justify-center"
-            >
-              <Plus className="w-4 h-4" />
-              <span>+ Daftarkan PBF Baru</span>
-            </button>
+            <div className="flex items-center gap-2 flex-wrap self-start sm:self-auto">
+              <button
+                type="button"
+                onClick={() => {
+                  const headers = ['Kode PBF', 'Nama Distributor', 'Aturan Retur (Bulan)', 'Kontak PIC', 'Telepon'];
+                  const rows = distributors.map((d) => [d.kode, d.nama, d.aturan_retur_bulan, d.kontak || '-', d.telepon || '-']);
+                  exportToExcelCsv('daftar_pbf_apotek_asahan.csv', headers, rows);
+                }}
+                className="btn-outline h-11 sm:h-9 px-3 text-xs"
+              >
+                <Download className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Ekspor CSV</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowAddPbfModal(true)}
+                className="btn-primary h-11 sm:h-9 px-3.5 text-xs font-bold gap-1.5 flex items-center justify-center"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Tambah PBF</span>
+              </button>
+            </div>
           </div>
 
           {/* Mobile / Tablet Responsive PBF Cards (block md:hidden) */}

@@ -768,4 +768,36 @@ Struktur JSON terstandarisasi yang berisi nomor faktur, distributor, dan array i
 
 ---
 
+## BAB 10: PEMBARUAN INTEGRASI FRONTEND (IMPOR MULTI-FORMAT, TOKEN AI OPSIONAL, EKSPOR EXCEL/CSV & .ICS)
+
+Bagian ini mendokumentasikan kebutuhan backend tambahan seiring pembaruan modul frontend (`frontend/src/utils/fileTools.js`, `FakturInputPage.jsx`, `InventoriBatchPage.jsx`, `PenyesuaianStokPage.jsx`, dan `KalenderTenggatPage.jsx`):
+
+### 10.1 Ekstraksi Dokumen Multi-Format & Pass-Through Token AI Opsional
+* **Method & URL:** `POST /api/v1/faktur/ekstraksi`
+* **Headers Opsional dari Frontend:**
+  * `X-AI-Provider`: `"gemini"` | `"openai"` (jika petugas apotek mengisi token AI kustom di pengaturan frontend)
+  * `X-AI-Model`: contoh `"gemini-2.5-flash"`, `"gpt-4o-mini"`
+  * `X-AI-Key`: token API sementara (wajib diteruskan tanpa disimpan permanen di log server bila digunakan)
+* **Format Berkas Didukung (`multipart/form-data` field `file`):**
+  * Gambar faktur fisik: `.jpg`, `.jpeg`, `.png`, `.webp`
+  * Spreadsheet / Excel: `.csv`, `.tsv`, `.xlsx`, `.xls`
+  * Dokumen Word / Teks: `.docx`, `.doc`, `.txt`, `.json`
+* **Fallback Client-Side:** Saat berkas CSV/Excel/Word atau JSON berhasil diurai langsung di browser oleh `parseUploadedDocument()`, frontend akan langsung mengirimkan array item final ke `POST /api/v1/faktur/simpan-batch`.
+
+### 10.2 Impor Massal & Ekspor CSV Persediaan Batch
+1. **`POST /api/v1/inventori/impor-batch`** *(Bulk Import)*:
+   * Menerima JSON array `items` berisi `{ obat_id, distributor_id, nomor_batch, tanggal_masuk, tanggal_kedaluwarsa, jumlah, harga_beli_satuan, satuan, keterangan }`.
+   * Backend melakukan validasi dalam satu transaksi ACID, menghitung `batas_retur` dan `skor_risiko` untuk seluruh baris, lalu mengembalikan total batch tersimpan.
+2. **`GET /api/v1/inventori/ekspor-csv`**:
+   * Mendukung query filter yang sama dengan `GET /api/v1/inventori` (`search`, `distributor_id`, `status_risiko`, `status_retur`).
+   * Mengembalikan berkas `text/csv; charset=utf-8` dengan awalan UTF-8 BOM (`\uFEFF`) agar langsung terbaca rapi di Microsoft Excel Indonesia.
+
+### 10.3 Ekspor Log Audit Opname & Feed Kalender iCalendar (.ICS)
+1. **`GET /api/v1/penyesuaian-stok/ekspor-csv`**:
+   * Mengembalikan riwayat buku audit penyesuaian stok fisik rak (`Waktu`, `Nama Obat`, `Nomor Batch`, `Stok Sebelum`, `Stok Sesudah`, `Selisih`, `Alasan`, `Petugas`) berformat CSV UTF-8 BOM.
+2. **`GET /api/v1/kalender/ekspor-ics?bulan=YYYY-MM`**:
+   * Mengembalikan feed kalender berstandar RFC 5545 (`Content-Type: text/calendar; charset=utf-8`) berisi blok `BEGIN:VCALENDAR` dan `VEVENT` untuk setiap tenggat batas retur PBF serta tanggal kedaluwarsa batch di bulan target.
+
+---
+
 *Dokumen ini menjadi kontrak sah antar tim pengembang A26-CS114. Jika ada perubahan nama field atau endpoint, harap hubungi Charlene atau Dio terlebih dahulu.*

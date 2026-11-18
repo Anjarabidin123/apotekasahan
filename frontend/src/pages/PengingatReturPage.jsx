@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { api } from '../services/api';
 import { StatusReturBadge, StatusRisikoBadge } from '../components/common/StatusBadge';
+import { exportToExcelCsv } from '../utils/fileTools';
 import {
   BellRing,
   Clock,
-  Calendar,
-  Building2,
   AlertTriangle,
   ArrowRight,
   Boxes,
@@ -25,13 +24,14 @@ import {
 export function PengingatReturPage({ onNavigateToPenyesuaian }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('retur'); // 'retur', 'kedaluwarsa', 'menipis'
-  const [viewMode, setViewMode] = useState('table'); // 'table' | 'cards'
+  const [activeTab, setActiveTab] = useState('retur');
+  const [viewMode, setViewMode] = useState(() =>
+    typeof window !== 'undefined' && window.innerWidth < 768 ? 'cards' : 'table'
+  );
   const [searchQuery, setSearchQuery] = useState('');
   const [filterPbf, setFilterPbf] = useState('semua');
-  const [sortBy, setSortBy] = useState('urgensi'); // 'urgensi', 'nilai_desc', 'nama_asc', 'stok_asc'
+  const [sortBy, setSortBy] = useState('urgensi');
   const [selectedBatchIds, setSelectedBatchIds] = useState([]);
-  const [bulkSuccessMsg, setBulkSuccessMsg] = useState('');
   const [bapModalData, setBapModalData] = useState({ isOpen: false, batches: [] });
 
   useEffect(() => {
@@ -165,144 +165,127 @@ export function PengingatReturPage({ onNavigateToPenyesuaian }) {
 
   return (
     <div className="space-y-3">
-      
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200/80 pb-3">
-        <div>
-          <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">
-            Pusat Pengawasan Logistik
-          </span>
-          <h2 className="text-base font-black text-slate-900 tracking-tight flex items-center gap-2">
-            <BellRing className="w-4 h-4 text-rose-600" />
-            Pengingat Tenggat Retur & Kedaluwarsa
-          </h2>
-          <p className="text-xs text-slate-500">
-            Dihitung otomatis per tanggal acuan sistem: <strong className="text-slate-800">{data.tanggal_acuan}</strong>
-          </p>
+      {/* Header Pengingat & Ekspor Excel */}
+      <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+            <BellRing className="w-5 h-5" />
+          </div>
+          <div>
+            <h2 className="text-sm sm:text-base font-bold text-slate-900">
+              Pengingat Retur & Kedaluwarsa
+            </h2>
+            <p className="text-xs text-slate-500">
+              Dihitung per acuan <strong className="text-slate-700">{data.tanggal_acuan}</strong>
+            </p>
+          </div>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
           <button
+            type="button"
             onClick={() => {
-              const csvContent =
-                'data:text/csv;charset=utf-8,Nama Obat,No Batch,PBF,Sisa Hari,Batas Retur,Stok,Nilai Total\n' +
-                filteredAndSortedList
-                  .map(
-                    (b) =>
-                      `"${b.nama_obat}","${b.nomor_batch}","${b.nama_distributor || ''}",${b.sisa_hari_retur || ''},${b.batas_retur || ''},${b.jumlah_saat_ini || 0},${b.nilai_total || 0}`
-                  )
-                  .join('\n');
-              const encodedUri = encodeURI(csvContent);
-              const link = document.createElement('a');
-              link.setAttribute('href', encodedUri);
-              link.setAttribute('download', `pengingat_retur_${data.tanggal_acuan}.csv`);
-              document.body.appendChild(link);
-              link.click();
-              document.body.removeChild(link);
+              const headers = ['Nama Obat', 'Nomor Batch', 'Distributor PBF', 'Sisa Hari Retur', 'Batas Retur', 'Tanggal ED', 'Sisa Stok', 'Nilai Total (Rp)'];
+              const rows = filteredAndSortedList.map((b) => [
+                b.nama_obat,
+                b.nomor_batch,
+                b.nama_distributor || '-',
+                b.sisa_hari_retur ?? b.sisa_hari_exp ?? '-',
+                b.batas_retur || '-',
+                b.tanggal_kedaluwarsa || '-',
+                b.jumlah_saat_ini || 0,
+                b.nilai_total || 0,
+              ]);
+              exportToExcelCsv(`pengingat_retur_${data.tanggal_acuan}.csv`, headers, rows);
             }}
-            className="btn-outline h-8 px-3 text-xs"
-            title="Ekspor daftar ini ke format CSV/Excel"
+            className="btn-outline h-10 sm:h-9 px-3 text-xs"
+            title="Ekspor daftar ini ke format Excel CSV"
           >
-            <Download className="w-3.5 h-3.5 text-slate-500" />
-            <span>Ekspor CSV</span>
+            <Download className="w-3.5 h-3.5 text-emerald-600" />
+            <span>Ekspor Excel (.CSV)</span>
           </button>
 
-          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold">
-            <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
-            <span>{mendesakRetur.length} Batch Perlu Tindakan Segera</span>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold">
+            <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+            <span>{mendesakRetur.length} Mendesak</span>
           </div>
         </div>
       </div>
 
-      {bulkSuccessMsg && (
-        <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2.5 shadow-sm">
-          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-          <span className="font-bold">{bulkSuccessMsg}</span>
-        </div>
-      )}
-
-      
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+      {/* Kartu Kategori 3 Kolom Ringkas */}
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
         <button
+          type="button"
           onClick={() => {
             setActiveTab('retur');
             setSelectedBatchIds([]);
           }}
-          className={`p-3 rounded-2xl border text-left transition-all active:scale-[0.99] flex items-center justify-between cursor-pointer ${
+          className={`p-2.5 sm:p-3.5 rounded-2xl border text-left transition-all flex items-center justify-between cursor-pointer ${
             activeTab === 'retur'
-              ? 'bg-rose-50/60 border-rose-300 ring-2 ring-rose-500/20 shadow-xs'
-              : 'bg-white border-slate-200/80 hover:border-slate-300 shadow-xs'
+              ? 'bg-rose-600 border-rose-600 text-white shadow-xs'
+              : 'bg-white border-slate-200/80 hover:border-rose-300 text-slate-900'
           }`}
         >
           <div className="min-w-0">
-            <div className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-rose-500" />
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-rose-700 block truncate">
-                Mendesak Retur (&lt; 30 Hari)
-              </span>
-            </div>
-            <p className="text-xl font-black text-slate-900 mt-0.5">
-              {mendesakRetur.length} Batch
+            <span className={`text-[10px] sm:text-xs font-semibold block truncate ${activeTab === 'retur' ? 'text-rose-100' : 'text-slate-500'}`}>
+              Mendesak Retur
+            </span>
+            <p className="text-base sm:text-xl font-extrabold tabular-nums mt-0.5">
+              {mendesakRetur.length} <span className="text-[11px] font-medium hidden sm:inline">Batch</span>
             </p>
-            <p className="text-[11px] text-slate-500 font-medium">Batas klaim PBF hampir habis</p>
           </div>
-          <div className="w-9 h-9 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center shrink-0">
-            <Clock className="w-4 h-4" strokeWidth={2.4} />
+          <div className={`hidden sm:flex w-9 h-9 rounded-xl items-center justify-center shrink-0 ${activeTab === 'retur' ? 'bg-white/20 text-white' : 'bg-rose-50 text-rose-600'}`}>
+            <Clock className="w-4 h-4" />
           </div>
         </button>
 
         <button
+          type="button"
           onClick={() => {
             setActiveTab('kedaluwarsa');
             setSelectedBatchIds([]);
           }}
-          className={`p-3 rounded-2xl border text-left transition-all active:scale-[0.99] flex items-center justify-between cursor-pointer ${
+          className={`p-2.5 sm:p-3.5 rounded-2xl border text-left transition-all flex items-center justify-between cursor-pointer ${
             activeTab === 'kedaluwarsa'
-              ? 'bg-amber-50/60 border-amber-300 ring-2 ring-amber-500/20 shadow-xs'
-              : 'bg-white border-slate-200/80 hover:border-slate-300 shadow-xs'
+              ? 'bg-amber-500 border-amber-500 text-white shadow-xs'
+              : 'bg-white border-slate-200/80 hover:border-amber-300 text-slate-900'
           }`}
         >
           <div className="min-w-0">
-            <div className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-amber-500" />
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-700 block truncate">
-                Mendekati Kedaluwarsa (&lt; 90 Hari)
-              </span>
-            </div>
-            <p className="text-xl font-black text-slate-900 mt-0.5">
-              {mendekatiKedaluwarsa.length} Batch
+            <span className={`text-[10px] sm:text-xs font-semibold block truncate ${activeTab === 'kedaluwarsa' ? 'text-amber-50' : 'text-slate-500'}`}>
+              Dekat ED
+            </span>
+            <p className="text-base sm:text-xl font-extrabold tabular-nums mt-0.5">
+              {mendekatiKedaluwarsa.length} <span className="text-[11px] font-medium hidden sm:inline">Batch</span>
             </p>
-            <p className="text-[11px] text-slate-500 font-medium">Prioritaskan pengeluaran FEFO</p>
           </div>
-          <div className="w-9 h-9 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
-            <AlertTriangle className="w-4 h-4" strokeWidth={2.4} />
+          <div className={`hidden sm:flex w-9 h-9 rounded-xl items-center justify-center shrink-0 ${activeTab === 'kedaluwarsa' ? 'bg-white/20 text-white' : 'bg-amber-50 text-amber-600'}`}>
+            <AlertTriangle className="w-4 h-4" />
           </div>
         </button>
 
         <button
+          type="button"
           onClick={() => {
             setActiveTab('menipis');
             setSelectedBatchIds([]);
           }}
-          className={`p-3 rounded-2xl border text-left transition-all active:scale-[0.99] flex items-center justify-between cursor-pointer ${
+          className={`p-2.5 sm:p-3.5 rounded-2xl border text-left transition-all flex items-center justify-between cursor-pointer ${
             activeTab === 'menipis'
-              ? 'bg-blue-50/60 border-blue-300 ring-2 ring-blue-500/20 shadow-xs'
-              : 'bg-white border-slate-200/80 hover:border-slate-300 shadow-xs'
+              ? 'bg-blue-600 border-blue-600 text-white shadow-xs'
+              : 'bg-white border-slate-200/80 hover:border-blue-300 text-slate-900'
           }`}
         >
           <div className="min-w-0">
-            <div className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-blue-500" />
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-blue-700 block truncate">
-                Stok Menipis
-              </span>
-            </div>
-            <p className="text-xl font-black text-slate-900 mt-0.5">
-              {stokMenipis.length} Batch
+            <span className={`text-[10px] sm:text-xs font-semibold block truncate ${activeTab === 'menipis' ? 'text-blue-100' : 'text-slate-500'}`}>
+              Stok Tipis
+            </span>
+            <p className="text-base sm:text-xl font-extrabold tabular-nums mt-0.5">
+              {stokMenipis.length} <span className="text-[11px] font-medium hidden sm:inline">Batch</span>
             </p>
-            <p className="text-[11px] text-slate-500 font-medium">Di bawah stok pengaman</p>
           </div>
-          <div className="w-9 h-9 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center shrink-0">
-            <Boxes className="w-4 h-4" strokeWidth={2.4} />
+          <div className={`hidden sm:flex w-9 h-9 rounded-xl items-center justify-center shrink-0 ${activeTab === 'menipis' ? 'bg-white/20 text-white' : 'bg-blue-50 text-blue-600'}`}>
+            <Boxes className="w-4 h-4" />
           </div>
         </button>
       </div>
@@ -680,9 +663,7 @@ export function PengingatReturPage({ onNavigateToPenyesuaian }) {
         </div>
       )}
 
-      {/* ========================================================
-          Scrollable BAP Modal Dialog (Official Pharmacy Document)
-      ======================================================== */}
+      {/* Modal Dokumen Berita Acara Retur (BAP) */}
       {bapModalData.isOpen && (
         <div
           data-testid="bap-modal"
@@ -693,16 +674,14 @@ export function PengingatReturPage({ onNavigateToPenyesuaian }) {
             className="bg-white rounded-2xl max-w-2xl w-full my-auto shadow-2xl border border-slate-200 flex flex-col max-h-[90vh] overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Modal Header */}
+            {/* Header Modal BAP */}
             <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/70 shrink-0">
               <div>
-                <span className="text-[10px] font-extrabold uppercase tracking-wider text-rose-600 block">
-                  Dokumen Resmi Retur Farmasi
-                </span>
-                <h3 className="text-sm font-black text-slate-900 flex items-center gap-2">
+                <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
                   <FileText className="w-4 h-4 text-blue-600" />
                   Berita Acara Pengembalian (BAP) Obat
                 </h3>
+                <p className="text-[11px] text-slate-500 mt-0.5">Dokumen resmi pengajuan retur PBF</p>
               </div>
               <button
                 type="button"

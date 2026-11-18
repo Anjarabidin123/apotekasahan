@@ -1765,5 +1765,17 @@ Seluruh struktur objek, properti kunci, tipe data, serta nilai ambang batas pada
 ### 5.2 Standar Validasi Kontrak OpenAPI 3.0
 Dokumen kontrak mesin mandiri disediakan pada berkas `docs/openapi.yaml`. Kontrak tersebut dapat divalidasi keabsahan sintaksis dan skemanya menggunakan parser OpenAPI standar (seperti PyYAML, Redocly CLI, atau Swagger Parser).
 
+### 5.3 Pembaruan Antarmuka Frontend (Multi-Format Import, Token AI, CSV & .ICS)
+Sejak revisi UI terbaru pada frontend (`frontend/src/utils/fileTools.js` dan halaman operasional), arsitektur backend diharapkan turut mendukung skenario integrasi berikut:
+1. **Dukungan Upload Multi-Format pada Faktur (`POST /api/v1/faktur/ekstraksi`)**:
+   - Selain berkas citra (`image/*`), backend direkomendasikan menerima format `.csv`, `.xlsx`, `.docx`, dan `.txt`, serta opsional header `X-AI-Provider`, `X-AI-Model`, dan `X-AI-Key` apabila pengguna memasukkan token API sendiri dari menu *Pengaturan -> Integrasi AI & Impor*.
+   - Apabila parsing dilakukan di sisi klien (`parseUploadedDocument`), payload siap simpan langsung dikirimkan via `POST /api/v1/faktur/simpan-batch`.
+2. **Filter Inventori Terstandar (`GET /api/v1/inventori` / `GET /api/v1/batches`)**:
+   - Query parameter yang dipakai frontend telah diseragamkan menjadi `search`, `distributor_id`, `status_risiko`, dan `status_retur`.
+3. **Dukungan Impor/Ekspor Massal & Sinkronisasi Kalender**:
+   - `POST /api/v1/inventori/impor-batch`: menerima batch array hasil unggahan Excel/CSV untuk penyimpanan transaksional sekaligus.
+   - `GET /api/v1/inventori/ekspor-csv` dan `GET /api/v1/penyesuaian-stok/ekspor-csv`: menghasilkan CSV dengan UTF-8 BOM (`\uFEFF`) agar kompatibel dengan Microsoft Excel.
+   - `GET /api/v1/kalender/ekspor-ics`: menghasilkan dokumen iCalendar (`.ics`) berstandar `VCALENDAR` / `VEVENT` untuk pengingat jatuh tempo retur PBF dan ED obat.
+
 ---
 *Dokumen ini diterbitkan sebagai panduan arsitektur dan spesifikasi integrasi resmi backend SIMAAF Apotek Asahan Farma.*
