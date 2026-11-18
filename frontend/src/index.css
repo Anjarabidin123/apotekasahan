@@ -4,16 +4,16 @@
 
 /* Token warna dan elevasi antarmuka SIMAAF */
 :root {
-  --radius: 0.75rem;
-  --background: #eef2f6;
+  --radius: 0.875rem;
+  --background: #f4f6fa;
   --foreground: #0f172a;
 
   --card: #ffffff;
   --card-foreground: #0f172a;
 
-  --primary: #059669;
-  --primary-glow: #10b981;
-  --primary-dark: #047857;
+  --primary: #2563eb;
+  --primary-glow: #3b82f6;
+  --primary-dark: #1d4ed8;
   --primary-foreground: #ffffff;
 
   --secondary: #64748b;
@@ -63,8 +63,8 @@
 @layer components {
   .clean-card {
     background: #ffffff;
-    border-radius: 0.75rem;
-    border: 1px solid #e2e8f0;
+    border-radius: 1rem;
+    border: 1px solid rgba(226, 232, 240, 0.85);
     box-shadow: var(--shadow-soft);
     transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   }
@@ -75,8 +75,8 @@
   }
 
   .surface-elevated {
-    @apply bg-white rounded-xl border border-slate-200/90 transition-all duration-200;
-    box-shadow: var(--shadow-soft);
+    @apply bg-white rounded-2xl border border-slate-200 transition-all duration-200;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 4px 14px -4px rgba(15, 23, 42, 0.04);
   }
 
   .surface-elevated:hover {
@@ -85,7 +85,7 @@
   }
 
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-xs active:scale-95 cursor-pointer;
+    @apply inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-sm shadow-blue-600/20 active:scale-95 cursor-pointer;
   }
 
   .btn-outline {
@@ -94,5 +94,14 @@
 
   .btn-ghost {
     @apply inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg hover:bg-slate-100 text-slate-600 text-xs font-semibold transition cursor-pointer;
+  }
+
+  .no-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
   }
 }

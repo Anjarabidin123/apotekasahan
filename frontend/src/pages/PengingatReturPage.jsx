@@ -201,7 +201,7 @@ export function PengingatReturPage({ onNavigateToPenyesuaian }) {
             className="btn-outline h-10 sm:h-9 px-3 text-xs"
             title="Ekspor daftar ini ke format Excel CSV"
           >
-            <Download className="w-3.5 h-3.5 text-emerald-600" />
+            <Download className="w-3.5 h-3.5 text-blue-600" />
             <span>Ekspor Excel (.CSV)</span>
           </button>
 
@@ -718,9 +718,46 @@ export function PengingatReturPage({ onNavigateToPenyesuaian }) {
                 </p>
               </div>
 
-              {/* Batches Table in BAP */}
-              <div className="border border-slate-200 rounded-xl overflow-x-auto">
-                <table className="w-full text-left text-[11px] min-w-[480px]">
+              {/* Daftar Item BAP untuk Layar Mobile (Tanpa Geser Horizontal) */}
+              <div className="sm:hidden print:hidden border border-slate-200 rounded-xl divide-y divide-slate-100 overflow-hidden">
+                {bapModalData.batches.map((b, idx) => (
+                  <div key={b.id || idx} className="p-3 bg-white space-y-1.5">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="font-bold text-slate-900 leading-snug">
+                          {idx + 1}. {b.nama_obat}
+                        </p>
+                        <p className="text-[11px] text-slate-500 truncate">
+                          <span className="font-mono">{b.nomor_batch || b.no_batch}</span> • {b.nama_distributor || b.pbf}
+                        </p>
+                      </div>
+                      <span className="font-extrabold text-slate-900 tabular-nums shrink-0">
+                        {formatRupiah(b.nilai_total || b.nilai)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-[11px] pt-1">
+                      <span className="text-rose-600 font-semibold whitespace-nowrap">
+                        ED: {b.tanggal_kedaluwarsa || b.ed}
+                      </span>
+                      <span className="font-bold text-slate-700">
+                        {b.jumlah_saat_ini || b.stok} unit
+                      </span>
+                    </div>
+                  </div>
+                ))}
+                <div className="p-3 bg-slate-50 border-t border-slate-200 flex items-center justify-between font-extrabold">
+                  <span className="text-slate-700">Total Pengajuan Retur</span>
+                  <span className="text-blue-700 tabular-nums">
+                    {formatRupiah(
+                      bapModalData.batches.reduce((acc, curr) => acc + (curr.nilai_total || curr.nilai || 0), 0)
+                    )}
+                  </span>
+                </div>
+              </div>
+
+              {/* Tabel Resmi BAP untuk Desktop & Cetak */}
+              <div className="hidden sm:block print:block border border-slate-200 rounded-xl overflow-x-auto">
+                <table className="w-full text-left text-[11px]">
                   <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold">
                     <tr>
                       <th className="py-2 px-3">No</th>
@@ -739,9 +776,9 @@ export function PengingatReturPage({ onNavigateToPenyesuaian }) {
                         <td className="py-2 px-3 font-bold text-slate-900">{b.nama_obat}</td>
                         <td className="py-2 px-3 font-mono">{b.nomor_batch || b.no_batch}</td>
                         <td className="py-2 px-3 text-slate-600">{b.nama_distributor || b.pbf}</td>
-                        <td className="py-2 px-3 text-rose-600 font-medium">{b.tanggal_kedaluwarsa || b.ed}</td>
+                        <td className="py-2 px-3 text-rose-600 font-medium whitespace-nowrap">{b.tanggal_kedaluwarsa || b.ed}</td>
                         <td className="py-2 px-3 text-center font-bold">{b.jumlah_saat_ini || b.stok}</td>
-                        <td className="py-2 px-3 text-right font-bold text-slate-900">
+                        <td className="py-2 px-3 text-right font-bold text-slate-900 whitespace-nowrap">
                           {formatRupiah(b.nilai_total || b.nilai)}
                         </td>
                       </tr>
@@ -750,7 +787,7 @@ export function PengingatReturPage({ onNavigateToPenyesuaian }) {
                   <tfoot className="bg-slate-50 border-t border-slate-200 font-extrabold">
                     <tr>
                       <td colSpan={6} className="py-2 px-3 text-right">Total Nilai Pengajuan Retur:</td>
-                      <td className="py-2 px-3 text-right text-blue-700">
+                      <td className="py-2 px-3 text-right text-blue-700 whitespace-nowrap">
                         {formatRupiah(
                           bapModalData.batches.reduce((acc, curr) => acc + (curr.nilai_total || curr.nilai || 0), 0)
                         )}
@@ -760,19 +797,19 @@ export function PengingatReturPage({ onNavigateToPenyesuaian }) {
                 </table>
               </div>
 
-              {/* Signature area */}
-              <div className="grid grid-cols-2 gap-4 pt-4 text-center text-xs">
-                <div className="space-y-12">
+              {/* Area Tanda Tangan */}
+              <div className="grid grid-cols-2 gap-3 sm:gap-4 pt-4 text-center text-[11px] sm:text-xs">
+                <div className="space-y-10 sm:space-y-12">
                   <p className="text-slate-500 font-medium">Apoteker Penanggung Jawab,</p>
                   <div>
                     <p className="font-bold text-slate-900 underline">Ibu Anni, S.Farm., Apt.</p>
                     <p className="text-[10px] text-slate-400">SIP: 19850412/SIPA-012/2022</p>
                   </div>
                 </div>
-                <div className="space-y-12">
+                <div className="space-y-10 sm:space-y-12">
                   <p className="text-slate-500 font-medium">Petugas Ekspedisi / PBF,</p>
                   <div>
-                    <p className="font-bold text-slate-900 underline">( ............................................ )</p>
+                    <p className="font-bold text-slate-900 underline whitespace-nowrap">( .................... )</p>
                     <p className="text-[10px] text-slate-400">Nama Terang & Cap Distributor</p>
                   </div>
                 </div>

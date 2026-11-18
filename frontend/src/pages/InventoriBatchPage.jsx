@@ -176,7 +176,7 @@ export function InventoriBatchPage({ onSelectBatchForAdjustment }) {
       <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-2xs space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
               <Boxes className="w-5 h-5" />
             </div>
             <div>
@@ -213,7 +213,7 @@ export function InventoriBatchPage({ onSelectBatchForAdjustment }) {
               disabled={batches.length === 0}
               className="inline-flex items-center gap-1.5 px-3 min-h-[44px] sm:min-h-0 h-11 sm:h-9 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition disabled:opacity-50"
             >
-              <Download className="w-3.5 h-3.5 text-emerald-600" />
+              <Download className="w-3.5 h-3.5 text-blue-600" />
               <span>Ekspor Excel (.CSV)</span>
             </button>
           </div>
@@ -223,12 +223,12 @@ export function InventoriBatchPage({ onSelectBatchForAdjustment }) {
           <div
             className={`p-3 rounded-xl text-xs flex items-center gap-2 border ${
               importNotice.type === 'success'
-                ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                ? 'bg-blue-50 border-blue-200 text-blue-800'
                 : 'bg-rose-50 border-rose-200 text-rose-800'
             }`}
           >
             {importNotice.type === 'success' ? (
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0" />
             ) : (
               <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
             )}
@@ -267,7 +267,7 @@ export function InventoriBatchPage({ onSelectBatchForAdjustment }) {
             <button
               type="button"
               onClick={loadData}
-              className="flex-1 h-11 sm:h-9 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition"
+              className="flex-1 h-11 sm:h-9 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs"
             >
               Cari
             </button>
@@ -294,7 +294,7 @@ export function InventoriBatchPage({ onSelectBatchForAdjustment }) {
                 onClick={() => setRisikoFilter(pill.id)}
                 className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition shrink-0 ${
                   risikoFilter === pill.id
-                    ? 'bg-slate-900 text-white shadow-2xs'
+                    ? 'bg-blue-600 text-white shadow-2xs'
                     : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
                 }`}
               >
@@ -312,7 +312,7 @@ export function InventoriBatchPage({ onSelectBatchForAdjustment }) {
                 onClick={() => setReturFilter(pill.id)}
                 className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition shrink-0 ${
                   returFilter === pill.id
-                    ? 'bg-emerald-600 text-white shadow-2xs'
+                    ? 'bg-blue-600 text-white shadow-2xs'
                     : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
                 }`}
               >
@@ -345,7 +345,7 @@ export function InventoriBatchPage({ onSelectBatchForAdjustment }) {
                         {b.nama_obat}
                       </h3>
                       <p className="text-[11px] text-slate-500 truncate mt-0.5">
-                        <span className="font-mono font-semibold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded mr-1.5">
+                        <span className="font-mono font-semibold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded mr-1.5">
                           {b.nomor_batch}
                         </span>
                         {b.nama_distributor}
@@ -355,7 +355,7 @@ export function InventoriBatchPage({ onSelectBatchForAdjustment }) {
                       <span className="text-xs font-extrabold text-slate-900 tabular-nums block">
                         {formatRupiah(b.nilai_total)}
                       </span>
-                      <span className="text-[11px] font-semibold text-emerald-700 tabular-nums">
+                      <span className="text-[11px] font-semibold text-blue-700 tabular-nums">
                         Stok: {b.jumlah_saat_ini}
                       </span>
                     </div>
@@ -378,9 +378,9 @@ export function InventoriBatchPage({ onSelectBatchForAdjustment }) {
                   <button
                     type="button"
                     onClick={() => onSelectBatchForAdjustment && onSelectBatchForAdjustment(b)}
-                    className="w-full flex items-center justify-center gap-2 h-11 min-h-[44px] rounded-xl bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 text-slate-700 font-bold text-xs transition"
+                    className="w-full flex items-center justify-center gap-2 h-11 min-h-[44px] rounded-xl bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-700 font-bold text-xs transition"
                   >
-                    <Edit3 className="w-4 h-4 text-emerald-600" />
+                    <Edit3 className="w-4 h-4 text-blue-600" />
                     <span>Cek Fisik Rak & Opname</span>
                   </button>
                 </div>
@@ -408,7 +408,7 @@ export function InventoriBatchPage({ onSelectBatchForAdjustment }) {
                     <tr key={b.id} className="hover:bg-slate-50/70 transition">
                       <td className="py-2.5 px-3.5">
                         <p className="font-bold text-slate-900 leading-tight">{b.nama_obat}</p>
-                        <span className="font-mono text-[11px] text-indigo-700">
+                        <span className="font-mono text-[11px] text-blue-700">
                           {b.nomor_batch}
                         </span>
                       </td>
@@ -438,7 +438,7 @@ export function InventoriBatchPage({ onSelectBatchForAdjustment }) {
                         <button
                           type="button"
                           onClick={() => onSelectBatchForAdjustment && onSelectBatchForAdjustment(b)}
-                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 text-slate-700 text-[11px] font-semibold transition"
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-700 text-[11px] font-semibold transition"
                         >
                           <Edit3 className="w-3.5 h-3.5" />
                           <span>Opname</span>

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { BrandLogo } from '../common/BrandLogo';
-import { Calendar, LogOut, Menu, ArrowRightLeft } from 'lucide-react';
+import { Calendar, LogOut, Menu, PanelLeft, ArrowRightLeft } from 'lucide-react';
 
 export function Header({
   onToggleSidebar,
@@ -21,73 +21,76 @@ export function Header({
   };
 
   return (
-    <header className="h-14 border-b border-slate-800 bg-slate-900 text-white sticky top-0 z-30 flex items-center justify-between px-3 sm:px-6 w-full max-w-full">
+    <header className="h-14 bg-[#eef1f9]/85 backdrop-blur-md sticky top-0 z-30 flex items-center justify-between px-3 sm:px-4 lg:px-5 w-full max-w-full border-b border-slate-200/60 md:border-b-0">
       <div className="flex items-center gap-2 min-w-0">
         {/* Tombol Hamburger Mobile */}
         <button
           type="button"
           data-testid="mobile-hamburger"
           onClick={onOpenMobile}
-          className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-slate-800 text-slate-200 active:scale-95 transition md:hidden shrink-0"
+          className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl hover:bg-white text-slate-700 active:scale-95 transition md:hidden shrink-0"
           aria-label="Buka menu navigasi"
           title="Buka menu navigasi"
         >
-          <Menu className="w-5 h-5 text-white" />
+          <Menu className="w-5 h-5 text-slate-800" />
         </button>
 
         {/* Tombol Lipat Sidebar Desktop */}
         <button
           type="button"
           onClick={onToggleSidebar}
-          className="p-2 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition md:inline-flex hidden shrink-0"
+          className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/90 text-slate-500 hover:text-slate-900 transition md:inline-flex hidden shrink-0 cursor-pointer"
           title="Buka / Tutup Sidebar"
           aria-label="Buka / Tutup Sidebar"
         >
-          <Menu className="w-5 h-5" />
+          <PanelLeft className="w-4 h-4" />
         </button>
 
         {/* Logo Ringkas di Mobile */}
         <div className="md:hidden shrink-0">
-          <BrandLogo logoUrl={logoUrl} className="w-7 h-7 rounded-lg bg-white p-0.5" />
+          <BrandLogo logoUrl={logoUrl} className="w-7 h-7" />
         </div>
 
-        <div className="min-w-0">
+        <div className="min-w-0 flex items-center gap-2">
+          <span className="hidden md:inline text-xs font-semibold text-slate-400">
+            SIMAAF /
+          </span>
           <h1
             data-testid="page-title"
-            className="text-sm sm:text-[15px] font-bold text-white tracking-tight leading-tight truncate"
+            className="text-sm sm:text-[15px] font-extrabold text-slate-950 tracking-tight leading-tight truncate"
           >
             {activePageTitle}
           </h1>
-          <p className="text-[11px] font-medium text-slate-400 leading-tight truncate">
-            Apotek Asahan Farma
-          </p>
         </div>
       </div>
 
-      <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
-        <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 text-xs font-medium">
-          <Calendar className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+      <div className="flex items-center gap-2 shrink-0">
+        <div className="hidden sm:flex items-center gap-1.5 px-3 h-9 rounded-full bg-white/90 border border-slate-200/80 text-slate-600 text-xs font-semibold shadow-2xs">
+          <Calendar className="w-3.5 h-3.5 text-blue-600 shrink-0" />
           <span>
-            Acuan: <strong className="text-white tabular-nums">{tanggalAcuan || '2026-10-31'}</strong>
+            Acuan <strong className="text-slate-950 tabular-nums ml-0.5">{tanggalAcuan || '2026-10-31'}</strong>
           </span>
         </div>
 
-        {/* Pengalih Peran Cepat */}
+        {/* Pengalih Peran Cepat Bergaya Kapsul Profil */}
         <button
           type="button"
           onClick={handleQuickSwitchRole}
-          className="flex items-center gap-1.5 text-xs px-3 h-11 min-h-[44px] rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-white font-bold transition active:scale-95"
+          className="flex items-center gap-2 text-xs pl-1.5 pr-3 h-11 sm:h-9 min-h-[44px] sm:min-h-0 rounded-full border border-slate-200/85 bg-white hover:bg-slate-50 text-slate-800 font-bold transition shadow-2xs active:scale-95 cursor-pointer"
           title="Beralih antara Pemilik (Ibu Anni) dan Karyawan"
         >
-          <ArrowRightLeft className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+          <span className="w-6 h-6 rounded-full bg-blue-600 text-white text-[10px] font-black flex items-center justify-center shrink-0">
+            {isAdmin ? 'IA' : 'ST'}
+          </span>
           <span>{isAdmin ? 'Ibu Anni' : 'Karyawan'}</span>
+          <ArrowRightLeft className="w-3 h-3 text-slate-400 shrink-0" />
         </button>
 
         {/* Tombol Keluar */}
         <button
           type="button"
           onClick={logout}
-          className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-slate-800 text-slate-300 hover:text-rose-400 active:scale-95 transition shrink-0"
+          className="w-11 h-11 sm:w-9 sm:h-9 min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 flex items-center justify-center rounded-full bg-white/85 hover:bg-rose-50 border border-slate-200/80 text-slate-500 hover:text-rose-600 hover:border-rose-200 active:scale-95 transition shrink-0 cursor-pointer"
           title="Keluar"
           aria-label="Keluar dari sistem"
         >

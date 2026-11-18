@@ -201,7 +201,7 @@ export function KalenderTenggatPage() {
             disabled={monthMilestones.length === 0}
             className="btn-outline h-11 sm:h-9 px-3 text-xs disabled:opacity-50"
           >
-            <Download className="w-3.5 h-3.5 text-emerald-600" />
+            <Download className="w-3.5 h-3.5 text-blue-600" />
             <span>Ekspor CSV</span>
           </button>
 
@@ -335,7 +335,7 @@ export function KalenderTenggatPage() {
 
             {selectedEvents.returEvents.length === 0 && selectedEvents.expEvents.length === 0 ? (
               <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 text-center space-y-1.5">
-                <CheckCircle2 className="w-6 h-6 text-emerald-500 mx-auto" />
+                <CheckCircle2 className="w-6 h-6 text-blue-600 mx-auto" />
                 <p className="text-xs font-bold text-slate-800">Tidak Ada Jatuh Tempo</p>
                 <p className="text-[11px] text-slate-500">
                   Klik tanggal bertanda titik merah atau kuning untuk melihat detail.

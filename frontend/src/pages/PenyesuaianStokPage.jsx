@@ -202,8 +202,8 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
       )}
 
       {successMsg && (
-        <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2.5">
-          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+        <div className="p-3.5 rounded-xl bg-blue-50 border border-blue-200 text-blue-800 text-xs flex items-center gap-2.5">
+          <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0" />
           <span className="font-semibold">{successMsg}</span>
         </div>
       )}
@@ -255,7 +255,7 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
               {selectedBatch && (
                 <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/70 text-xs flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-2 text-slate-600">
-                    <Building2 className="w-3.5 h-3.5 text-indigo-600" />
+                    <Building2 className="w-3.5 h-3.5 text-blue-600" />
                     <span className="font-medium truncate max-w-[200px]">
                       {selectedBatch.nama_distributor || 'PBF Rekanan'}
                     </span>
@@ -270,29 +270,29 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
 
             {selectedBatch && (
               <div className="space-y-3 pt-2 border-t border-slate-100">
-                {/* Bar Perbandingan Gelap Kontras Tinggi */}
-                <div className="bg-slate-900 text-white rounded-2xl p-3.5 grid grid-cols-3 gap-2 text-center">
+                {/* Ringkasan Perbandingan Stok Cerah & Terbaca */}
+                <div className="bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl p-3.5 grid grid-cols-3 gap-2 text-center shadow-2xs">
                   <div>
-                    <span className="text-[11px] text-slate-400 block">Stok Sistem</span>
-                    <span className="text-lg font-extrabold tabular-nums">
+                    <span className="text-[11px] font-semibold text-slate-500 block">Stok Sistem</span>
+                    <span className="text-lg font-extrabold text-slate-900 tabular-nums">
                       {selectedBatch.jumlah_saat_ini}
                     </span>
                   </div>
-                  <div className="border-x border-slate-800">
-                    <span className="text-[11px] text-blue-300 block">Fisik Rak</span>
-                    <span className="text-lg font-extrabold text-blue-400 tabular-nums">
+                  <div className="border-x border-slate-200">
+                    <span className="text-[11px] font-semibold text-blue-700 block">Fisik Rak</span>
+                    <span className="text-lg font-extrabold text-blue-600 tabular-nums">
                       {jumlahFisik === '' ? 0 : jumlahFisik}
                     </span>
                   </div>
                   <div>
-                    <span className="text-[11px] text-slate-400 block">Selisih</span>
+                    <span className="text-[11px] font-semibold text-slate-500 block">Selisih</span>
                     <span
                       className={`text-lg font-extrabold tabular-nums ${
                         selisih < 0
-                          ? 'text-rose-400'
+                          ? 'text-rose-600'
                           : selisih > 0
-                          ? 'text-cyan-400'
-                          : 'text-emerald-400'
+                          ? 'text-blue-600'
+                          : 'text-blue-600'
                       }`}
                     >
                       {selisih > 0 ? `+${selisih}` : selisih}
@@ -327,7 +327,7 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
                   <button
                     type="button"
                     onClick={() => adjustJumlahFisik(1)}
-                    className="w-11 h-11 min-w-[44px] rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center active:scale-95 transition"
+                    className="w-11 h-11 min-w-[44px] rounded-xl bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center active:scale-95 transition"
                     aria-label="Tambah 1 unit"
                   >
                     <Plus className="w-4 h-4" />
@@ -387,7 +387,7 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
               <button
                 type="submit"
                 disabled={loading}
-                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 min-h-[44px] rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-xs active:scale-95 disabled:opacity-50 w-full sm:w-auto"
+                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 min-h-[44px] rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-sm shadow-blue-600/20 active:scale-95 disabled:opacity-50 w-full sm:w-auto"
               >
                 <Save className="w-4 h-4" />
                 <span>{loading ? 'Menyimpan...' : 'Simpan Hasil Opname'}</span>
@@ -410,7 +410,7 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
               disabled={riwayat.length === 0}
               className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold transition disabled:opacity-50"
             >
-              <Download className="w-3.5 h-3.5 text-emerald-600" />
+              <Download className="w-3.5 h-3.5 text-blue-600" />
               <span>Ekspor CSV</span>
             </button>
           </div>
@@ -424,7 +424,7 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
                     ? 'text-rose-600'
                     : netSelisih > 0
                     ? 'text-blue-600'
-                    : 'text-emerald-600'
+                    : 'text-blue-600'
                 }`}
               >
                 {netSelisih > 0 ? `+${netSelisih}` : netSelisih} Unit
@@ -452,7 +452,7 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
                         ? 'bg-rose-100 text-rose-700'
                         : log.selisih > 0
                         ? 'bg-blue-100 text-blue-700'
-                        : 'bg-emerald-100 text-emerald-700'
+                        : 'bg-blue-100 text-blue-700'
                     }`}
                   >
                     {log.selisih > 0 ? `+${log.selisih}` : log.selisih} unit

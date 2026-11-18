@@ -17,7 +17,10 @@ function MainApp() {
   const [tanggalAcuan, setTanggalAcuan] = useState('2026-10-31');
   const [urgentReturCount, setUrgentReturCount] = useState(0);
   const [preselectedBatch, setPreselectedBatch] = useState(null);
-  const [logoUrl, setLogoUrl] = useState(() => localStorage.getItem('simaaf_logo_url') || '/logo-asahan.svg');
+  const [logoUrl, setLogoUrl] = useState(() => {
+    const saved = localStorage.getItem('simaaf_logo_url') || '';
+    return saved.startsWith('/logo-') ? '' : saved;
+  });
 
   const handleLogoChange = (newUrl) => {
     setLogoUrl(newUrl);
@@ -61,7 +64,12 @@ function MainApp() {
   }
 
   if (!user) {
-    return <LoginPage onSuccess={() => setActivePage(localStorage.getItem('simaaf_default_page') || 'dashboard')} />;
+    return (
+      <LoginPage
+        logoUrl={logoUrl}
+        onSuccess={() => setActivePage(localStorage.getItem('simaaf_default_page') || 'dashboard')}
+      />
+    );
   }
 
   // Navigasi dengan context data

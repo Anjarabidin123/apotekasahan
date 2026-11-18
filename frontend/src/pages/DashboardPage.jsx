@@ -190,7 +190,7 @@ export function DashboardPage({
         <button
           type="button"
           onClick={() => loadDashboard(false)}
-          className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-900 text-white rounded-lg text-xs font-bold hover:bg-slate-800 transition"
+          className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-blue-700 transition shadow-sm shadow-blue-600/20"
         >
           <RefreshCw className="w-3.5 h-3.5" />
           <span>Muat Ulang</span>
@@ -249,136 +249,205 @@ export function DashboardPage({
   ];
 
   return (
-    <div className="space-y-4">
-      {/* Banner Gelap Terhubung ke Header + Kartu KPI Tumpang-Tindih Berkedalaman */}
-      <div>
-        <div className="rounded-2xl bg-gradient-to-r from-slate-900 via-[#0e2222] to-slate-900 text-white px-4 sm:px-6 pt-4 sm:pt-5 pb-14 sm:pb-16 border border-slate-800 shadow-sm">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+    <div className="space-y-3">
+      {/* Showcase Ringkasan Berilustrasi Ringkas ala Orely Studio */}
+      <div className="relative overflow-hidden rounded-2xl border border-[#DCE3FB] bg-gradient-to-br from-[#F4F6FF] via-[#ECEFFD] to-[#E2E9FC] px-4 sm:px-5 py-3.5 sm:py-4 shadow-[0_4px_18px_rgba(37,99,235,0.06)]">
+        {/* Elemen vektor pemandangan apotek & daun botani di latar kanan/bawah */}
+        <svg
+          aria-hidden="true"
+          viewBox="0 0 600 180"
+          preserveAspectRatio="xMidYMax slice"
+          className="pointer-events-none absolute inset-0 w-full h-full opacity-55 sm:opacity-90"
+        >
+          {/* Awan halus atmosfer */}
+          <ellipse cx="470" cy="36" rx="85" ry="15" fill="#FFFFFF" fillOpacity="0.6" />
+          <ellipse cx="300" cy="28" rx="52" ry="11" fill="#FFFFFF" fillOpacity="0.45" />
+          {/* Perbukitan berlapis */}
+          <path d="M0 155 Q160 128 320 148 T600 138 L600 180 L0 180 Z" fill="#D5DDFB" fillOpacity="0.7" />
+          <path d="M220 180 Q390 132 600 150 L600 180 Z" fill="#C4D0FA" fillOpacity="0.75" />
+          {/* Daun botani herbal sudut kanan */}
+          <g transform="translate(510, 100)" opacity="0.9">
+            <path d="M22 80 C20 48 24 22 38 6" stroke="#0D9488" strokeWidth="2.4" fill="none" strokeLinecap="round" />
+            <path d="M23 58 C4 52 -2 38 10 32 C20 27 25 43 23 58 Z" fill="#14B8A6" />
+            <path d="M25 40 C44 36 52 22 40 16 C29 11 24 28 25 40 Z" fill="#2DD4BF" />
+          </g>
+          {/* Ikon apotek/gudang minimalis */}
+          <g transform="translate(415, 118)">
+            <rect x="4" y="20" width="52" height="34" rx="4" fill="#FFFFFF" stroke="#C7D2FE" strokeWidth="1.5" />
+            <path d="M0 22 L30 4 L60 22 Z" fill="#3B82F6" />
+            <rect x="24" y="34" width="12" height="20" rx="2" fill="#E0E7FF" />
+            <rect x="11" y="28" width="8" height="8" rx="1.5" fill="#93C5FD" />
+            <rect x="41" y="28" width="8" height="8" rx="1.5" fill="#93C5FD" />
+          </g>
+        </svg>
+
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+          <div className="space-y-2 max-w-2xl">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-white/95 text-blue-700 border border-blue-200/80 shadow-2xs">
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse" />
+                Terpantau • Acuan {refDate}
+              </span>
+            </div>
+
             <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-base sm:text-lg font-extrabold tracking-tight text-white">
-                  Ringkasan Inventori & Retur PBF
-                </h2>
-                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                  Terpantau
-                </span>
-              </div>
-              <p className="text-xs text-slate-300 mt-0.5">
-                Acuan operasional {refDate} • Apotek Asahan Farma
+              <h2 className="text-lg sm:text-xl font-black tracking-tight text-slate-950 leading-snug">
+                Ringkasan Inventori & Retur PBF
+              </h2>
+              <p className="text-xs text-slate-600 mt-0.5 font-medium leading-relaxed">
+                Pantau batas retur distributor rekanan, urutan FEFO, dan nilai persediaan apotek.
               </p>
             </div>
 
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="hidden md:flex items-center gap-2 flex-wrap">
               <button
                 type="button"
-                onClick={() => loadDashboard(true)}
-                disabled={refreshing}
-                className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-slate-700 bg-slate-800/80 hover:bg-slate-800 text-slate-200 text-xs font-bold transition"
+                onClick={onNavigateToFaktur}
+                className="inline-flex items-center gap-1.5 h-8 px-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs shadow-blue-600/25 active:scale-95"
               >
-                <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
-                <span>Segarkan</span>
+                <Plus className="w-3.5 h-3.5" />
+                <span>Input Faktur Baru</span>
               </button>
 
               <button
                 type="button"
                 onClick={handleExportTableCsv}
-                className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-slate-700 bg-slate-800/80 hover:bg-slate-800 text-slate-200 text-xs font-bold transition"
+                className="inline-flex items-center gap-1.5 h-8 px-3 rounded-xl border border-white bg-white/90 hover:bg-white text-slate-700 text-xs font-bold transition shadow-2xs active:scale-95"
               >
-                <Download className="w-3.5 h-3.5 text-emerald-400" />
+                <Download className="w-3.5 h-3.5 text-blue-600" />
                 <span>Ekspor Excel</span>
               </button>
 
               <button
                 type="button"
-                onClick={onNavigateToFaktur}
-                className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow-xs"
+                onClick={() => loadDashboard(true)}
+                disabled={refreshing}
+                className="inline-flex items-center gap-1.5 h-8 px-3 rounded-xl border border-white bg-white/85 hover:bg-white text-slate-700 text-xs font-bold transition shadow-2xs active:scale-95"
               >
-                <Plus className="w-4 h-4" />
-                <span>Input Faktur</span>
+                <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
+                <span>Segarkan</span>
               </button>
             </div>
+          </div>
+
+          {/* Kartu Mengambang Interaktif Bergaya Cropconex di Sisi Kanan Desktop */}
+          <div className="hidden lg:flex items-center gap-2.5 shrink-0">
+            <button
+              type="button"
+              onClick={onNavigateToPengingat}
+              className="text-left bg-white/95 backdrop-blur-xs rounded-2xl p-3 w-48 border border-white shadow-[0_10px_28px_rgba(30,41,59,0.08)] hover:-translate-y-0.5 transition-all duration-200 group"
+            >
+              <div className="flex items-center justify-between gap-2 mb-1.5">
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200">
+                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                  Pantau Retur
+                </span>
+                <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-0.5 transition-all" />
+              </div>
+              <p className="text-[13px] font-extrabold text-slate-900 tabular-nums">
+                {ringkasan?.total_mendesak_retur ?? mendesakList.length} Batch Prioritas
+              </p>
+              <p className="text-[11px] text-slate-500 truncate">
+                {kedaluwarsaList.length} mendekati ED • Klik tinjau
+              </p>
+            </button>
+
+            <button
+              type="button"
+              onClick={onNavigateToInventori}
+              className="w-[74px] h-[74px] rounded-full bg-teal-500 hover:bg-teal-600 text-white shadow-[0_10px_24px_rgba(20,184,166,0.28)] border-[3px] border-white flex flex-col items-center justify-center hover:scale-105 transition-all duration-200 shrink-0"
+              title="Lihat detail stok aman"
+            >
+              <span className="text-base font-black leading-none tabular-nums">{pctAman}%</span>
+              <span className="text-[10px] font-bold text-teal-50 mt-0.5">Stok Aman</span>
+            </button>
           </div>
         </div>
-
-        {/* 4 Kartu Metrik Melayang dengan Garis Aksen Atas & Efek Hover */}
-        <section className="-mt-10 sm:-mt-11 px-2 sm:px-3 grid grid-cols-2 lg:grid-cols-4 gap-3 relative z-10">
-          <div className="bg-white rounded-xl border border-slate-200/90 border-t-2 border-t-slate-900 p-3.5 sm:p-4 flex flex-col justify-between space-y-2 shadow-md shadow-slate-900/5 hover:-translate-y-0.5 hover:shadow-lg transition-all duration-200">
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-xs font-bold text-slate-500">Total Nilai Aset</span>
-              <button
-                type="button"
-                onClick={() => setHideValue(!hideValue)}
-                className="text-slate-400 hover:text-slate-800 p-1 rounded transition"
-                title={hideValue ? 'Tampilkan' : 'Sembunyikan'}
-                aria-label={hideValue ? 'Tampilkan Nominal' : 'Sembunyikan Nominal'}
-              >
-                {hideValue ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-              </button>
-            </div>
-            <p className="text-base sm:text-2xl font-extrabold text-slate-950 tracking-tight tabular-nums">
-              {hideValue ? 'Rp ••••••••' : formatRupiah(summary?.total_nilai_persediaan)}
-            </p>
-            <p className="text-[11px] text-slate-500 font-medium">
-              {summary?.total_batch_aktif || batches.length} batch tercatat di rak
-            </p>
-          </div>
-
-          <button
-            type="button"
-            onClick={onNavigateToPengingat}
-            className="text-left bg-white rounded-xl border border-slate-200/90 border-t-2 border-t-rose-500 p-3.5 sm:p-4 flex flex-col justify-between space-y-2 shadow-md shadow-slate-900/5 hover:-translate-y-0.5 hover:shadow-lg transition-all duration-200 group"
-          >
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-xs font-bold text-slate-500">Aset Risiko Retur</span>
-              <span className="w-2 h-2 rounded-full bg-rose-600 shrink-0" />
-            </div>
-            <p className="text-base sm:text-2xl font-extrabold text-slate-950 tracking-tight tabular-nums">
-              {hideValue ? '••••••' : formatRupiah(summary?.total_nilai_berisiko)}
-            </p>
-            <p className="text-[11px] font-bold text-rose-600 flex items-center justify-between w-full">
-              <span>{summary?.persentase_berisiko || 0}% nilai persediaan</span>
-              <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-            </p>
-          </button>
-
-          <button
-            type="button"
-            onClick={onNavigateToPengingat}
-            className="text-left bg-white rounded-xl border border-slate-200/90 border-t-2 border-t-amber-500 p-3.5 sm:p-4 flex flex-col justify-between space-y-2 shadow-md shadow-slate-900/5 hover:-translate-y-0.5 hover:shadow-lg transition-all duration-200 group"
-          >
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-xs font-bold text-slate-500">Wajib Retur</span>
-              <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
-            </div>
-            <p className="text-base sm:text-2xl font-extrabold text-slate-950 tracking-tight tabular-nums">
-              {ringkasan?.total_mendesak_retur ?? mendesakList.length} Batch
-            </p>
-            <p className="text-[11px] text-slate-500 font-medium flex items-center justify-between w-full">
-              <span>{kedaluwarsaList.length} batch mendekati ED</span>
-              <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-            </p>
-          </button>
-
-          <button
-            type="button"
-            onClick={onNavigateToInventori}
-            className="text-left bg-white rounded-xl border border-slate-200/90 border-t-2 border-t-emerald-600 p-3.5 sm:p-4 flex flex-col justify-between space-y-2 shadow-md shadow-slate-900/5 hover:-translate-y-0.5 hover:shadow-lg transition-all duration-200 group"
-          >
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-xs font-bold text-slate-500">Kondisi Stok Aman</span>
-              <span className="w-2 h-2 rounded-full bg-emerald-600 shrink-0" />
-            </div>
-            <p className="text-base sm:text-2xl font-extrabold text-emerald-700 tracking-tight tabular-nums">
-              {pctAman}%
-            </p>
-            <p className="text-[11px] text-slate-500 font-medium flex items-center justify-between w-full">
-              <span>{countAman} batch aman • {stokTipisList.length} tipis</span>
-              <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-            </p>
-          </button>
-        </section>
       </div>
+
+      {/* 4 Kartu Metrik Modular Bersih */}
+      <section className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="bg-white rounded-2xl border border-slate-200 p-3.5 sm:p-4 flex flex-col justify-between space-y-2 shadow-[0_1px_3px_rgba(15,23,42,0.04)] hover:border-slate-300 hover:shadow-md transition-all duration-200">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-xs font-bold text-slate-500">Total Nilai Aset</span>
+            <button
+              type="button"
+              onClick={() => setHideValue(!hideValue)}
+              className="text-slate-500 hover:text-slate-900 bg-slate-100 p-1 rounded-lg transition"
+              title={hideValue ? 'Tampilkan' : 'Sembunyikan'}
+              aria-label={hideValue ? 'Tampilkan Nominal' : 'Sembunyikan Nominal'}
+            >
+              {hideValue ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+            </button>
+          </div>
+          <p className="text-base sm:text-2xl font-extrabold text-slate-950 tracking-tight tabular-nums">
+            {hideValue ? 'Rp ••••••••' : formatRupiah(summary?.total_nilai_persediaan)}
+          </p>
+          <p className="text-[11px] text-slate-500 font-medium">
+            {summary?.total_batch_aktif || batches.length} batch tercatat di rak
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={onNavigateToPengingat}
+          className="text-left bg-white rounded-2xl border border-slate-200 p-3.5 sm:p-4 flex flex-col justify-between space-y-2 shadow-[0_1px_3px_rgba(15,23,42,0.04)] hover:border-slate-300 hover:shadow-md transition-all duration-200 group"
+        >
+          <div className="flex items-center justify-between gap-1.5">
+            <span className="text-xs font-bold text-slate-500 truncate">Aset Risiko Retur</span>
+            <span className="hidden sm:inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 shrink-0">
+              Risiko
+            </span>
+          </div>
+          <p className="text-base sm:text-2xl font-extrabold text-slate-950 tracking-tight tabular-nums">
+            {hideValue ? '••••••' : formatRupiah(summary?.total_nilai_berisiko)}
+          </p>
+          <p className="text-[11px] font-bold text-rose-600 flex items-center justify-between w-full">
+            <span>{summary?.persentase_berisiko || 0}% nilai persediaan</span>
+            <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+          </p>
+        </button>
+
+        <button
+          type="button"
+          onClick={onNavigateToPengingat}
+          className="text-left bg-white rounded-2xl border border-slate-200 p-3.5 sm:p-4 flex flex-col justify-between space-y-2 shadow-[0_1px_3px_rgba(15,23,42,0.04)] hover:border-slate-300 hover:shadow-md transition-all duration-200 group"
+        >
+          <div className="flex items-center justify-between gap-1.5">
+            <span className="text-xs font-bold text-slate-500 truncate">Wajib Retur</span>
+            <span className="hidden sm:inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200 shrink-0">
+              Prioritas
+            </span>
+          </div>
+          <p className="text-base sm:text-2xl font-extrabold text-slate-950 tracking-tight tabular-nums">
+            {ringkasan?.total_mendesak_retur ?? mendesakList.length} Batch
+          </p>
+          <p className="text-[11px] text-slate-500 font-medium flex items-center justify-between w-full">
+            <span>{kedaluwarsaList.length} batch mendekati ED</span>
+            <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+          </p>
+        </button>
+
+        <button
+          type="button"
+          onClick={onNavigateToInventori}
+          className="text-left bg-white rounded-2xl border border-slate-200 p-3.5 sm:p-4 flex flex-col justify-between space-y-2 shadow-[0_1px_3px_rgba(15,23,42,0.04)] hover:border-slate-300 hover:shadow-md transition-all duration-200 group"
+        >
+          <div className="flex items-center justify-between gap-1.5">
+            <span className="text-xs font-bold text-slate-500 truncate">Kondisi Stok Aman</span>
+            <span className="hidden sm:inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200 shrink-0">
+              Aman
+            </span>
+          </div>
+          <p className="text-base sm:text-2xl font-extrabold text-blue-600 tracking-tight tabular-nums">
+            {pctAman}%
+          </p>
+          <p className="text-[11px] text-slate-500 font-medium flex items-center justify-between w-full">
+            <span>{countAman} batch aman • {stokTipisList.length} tipis</span>
+            <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+          </p>
+        </button>
+      </section>
 
       {/* Peluncur Cepat 4 Tombol untuk Mobile */}
       <div className="grid grid-cols-4 gap-2 md:hidden">
@@ -396,7 +465,7 @@ export function DashboardPage({
                   {item.badge}
                 </span>
               )}
-              <div className="w-9 h-9 rounded-lg bg-slate-900 text-emerald-400 flex items-center justify-center">
+              <div className="w-9 h-9 rounded-xl bg-blue-600 text-white shadow-xs shadow-blue-600/20 flex items-center justify-center">
                 <Icon className="w-4 h-4" strokeWidth={2.2} />
               </div>
               <span className="text-[11px] font-bold text-slate-800 leading-tight text-center truncate w-full">
@@ -408,7 +477,7 @@ export function DashboardPage({
       </div>
 
       {/* Workspace Utama: Tabel Kerja Inventori (8 Kolom) + Antrean Tindakan Cepat (4 Kolom) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 items-start">
         <section className="lg:col-span-8 surface-elevated overflow-hidden">
           <div className="p-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
@@ -427,18 +496,18 @@ export function DashboardPage({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Cari obat, batch, atau PBF..."
-                className="w-full h-9 pl-8 pr-3 text-xs rounded-lg border border-slate-300 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600 font-medium"
+                className="w-full h-9 pl-8 pr-3 text-xs rounded-lg border border-slate-300 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 font-medium"
               />
             </div>
           </div>
 
-          <div className="px-4 border-b border-slate-200 flex items-center justify-between gap-2 bg-slate-50/70">
-            <div className="flex items-center gap-5 text-xs overflow-x-auto no-scrollbar">
+          <div className="px-3.5 sm:px-4 border-b border-slate-200 flex items-center justify-between gap-2 bg-slate-50/80">
+            <div className="flex items-center gap-3.5 sm:gap-5 text-[11px] sm:text-xs overflow-x-auto no-scrollbar">
               {[
                 { id: 'semua', label: `Semua (${batches.length})` },
-                { id: 'retur', label: `Wajib Retur (${mendesakList.length})` },
+                { id: 'retur', label: `Retur (${mendesakList.length})` },
                 { id: 'kedaluwarsa', label: `Dekat ED (${kedaluwarsaList.length})` },
-                { id: 'stok', label: `Stok Tipis (${stokTipisList.length})` }
+                { id: 'stok', label: `Tipis (${stokTipisList.length})` }
               ].map((t) => (
                 <button
                   key={t.id}
@@ -446,7 +515,7 @@ export function DashboardPage({
                   onClick={() => setActiveTab(t.id)}
                   className={`py-2.5 border-b-2 transition whitespace-nowrap ${
                     activeTab === t.id
-                      ? 'border-emerald-600 text-slate-950 font-bold'
+                      ? 'border-blue-600 text-slate-950 font-bold'
                       : 'border-transparent text-slate-500 hover:text-slate-900 font-semibold'
                   }`}
                 >
@@ -458,7 +527,7 @@ export function DashboardPage({
 
           {filteredTableItems.length === 0 ? (
             <div className="py-12 text-center space-y-2">
-              <CheckCircle2 className="w-7 h-7 text-emerald-600 mx-auto" />
+              <CheckCircle2 className="w-7 h-7 text-blue-600 mx-auto" />
               <p className="text-xs font-medium text-slate-500">
                 Tidak ada batch obat yang cocok dengan filter saat ini.
               </p>
@@ -469,51 +538,52 @@ export function DashboardPage({
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
                     <tr className="bg-slate-100/70 border-b border-slate-200 text-slate-600 font-bold text-[11px]">
-                      <th className="py-2.5 px-4">Nama Obat & Batch</th>
-                      <th className="py-2.5 px-3">Distributor (PBF)</th>
-                      <th className="py-2.5 px-3">Tenggat / ED</th>
-                      <th className="py-2.5 px-3 text-center">Stok</th>
-                      <th className="py-2.5 px-3 text-right">Nilai Aset</th>
-                      <th className="py-2.5 px-3">Status Retur</th>
-                      <th className="py-2.5 px-4 text-right">Aksi</th>
+                      <th className="py-2.5 pl-4 pr-2">Obat & Batch</th>
+                      <th className="py-2.5 px-2">Distributor</th>
+                      <th className="py-2.5 px-2">Tenggat</th>
+                      <th className="py-2.5 px-2 text-right">Stok & Nilai</th>
+                      <th className="py-2.5 px-2">Status</th>
+                      <th className="py-2.5 pl-2 pr-4 text-right">Aksi</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {filteredTableItems.map((item) => (
                       <tr key={item.id} className="hover:bg-slate-50/90 transition-colors">
-                        <td className="py-3 px-4">
-                          <p className="font-bold text-slate-900 leading-snug">
+                        <td className="py-3 pl-4 pr-2 min-w-[145px] max-w-[180px]">
+                          <p className="font-bold text-slate-900 leading-snug line-clamp-2">
                             {item.nama_obat}
                           </p>
                           <span className="font-mono text-[11px] font-medium text-slate-500">
                             {item.nomor_batch}
                           </span>
                         </td>
-                        <td className="py-3 px-3 text-slate-600 max-w-[160px] truncate" title={item.nama_distributor}>
+                        <td className="py-3 px-2 text-slate-600 max-w-[105px] truncate" title={item.nama_distributor}>
                           {item.nama_distributor}
                         </td>
-                        <td className="py-3 px-3 whitespace-nowrap tabular-nums">
-                          <span className="font-semibold text-slate-800 block">
+                        <td className="py-3 px-2 whitespace-nowrap tabular-nums">
+                          <span className="font-semibold text-slate-800 block text-[11px]">
                             {item.batas_retur ? `Retur: ${item.batas_retur}` : 'Tanpa Retur'}
                           </span>
                           <span className="text-[11px] text-slate-500">
                             ED: {item.tanggal_kedaluwarsa}
                           </span>
                         </td>
-                        <td className="py-3 px-3 text-center font-bold text-slate-900 tabular-nums">
-                          {item.jumlah_saat_ini ?? 0}
+                        <td className="py-3 px-2 text-right whitespace-nowrap tabular-nums">
+                          <span className="font-bold text-slate-950 block">
+                            {hideValue ? '••••••' : formatRupiah(item.nilai_total)}
+                          </span>
+                          <span className="text-[11px] font-semibold text-slate-500">
+                            {item.jumlah_saat_ini ?? 0} unit
+                          </span>
                         </td>
-                        <td className="py-3 px-3 text-right font-bold text-slate-950 whitespace-nowrap tabular-nums">
-                          {hideValue ? '••••••' : formatRupiah(item.nilai_total)}
-                        </td>
-                        <td className="py-3 px-3 whitespace-nowrap">
+                        <td className="py-3 px-2 whitespace-nowrap">
                           <StatusReturBadge
                             status={item.status_retur}
                             sisaHari={item.sisa_hari_retur}
                             batasRetur={item.batas_retur}
                           />
                         </td>
-                        <td className="py-3 px-4 text-right whitespace-nowrap">
+                        <td className="py-3 pl-2 pr-4 text-right whitespace-nowrap">
                           <button
                             type="button"
                             onClick={() =>
@@ -521,7 +591,7 @@ export function DashboardPage({
                                 ? onNavigateToPenyesuaian()
                                 : onNavigateToPengingat()
                             }
-                            className="px-2.5 py-1 rounded-md border border-slate-300 bg-white hover:bg-emerald-600 hover:text-white hover:border-emerald-600 text-slate-700 text-[11px] font-bold transition"
+                            className="px-2.5 py-1 rounded-lg border border-slate-300 bg-white hover:bg-blue-600 hover:text-white hover:border-blue-600 text-slate-700 text-[11px] font-bold transition"
                           >
                             {activeTab === 'stok' ? 'Opname' : 'Tinjau'}
                           </button>
@@ -575,7 +645,7 @@ export function DashboardPage({
             <button
               type="button"
               onClick={onNavigateToInventori}
-              className="font-bold text-emerald-700 hover:text-emerald-800 inline-flex items-center gap-1 transition"
+              className="font-bold text-blue-600 hover:text-blue-800 inline-flex items-center gap-1 transition"
             >
               <span>Kelola Semua Batch</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -584,7 +654,7 @@ export function DashboardPage({
         </section>
 
         {/* Kolom Kanan: Antrean Tindakan Cepat + Eksposur PBF + Halaman Awal */}
-        <div className="lg:col-span-4 space-y-4">
+        <div className="lg:col-span-4 space-y-3">
           <section className="surface-elevated p-4 space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-extrabold text-slate-900">
@@ -604,7 +674,7 @@ export function DashboardPage({
                 {actionQueue.map((q) => (
                   <div
                     key={q.id}
-                    className="p-3 rounded-lg border border-slate-200/90 bg-slate-50/80 hover:bg-white hover:border-slate-300 transition space-y-2"
+                    className="p-3 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-white hover:border-slate-300 transition space-y-2"
                   >
                     <div className="flex items-center justify-between gap-2">
                       <span
@@ -634,14 +704,14 @@ export function DashboardPage({
                       <button
                         type="button"
                         onClick={onNavigateToPengingat}
-                        className="flex-1 py-1.5 rounded-md bg-slate-900 hover:bg-emerald-600 text-white text-[11px] font-bold transition"
+                        className="flex-1 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold transition shadow-xs"
                       >
                         Proses Retur
                       </button>
                       <button
                         type="button"
                         onClick={onNavigateToPenyesuaian}
-                        className="px-2.5 py-1.5 rounded-md border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 text-[11px] font-bold transition"
+                        className="px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 text-[11px] font-bold transition"
                       >
                         Cek Rak
                       </button>
@@ -660,7 +730,7 @@ export function DashboardPage({
               <button
                 type="button"
                 onClick={onNavigateToInventori}
-                className="inline-flex items-center gap-0.5 text-xs font-bold text-slate-600 hover:text-emerald-700"
+                className="inline-flex items-center gap-0.5 text-xs font-bold text-slate-600 hover:text-blue-700"
               >
                 <span>Semua</span>
                 <ArrowRight className="w-3 h-3" />
@@ -676,7 +746,7 @@ export function DashboardPage({
                 {distributorList.map((d, idx) => {
                   const maxVal = distributorList[0]?.nilai || 1;
                   const percent = Math.min(100, Math.round(((d.nilai || 0) / maxVal) * 100));
-                  const barColor = idx === 0 ? 'bg-rose-600' : 'bg-slate-800';
+                  const barColor = idx === 0 ? 'bg-rose-500' : 'bg-blue-600';
                   return (
                     <div key={idx} className="space-y-1.5">
                       <div className="flex items-center justify-between gap-2 text-xs">
@@ -711,7 +781,7 @@ export function DashboardPage({
                 Halaman Awal Aplikasi
               </h3>
               {savedDefaultToast && (
-                <span className="text-[11px] font-bold text-emerald-700">
+                <span className="text-[11px] font-bold text-blue-700">
                   Tersimpan
                 </span>
               )}
@@ -729,12 +799,12 @@ export function DashboardPage({
                     onClick={() => handleSelectDefaultPage(opt.id)}
                     className={`px-3 py-2 rounded-lg text-xs font-bold border transition text-left flex items-center justify-between ${
                       isSelected
-                        ? 'bg-emerald-600 text-white border-emerald-600'
+                        ? 'bg-blue-50 text-blue-800 border-blue-300'
                         : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
                     }`}
                   >
                     <span className="truncate">{opt.label}</span>
-                    {isSelected && <CheckCircle2 className="w-3.5 h-3.5 text-white shrink-0" />}
+                    {isSelected && <CheckCircle2 className="w-3.5 h-3.5 text-blue-600 shrink-0" />}
                   </button>
                 );
               })}

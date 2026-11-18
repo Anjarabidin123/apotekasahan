@@ -54,7 +54,7 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
     jam_operasional: 'Senin - Minggu: 08.00 - 22.00 WIB',
     catatan_kaki_surat: 'Obat yang diretur wajib bersegel utuh dan diverifikasi nomor batch resminya.',
     format_no_retur: 'BAP-RETUR/{YYYY}/{MM}/{INDEX}',
-    logo_url: currentLogoUrl || '/logo-asahan.svg',
+    logo_url: currentLogoUrl && !currentLogoUrl.startsWith('/logo-') ? currentLogoUrl : '',
   });
 
   // Master Distributor (PBF Rekanan)
@@ -130,19 +130,11 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
     reader.readAsDataURL(file);
   };
 
-  const handleSelectPresetLogo = (presetUrl, presetName) => {
-    setProfile((prev) => ({ ...prev, logo_url: presetUrl }));
-    if (onLogoChange) onLogoChange(presetUrl);
-    setSuccessMsg(`Logo diubah ke preset: ${presetName}!`);
-    setTimeout(() => setSuccessMsg(''), 4000);
-  };
-
   const handleRemoveLogo = () => {
-    const defaultUrl = '/logo-asahan.svg';
-    setProfile((prev) => ({ ...prev, logo_url: defaultUrl }));
+    setProfile((prev) => ({ ...prev, logo_url: '' }));
     if (fileInputRef.current) fileInputRef.current.value = '';
-    if (onLogoChange) onLogoChange(defaultUrl);
-    setSuccessMsg('Logo dikembalikan ke default resmi.');
+    if (onLogoChange) onLogoChange('');
+    setSuccessMsg('Logo khusus dihapus dan dikembalikan ke inisial standar.');
     setTimeout(() => setSuccessMsg(''), 3000);
   };
 
@@ -245,7 +237,7 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
           <div>
             <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
               <span>Pengaturan Sarana & Profil Apotek</span>
-              <span className="w-2 h-2 rounded-full bg-emerald-500" />
+              <span className="w-2 h-2 rounded-full bg-blue-600" />
             </h1>
             <p className="text-xs text-slate-500 mt-0.5">
               Kelola identitas resmi apotek, format dokumen PDF, klausul retur PBF, dan kategori stok.
@@ -257,9 +249,9 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
           <button
             type="button"
             onClick={() => setShowSupportModal(true)}
-            className="btn-outline h-11 sm:h-9 min-h-[44px] sm:min-h-0 text-indigo-700 bg-indigo-50/60 border-indigo-200 hover:bg-indigo-100 font-bold gap-1.5 flex-1 sm:flex-initial"
+            className="btn-outline h-11 sm:h-9 min-h-[44px] sm:min-h-0 text-blue-700 bg-blue-50/70 border-blue-200 hover:bg-blue-100 font-bold gap-1.5 flex-1 sm:flex-initial"
           >
-            <LifeBuoy className="w-4 h-4 text-indigo-600" />
+            <LifeBuoy className="w-4 h-4 text-blue-600" />
             <span>Bantuan & SOP</span>
           </button>
 
@@ -276,8 +268,8 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
       </div>
 
       {successMsg && (
-        <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2.5 shadow-sm">
-          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+        <div className="p-3.5 rounded-xl bg-blue-50 border border-blue-200 text-blue-800 text-xs flex items-center gap-2.5 shadow-sm">
+          <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0" />
           <span className="font-bold">{successMsg}</span>
         </div>
       )}
@@ -307,7 +299,7 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-2 px-3.5 py-2.5 min-h-[44px] rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
                 isActive
-                  ? 'bg-emerald-600 text-white shadow-xs'
+                  ? 'bg-blue-600 text-white shadow-sm shadow-blue-600/20'
                   : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
               }`}
             >
@@ -322,7 +314,7 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-2xs space-y-4">
             <div className="border-b border-slate-100 pb-3 flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+              <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
                 <KeyRound className="w-4 h-4" />
               </div>
               <div>
@@ -501,15 +493,11 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
                 </div>
 
                 <div className="flex-1 space-y-2">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-xs font-black text-slate-800">
-                      {profile.logo_url === '/logo-asahan.svg'
-                        ? 'Preset: Royal Sapphire Shield (Default)'
-                        : profile.logo_url === '/logo-emerald.svg'
-                        ? 'Preset: Emerald Botanical Cross'
-                        : profile.logo_url === '/logo-modern-af.svg'
-                        ? 'Preset: Modern Monogram AF'
-                        : 'Logo Kustom (Tersimpan)'}
+                      {profile.logo_url && !profile.logo_url.startsWith('/logo-')
+                        ? 'Logo Apotek Terunggah'
+                        : 'Logo Standar Minimalis'}
                     </span>
                     <span className="text-[10px] px-2 py-0.5 rounded-md bg-blue-100 text-blue-800 font-extrabold">
                       Aktif di Sistem
@@ -517,7 +505,7 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
                   </div>
 
                   <p className="text-[11px] text-slate-500">
-                    Logo ini langsung ditampilkan pada sidebar navigasi, formulir login, dan KOP resmi Berita Acara Retur (BAP).
+                    Unggah file logo resmi apotek (PNG, JPG, WebP, atau SVG, maks. 2 MB) untuk ditampilkan di sidebar, login, dan kop surat BAP.
                   </p>
 
                   <div className="flex items-center gap-2 flex-wrap pt-1">
@@ -525,84 +513,30 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
                       type="file"
                       ref={fileInputRef}
                       onChange={handleLogoUpload}
-                      accept="image/png, image/jpeg, image/webp"
+                      accept="image/png, image/jpeg, image/webp, image/svg+xml"
                       className="hidden"
                     />
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
-                      className="btn-outline h-11 sm:h-8 min-h-[44px] sm:min-h-0 px-3 text-xs font-bold gap-1.5"
+                      className="btn-primary h-11 sm:h-8 min-h-[44px] sm:min-h-0 px-3.5 text-xs font-bold gap-1.5"
                     >
                       <Upload className="w-3.5 h-3.5" />
-                      <span>Unggah Gambar Sendiri</span>
+                      <span>Unggah Logo Apotek</span>
                     </button>
 
-                    <button
-                      type="button"
-                      onClick={handleRemoveLogo}
-                      className="btn-outline h-11 sm:h-8 min-h-[44px] sm:min-h-0 px-2.5 text-xs text-slate-600 hover:bg-slate-100"
-                      title="Kembalikan ke Default"
-                    >
-                      <RotateCcw className="w-3.5 h-3.5" />
-                      <span>Reset Default</span>
-                    </button>
+                    {profile.logo_url && !profile.logo_url.startsWith('/logo-') && (
+                      <button
+                        type="button"
+                        onClick={handleRemoveLogo}
+                        className="btn-outline h-11 sm:h-8 min-h-[44px] sm:min-h-0 px-2.5 text-xs text-slate-600 hover:bg-slate-100"
+                        title="Hapus Logo Unggahan"
+                      >
+                        <RotateCcw className="w-3.5 h-3.5" />
+                        <span>Hapus Logo</span>
+                      </button>
+                    )}
                   </div>
-                </div>
-              </div>
-
-              {/* Pilihan Preset Logo Desain Farmasi */}
-              <div>
-                <span className="text-[11px] font-bold text-slate-500 block mb-2">
-                  Atau pilih Desain Preset Logo Farmasi:
-                </span>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                  <button
-                    type="button"
-                    onClick={() => handleSelectPresetLogo('/logo-asahan.svg', 'Royal Sapphire Shield')}
-                    className={`p-3 min-h-[48px] rounded-xl border text-left flex items-center gap-3 transition-all cursor-pointer ${
-                      profile.logo_url === '/logo-asahan.svg'
-                        ? 'border-blue-600 bg-blue-50/70 ring-2 ring-blue-500/20 shadow-xs'
-                        : 'border-slate-200 bg-white hover:border-slate-300'
-                    }`}
-                  >
-                    <BrandLogo logoUrl="/logo-asahan.svg" className="w-9 h-9" />
-                    <div>
-                      <span className="text-xs font-bold text-slate-900 block">Royal Sapphire</span>
-                      <span className="text-[10px] text-slate-500">Shield & Daun Vitalitas</span>
-                    </div>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleSelectPresetLogo('/logo-emerald.svg', 'Emerald Botanical Cross')}
-                    className={`p-3 min-h-[48px] rounded-xl border text-left flex items-center gap-3 transition-all cursor-pointer ${
-                      profile.logo_url === '/logo-emerald.svg'
-                        ? 'border-blue-600 bg-blue-50/70 ring-2 ring-blue-500/20 shadow-xs'
-                        : 'border-slate-200 bg-white hover:border-slate-300'
-                    }`}
-                  >
-                    <BrandLogo logoUrl="/logo-emerald.svg" className="w-9 h-9" />
-                    <div>
-                      <span className="text-xs font-bold text-slate-900 block">Emerald Botanical</span>
-                      <span className="text-[10px] text-slate-500">Cross Farmasi Alami</span>
-                    </div>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleSelectPresetLogo('/logo-modern-af.svg', 'Modern Monogram AF')}
-                    className={`p-3 min-h-[48px] rounded-xl border text-left flex items-center gap-3 transition-all cursor-pointer ${
-                      profile.logo_url === '/logo-modern-af.svg'
-                        ? 'border-blue-600 bg-blue-50/70 ring-2 ring-blue-500/20 shadow-xs'
-                        : 'border-slate-200 bg-white hover:border-slate-300'
-                    }`}
-                  >
-                    <BrandLogo logoUrl="/logo-modern-af.svg" className="w-9 h-9" />
-                    <div>
-                      <span className="text-xs font-bold text-slate-900 block">Monogram AF</span>
-                      <span className="text-[10px] text-slate-500">Minimalis Preskripsi Rx</span>
-                    </div>
-                  </button>
                 </div>
               </div>
             </div>
@@ -690,7 +624,7 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
             <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
               <div className="border-b border-slate-100 pb-3">
                 <h3 className="text-sm font-black text-slate-900 flex items-center gap-2">
-                  <Shield className="w-4 h-4 text-emerald-600" />
+                  <Shield className="w-4 h-4 text-blue-600" />
                   <span>Legalitas & Perizinan BPOM</span>
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
@@ -736,12 +670,12 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
                 </div>
               </div>
 
-              <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 space-y-1">
+              <div className="p-3 rounded-xl bg-blue-50 border border-blue-200 text-xs text-blue-800 space-y-1">
                 <div className="flex items-center gap-1.5 font-bold">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  <CheckCircle2 className="w-4 h-4 text-blue-600" />
                   <span>Status Kepatuhan Terverifikasi</span>
                 </div>
-                <p className="text-[11px] text-emerald-700 leading-relaxed">
+                <p className="text-[11px] text-blue-700 leading-relaxed">
                   Sarana apotek beroperasi aktif dengan izin resmi di wilayah Kabupaten Asahan, Sumatera Utara.
                 </p>
               </div>
@@ -909,8 +843,8 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
                         kat.jenis === 'Keras'
                           ? 'bg-rose-100 text-rose-800'
                           : kat.jenis === 'Bebas Terbatas'
-                          ? 'bg-blue-100 text-blue-800'
-                          : 'bg-emerald-100 text-emerald-800'
+                          ? 'bg-sky-100 text-sky-800'
+                          : 'bg-blue-100 text-blue-800'
                       }`}
                     >
                       {kat.jenis}
@@ -968,7 +902,7 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
                 }}
                 className="btn-outline h-11 sm:h-9 px-3 text-xs"
               >
-                <Download className="w-3.5 h-3.5 text-emerald-600" />
+                <Download className="w-3.5 h-3.5 text-blue-600" />
                 <span>Ekspor CSV</span>
               </button>
 
@@ -998,7 +932,7 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
                           Menyimpan...
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600">
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-600">
                           <Check className="w-3 h-3" />
                           <span>Aktif</span>
                         </span>
@@ -1114,7 +1048,7 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
                           Menyimpan...
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600">
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-600">
                           <Check className="w-3 h-3" />
                           <span>Aktif</span>
                         </span>
@@ -1304,7 +1238,7 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
           <div className="bg-white rounded-2xl max-w-md w-full p-4 space-y-4 shadow-xl border border-slate-200 animate-in fade-in zoom-in-95">
             <div className="flex items-center justify-between border-b border-slate-100 pb-2">
               <h4 className="text-sm font-black text-slate-900 flex items-center gap-2">
-                <LifeBuoy className="w-4 h-4 text-indigo-600" />
+                <LifeBuoy className="w-4 h-4 text-blue-600" />
                 <span>Bantuan & SOP Retur Apotek</span>
               </h4>
               <button

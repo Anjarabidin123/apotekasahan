@@ -21,7 +21,12 @@ export function Layout({
   };
 
   return (
-    <div className="flex h-[100dvh] w-full max-w-full bg-[#eef2f6] overflow-hidden font-sans">
+    <div className="flex h-[100dvh] w-full max-w-full bg-[#eef1f9] overflow-hidden font-sans relative">
+      {/* Latar atmosfer halus terinspirasi desain Orely */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(ellipse_at_top_right,rgba(199,210,254,0.4),transparent_55%),radial-gradient(ellipse_at_bottom_left,rgba(191,219,254,0.35),transparent_55%)]"
+      />
       <Sidebar
         activePage={activePage}
         setActivePage={handleSelectPage}
@@ -32,7 +37,7 @@ export function Layout({
         logoUrl={logoUrl}
       />
 
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative w-full max-w-full">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative z-10 w-full max-w-full">
         <Header
           onToggleSidebar={() => setIsCollapsed(!isCollapsed)}
           onOpenMobile={() => setIsMobileOpen(true)}
@@ -41,8 +46,8 @@ export function Layout({
           logoUrl={logoUrl}
         />
 
-        <main className="flex-1 overflow-y-auto overflow-x-hidden w-full max-w-full p-3 sm:p-5 pb-20 md:pb-6">
-          <div className="max-w-6xl mx-auto space-y-4">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden w-full max-w-full px-3 sm:px-4 lg:px-5 pt-1 pb-20 md:pb-5">
+          <div className="w-full max-w-[1600px] mx-auto space-y-3">
             {children}
           </div>
         </main>
