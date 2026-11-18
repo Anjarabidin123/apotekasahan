@@ -609,6 +609,34 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
                 Tanggal referensi untuk simulasi seluruh kalkulasi sisa hari kedaluwarsa & retur obat.
               </p>
             </div>
+
+            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-black text-slate-900 flex items-center gap-1.5">
+                  <Settings className="w-4 h-4 text-blue-600" />
+                  <span>Halaman Awal Default</span>
+                </span>
+              </div>
+              <select
+                value={localStorage.getItem('simaaf_default_page') || 'dashboard'}
+                onChange={(e) => {
+                  localStorage.setItem('simaaf_default_page', e.target.value);
+                  setSuccessMsg('Halaman awal default berhasil diubah!');
+                  setTimeout(() => setSuccessMsg(''), 4000);
+                }}
+                className="w-full text-xs h-9 px-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-slate-700"
+              >
+                <option value="dashboard">Dashboard</option>
+                <option value="faktur">Input Faktur</option>
+                <option value="inventori">Inventori</option>
+                <option value="pengingat">Pengingat Retur</option>
+                <option value="penyesuaian">Penyesuaian Stok</option>
+                <option value="kalender">Kalender Tenggat</option>
+              </select>
+              <p className="text-[11px] text-slate-400">
+                Halaman yang muncul pertama kali setelah login.
+              </p>
+            </div>
           </div>
         </div>
       )}

@@ -13,7 +13,7 @@ import { api } from './services/api';
 
 function MainApp() {
   const { user, loading, isAdmin } = useAuth();
-  const [activePage, setActivePage] = useState('dashboard');
+  const [activePage, setActivePage] = useState(() => localStorage.getItem('simaaf_default_page') || 'dashboard');
   const [tanggalAcuan, setTanggalAcuan] = useState('2026-10-31');
   const [urgentReturCount, setUrgentReturCount] = useState(0);
   const [preselectedBatch, setPreselectedBatch] = useState(null);
@@ -61,7 +61,7 @@ function MainApp() {
   }
 
   if (!user) {
-    return <LoginPage onSuccess={() => setActivePage('dashboard')} />;
+    return <LoginPage onSuccess={() => setActivePage(localStorage.getItem('simaaf_default_page') || 'dashboard')} />;
   }
 
   // Navigasi dengan context data
@@ -83,16 +83,20 @@ function MainApp() {
     }
   };
 
+  // Fallback if activePage is invalid
+  const validPages = ['dashboard', 'faktur', 'inventori', 'pengingat', 'penyesuaian', 'kalender', 'pengaturan'];
+  const currentPage = validPages.includes(activePage) ? activePage : (localStorage.getItem('simaaf_default_page') || 'dashboard');
+
   return (
     <Layout
-      activePage={activePage}
+      activePage={currentPage}
       setActivePage={setActivePage}
       activePageTitle={getPageTitle()}
       tanggalAcuan={tanggalAcuan}
       urgentCount={urgentReturCount}
       logoUrl={logoUrl}
     >
-      {activePage === 'dashboard' && (
+      {currentPage === 'dashboard' && (
         <DashboardPage
           onNavigateToPengingat={() => setActivePage('pengingat')}
           onNavigateToInventori={() => setActivePage('inventori')}
@@ -101,7 +105,7 @@ function MainApp() {
         />
       )}
 
-      {activePage === 'faktur' && (
+      {currentPage === 'faktur' && (
         <FakturInputPage
           onBatchSaved={() => {
             refreshBadgeAndSettings();
@@ -110,29 +114,29 @@ function MainApp() {
         />
       )}
 
-      {activePage === 'inventori' && (
+      {currentPage === 'inventori' && (
         <InventoriBatchPage
           onSelectBatchForAdjustment={handleSelectBatchForAdjustment}
         />
       )}
 
-      {activePage === 'pengingat' && (
+      {currentPage === 'pengingat' && (
         <PengingatReturPage
           onNavigateToPenyesuaian={handleSelectBatchForAdjustment}
         />
       )}
 
-      {activePage === 'penyesuaian' && (
+      {currentPage === 'penyesuaian' && (
         <PenyesuaianStokPage
           preselectedBatch={preselectedBatch}
         />
       )}
 
-      {activePage === 'kalender' && (
+      {currentPage === 'kalender' && (
         <KalenderTenggatPage />
       )}
 
-      {activePage === 'pengaturan' && (
+      {currentPage === 'pengaturan' && (
         <PengaturanPage
           onSettingsUpdated={refreshBadgeAndSettings}
           currentLogoUrl={logoUrl}

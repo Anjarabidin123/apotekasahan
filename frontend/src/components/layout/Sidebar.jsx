@@ -117,7 +117,7 @@ export function Sidebar({
             type="button"
             data-testid="mobile-drawer-close"
             onClick={onCloseMobile}
-            className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl hover:bg-slate-200 text-slate-500 hover:text-slate-800 transition shrink-0 active:scale-95"
+            className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-slate-200 text-slate-500 hover:text-slate-800 transition shrink-0 active:scale-95"
             aria-label="Tutup menu navigasi"
             title="Tutup menu"
           >
@@ -139,7 +139,7 @@ export function Sidebar({
               return (
                 <div
                   key={item.id}
-                  className="flex items-center justify-between px-2 py-1.5 rounded-xl text-[13px] tracking-tight text-slate-400 bg-slate-50/50 border border-slate-200/50 select-none cursor-not-allowed opacity-60 font-bold min-h-[40px]"
+                  className="flex items-center justify-between px-2 py-1.5 rounded-lg text-[13px] tracking-tight text-slate-400 bg-transparent border border-transparent select-none cursor-not-allowed opacity-60 font-semibold min-h-[40px]"
                   title="Khusus Akun Admin (Bu Anni)"
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
@@ -157,10 +157,10 @@ export function Sidebar({
                 type="button"
                 data-testid={`mobile-nav-${item.id}`}
                 onClick={() => handleNavClick(item.id)}
-                className={`w-full flex items-center justify-between px-2 py-1.5 rounded-xl text-[13px] tracking-tight transition-all text-left min-h-[40px] active:scale-[0.98] ${
+                className={`w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-[13px] tracking-tight transition-all text-left min-h-[40px] active:scale-[0.98] ${
                   isActive
-                    ? 'bg-blue-600 text-white font-black shadow-md shadow-blue-600/30 ring-1 ring-blue-500 border border-blue-600'
-                    : 'bg-white border border-slate-200/80 hover:bg-slate-50 hover:border-blue-400 hover:text-blue-600 text-slate-900 font-extrabold shadow-2xs'
+                    ? 'bg-slate-800 text-white font-bold border-l-4 border-blue-600'
+                    : 'bg-transparent border border-transparent hover:bg-slate-200/50 text-slate-700 font-semibold'
                 }`}
               >
                 <div className="flex items-center gap-2.5 min-w-0">
@@ -191,7 +191,7 @@ export function Sidebar({
           })}
         </div>
 
-        <div className="p-3 m-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs space-y-1 shadow-2xs shrink-0">
+        <div className="p-3 m-3 rounded-lg bg-slate-50 border border-slate-200 text-xs space-y-1 shadow-2xs shrink-0">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">
               Kisaran Timur
@@ -209,12 +209,12 @@ export function Sidebar({
       <aside
         data-testid="desktop-sidebar"
         className={`hidden md:flex bg-slate-100/80 border-r border-slate-200/90 flex-col transition-all duration-300 z-40 select-none shadow-[1px_0_12px_rgba(0,0,0,0.03)] backdrop-blur-md shrink-0 ${
-          isCollapsed ? 'w-20' : 'w-64'
+          isCollapsed ? 'w-20' : 'w-80'
         }`}
       >
         <div
           onClick={() => setActivePage('dashboard')}
-          className="p-4 border-b border-slate-200/80 bg-white/70 flex items-center gap-3 hover:bg-white transition-colors group cursor-pointer"
+          className="p-5 border-b border-slate-200/80 bg-white/70 flex items-center gap-4 hover:bg-white transition-colors group cursor-pointer"
           title="Apotek Asahan Farma - SIMAAF"
         >
           <BrandLogo
@@ -233,9 +233,9 @@ export function Sidebar({
           )}
         </div>
 
-        <div className="flex-1 overflow-y-auto px-3 py-1 space-y-0.5">
+        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-1">
           {!isCollapsed && (
-            <p className="px-2 pt-1 pb-1 text-[10px] font-black uppercase tracking-wider text-slate-500">
+            <p className="px-2 pt-1 pb-2 text-[10px] font-black uppercase tracking-wider text-slate-500">
               {isAdmin ? 'Menu Eksekutif & Operasional' : 'Menu Operasional Lapangan'}
             </p>
           )}
@@ -249,10 +249,10 @@ export function Sidebar({
               return (
                 <div
                   key={item.id}
-                  className="flex items-center justify-between px-2 py-1.5 rounded-xl text-[13px] tracking-tight text-slate-400 bg-slate-50/50 border border-slate-200/50 select-none cursor-not-allowed opacity-60 font-bold min-h-[40px]"
+                  className="flex items-center justify-between px-5 py-2.5 rounded-lg text-[13px] tracking-tight text-slate-400 bg-transparent border border-transparent select-none cursor-not-allowed opacity-60 font-semibold min-h-[48px]"
                   title="Khusus Akun Admin (Bu Anni)"
                 >
-                  <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="flex items-center gap-3 min-w-0">
                     <Icon className="w-4 h-4 shrink-0 text-slate-400" strokeWidth={2} />
                     {!isCollapsed && <span className="truncate">{item.label}</span>}
                   </div>
@@ -266,14 +266,14 @@ export function Sidebar({
                 key={item.id}
                 type="button"
                 onClick={() => setActivePage(item.id)}
-                className={`w-full flex items-center justify-between px-2 py-1.5 rounded-xl text-[13px] tracking-tight transition-all group cursor-pointer text-left min-h-[40px] ${
+                className={`w-full flex items-center justify-between px-5 py-2.5 rounded-lg text-[13px] tracking-tight transition-all group cursor-pointer text-left min-h-[48px] ${
                   isActive
-                    ? 'bg-blue-600 text-white font-black shadow-md shadow-blue-600/30 ring-1 ring-blue-500 border border-blue-600'
-                    : 'bg-white/80 border border-slate-200/80 hover:bg-white hover:border-blue-400 hover:text-blue-600 text-slate-900 font-extrabold shadow-2xs'
+                    ? 'bg-slate-800 text-white font-bold border-l-4 border-blue-600'
+                    : 'bg-transparent border border-transparent hover:bg-slate-200/50 text-slate-700 font-semibold'
                 }`}
                 title={isCollapsed ? item.label : undefined}
               >
-                <div className="flex items-center gap-2.5 min-w-0">
+                <div className="flex items-center gap-3 min-w-0">
                   <Icon
                     className={`w-4 h-4 shrink-0 transition-colors ${
                       isActive
@@ -289,7 +289,7 @@ export function Sidebar({
 
                 {!isCollapsed && item.badge && (
                   <span
-                    className={`text-[9px] px-1.5 py-0.5 rounded-md font-black shrink-0 ${
+                    className={`text-[9px] px-2 py-0.5 rounded-md font-black shrink-0 ${
                       isActive
                         ? 'bg-white/25 text-white'
                         : item.badgeColor
@@ -306,7 +306,7 @@ export function Sidebar({
         </div>
 
         {!isCollapsed && (
-          <div className="p-3 m-3 rounded-2xl bg-white border border-slate-200 text-xs space-y-1 shadow-2xs">
+          <div className="p-3 m-3 rounded-lg bg-slate-50 border border-slate-200 text-xs space-y-1 shadow-2xs">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">
                 Kisaran Timur

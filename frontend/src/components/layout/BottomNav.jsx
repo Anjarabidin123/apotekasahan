@@ -15,7 +15,7 @@ export function BottomNav({ activePage, setActivePage, urgentCount = 0 }) {
 
   return (
     <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-lg z-30 px-4 pb-3 pt-1 pointer-events-none md:hidden">
-      <div className="flex items-center justify-around rounded-3xl bg-white/95 backdrop-blur-xl border border-slate-200/80 shadow-[0_10px_35px_-5px_rgba(0,0,0,0.12)] px-2 py-1.5 pointer-events-auto">
+      <div className="flex items-center justify-around rounded-lg bg-white/95 backdrop-blur-xl border border-slate-200 shadow-sm px-2 py-1.5 pointer-events-auto">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = activePage === item.id;
@@ -25,13 +25,13 @@ export function BottomNav({ activePage, setActivePage, urgentCount = 0 }) {
               key={item.id}
               type="button"
               onClick={() => setActivePage(item.id)}
-              className={`flex flex-col items-center justify-center min-w-[48px] min-h-[48px] px-2 py-1 rounded-2xl transition-all relative ${
+              className={`flex flex-col items-center justify-center min-w-[48px] min-h-[48px] px-2 py-1 rounded-lg transition-all relative ${
                 isActive ? '-translate-y-0.5' : 'text-slate-400 hover:text-slate-600'
               }`}
               aria-label={item.label}
             >
               <div
-                className={`flex items-center justify-center w-8 h-8 rounded-xl transition-all ${
+                className={`flex items-center justify-center w-8 h-8 rounded-lg transition-all ${
                   isActive
                     ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/25 scale-105'
                     : 'text-slate-500 bg-slate-50'
