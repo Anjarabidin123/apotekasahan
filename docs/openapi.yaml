@@ -1,0 +1,2205 @@
+openapi: "3.0.3"
+info:
+  title: "SIMAAF REST API"
+  description: "Sistem Pemantauan Stok dan Kedaluwarsa (SIMAAF) — Apotek Asahan Farma. Spesifikasi kontrak antarmuka pemrograman aplikasi (REST API) murni agnostik bahasa dan kerangka kerja untuk integrasi frontend React dan gateway backend."
+  version: "1.0.0"
+  contact:
+    name: "Tim Pengembang Apotek Asahan Farma"
+    email: "apotek.asahanfarma@gmail.com"
+servers:
+  - url: "/api/v1"
+    description: "API Gateway SIMAAF Versi 1"
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: "Autentikasi & Sesi"
+    description: "Pengelolaan sesi pengguna, verifikasi kredensial, dan otorisasi peran"
+  - name: "Dashboard & Telemetri"
+    description: "Metrik eksekutif, valuasi persediaan, evaluasi model Random Forest (AUC 0.91), dan peringkat risiko PBF"
+  - name: "Inventori & Batch"
+    description: "Manajemen katalog batch obat, filter multi-dimensi, dan pengurutan FEFO"
+  - name: "Pengingat & Retur"
+    description: "Peringatan retur mendesak (<30 hari), kedaluwarsa (<90 hari), stok menipis, dan penerbitan BAP fisik"
+  - name: "Penyesuaian Stok (Stock Opname)"
+    description: "Audit fisik rak apotek, kalkulasi variansi 3-pod, pemindaian kartu stok AI, dan buku audit trail"
+  - name: "Faktur & AI Vision"
+    description: "Unggah faktur fisik, ekstraksi OCR multimodal Gemini Vision, dan pendaftaran batch atomik"
+  - name: "Kalender Tenggat"
+    description: "Visualisasi jadwal jatuh tempo bulanan dan ekspor berkas standar iCalendar RFC 5545 (.ics)"
+  - name: "Pengaturan & Master Data"
+    description: "Profil sarana apotek, matriks kebijakan 14 PBF, katalog 18 obat, pencadangan dan pemulihan data"
+
+paths:
+  /auth/login:
+    post:
+      tags:
+        - "Autentikasi & Sesi"
+      summary: "Autentikasi Pengguna & Penerbitan JWT"
+      description: "Memvalidasi surel dan kata sandi petugas apotek, mengembalikan token JWT dan profil pengguna aktif."
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: "Autentikasi berhasil"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "400":
+          description: "Permintaan tidak valid (surel atau kata sandi kosong)"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandarGalatResponse"
+        "401":
+          description: "Kredensial tidak valid atau akun tidak aktif"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandarGalatResponse"
+
+  /auth/me:
+    get:
+      tags:
+        - "Autentikasi & Sesi"
+      summary: "Pemeriksaan Sesi Aktif"
+      description: "Memverifikasi validitas token JWT aktif dan mengembalikan data identitas pengguna yang sedang login."
+      responses:
+        "200":
+          description: "Sesi valid dan profil berhasil dimuat"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sukses:
+                    type: boolean
+                    example: true
+                  pesan:
+                    type: string
+                    example: "Profil sesi aktif berhasil dimuat"
+                  data:
+                    $ref: "#/components/schemas/Pengguna"
+        "401":
+          description: "Token tidak disertakan, tidak valid, atau kedaluwarsa"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandarGalatResponse"
+
+  /auth/logout:
+    post:
+      tags:
+        - "Autentikasi & Sesi"
+      summary: "Penghentian Sesi Pengguna"
+      description: "Mencabut token sesi aktif dan mencatat log keluar sistem."
+      responses:
+        "200":
+          description: "Logout berhasil"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sukses:
+                    type: boolean
+                    example: true
+                  pesan:
+                    type: string
+                    example: "Logout berhasil"
+        "401":
+          description: "Token tidak valid"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandarGalatResponse"
+
+  /dashboard/ringkasan:
+    get:
+      tags:
+        - "Dashboard & Telemetri"
+      summary: "Ringkasan Metrik Eksekutif & Telemetri AI"
+      description: "Menghitung total nilai persediaan, aset berisiko hangus, rasio kepatuhan FEFO, evaluasi model Random Forest Capstone Asah (AUC 0.91), dan peringkat ancaman 14 PBF. Wajib peran admin."
+      parameters:
+        - name: tanggal_acuan
+          in: query
+          required: false
+          description: "Tanggal acuan tolok ukur simulasi (format YYYY-MM-DD)"
+          schema:
+            type: string
+            format: date
+            default: "2026-10-31"
+      responses:
+        "200":
+          description: "Metrik dashboard berhasil dihitung"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardRingkasanResponse"
+        "401":
+          description: "Token tidak valid"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandarGalatResponse"
+        "403":
+          description: "Ditolak: Hanya pengguna dengan peran admin yang berhak mengakses"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandarGalatResponse"
+
+  /dashboard/analisis-ds:
+    get:
+      tags:
+        - "Dashboard & Telemetri"
+      summary: "Temuan Kualitatif Analisis Data Science"
+      description: "Menyajikan wawasan strategis analitik dan rekomendasi optimasi stok dari model prediktif."
+      responses:
+        "200":
+          description: "Wawasan data science berhasil dimuat"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardAnalisisDsResponse"
+        "401":
+          description: "Token tidak valid"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandarGalatResponse"
+
+  /batches:
+    get:
+      tags:
+        - "Inventori & Batch"
+      summary: "Daftar Batch Inventori Obat"
+      description: "Mengambil daftar batch obat aktif di rak apotek dengan filter multi-dimensi dan pengurutan kepatuhan FEFO."
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 50
+        - name: search
+          in: query
+          required: false
+          description: "Pencarian teks pada nama obat atau nomor batch"
+          schema:
+            type: string
+        - name: distributor_id
+          in: query
+          required: false
+          description: "Penyaringan berdasarkan distributor PBF tertentu"
+          schema:
+            type: integer
+        - name: status_risiko
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [semua, rendah, sedang, tinggi]
+            default: semua
+        - name: status_retur
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [semua, bisa_diretur, lewat_batas, tidak_bisa_diretur]
+            default: semua
+        - name: sort_by
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [tanggal_kedaluwarsa, batas_retur, skor_risiko, nilai_total, nama_obat]
+            default: tanggal_kedaluwarsa
+        - name: order
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: asc
+        - name: tanggal_acuan
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+            default: "2026-10-31"
+      responses:
+        "200":
+          description: "Daftar batch inventori berhasil diambil"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchListResponse"
+        "400":
+          description: "Parameter filter tidak valid"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandarGalatResponse"
+        "401":
+          description: "Token tidak valid"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandarGalatResponse"
+
+  /batches/{id}:
+    get:
+      tags:
+        - "Inventori & Batch"
+      summary: "Detail Profil Batch & Riwayat Audit Rak"
+      description: "Mengambil data lengkap batch obat tertentu beserta linimasa riwayat stock opname pada batch tersebut."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: "ID numerik unik batch obat"
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: "Detail batch berhasil dimuat"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchDetailResponse"
+        "404":
+          description: "Batch obat tidak ditemukan"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandarGalatResponse"
+
+  /pengingat:
+    get:
+      tags:
+        - "Pengingat & Retur"
+      summary: "Pemantauan Pengingat Retur & Peringatan Stok"
+      description: "Menghitung pengelompokan batch mendesak retur (<30 hari), mendekati kedaluwarsa (<90 hari), dan stok menipis (<=10 unit) terhadap tanggal acuan."
+      parameters:
+        - name: tanggal_acuan
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+            default: "2026-10-31"
+      responses:
+        "200":
+          description: "Data pengingat dan peringatan stok berhasil dikalkulasi"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PengingatResponse"
+        "401":
+          description: "Token tidak valid"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandarGalatResponse"
+
+  /retur/bap:
+    post:
+      tags:
+        - "Pengingat & Retur"
+      summary: "Penerbitan Berita Acara Retur Fisik Resmi (BAP-RETUR)"
+      description: "Menerbitkan lembar BAP resmi berstandar CDOB BPOM untuk sejumlah batch obat terpilih, mencantumkan KOP surat sarana, nomor izin SIA/SIPA, dan total nilai finansial klaim."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReturBapRequest"
+      responses:
+        "200":
+          description: "Dokumen BAP resmi berhasil diterbitkan"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReturBapResponse"
+        "201":
+          description: "Dokumen BAP resmi berhasil dibuat"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReturBapResponse"
+        "400":
+          description: "Daftar batch kosong atau data tidak valid"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandarGalatResponse"
+        "404":
+          description: "Salah satu batch tidak ditemukan"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandarGalatResponse"
+
+  /penyesuaian-stok:
+    post:
+      tags:
+        - "Penyesuaian Stok (Stock Opname)"
+      summary: "Pencatatan Penyesuaian Fisik Rak & Audit Trail"
+      description: "Mencatat hasil hitungan fisik rak etalase, menghitung deviasi matematis selisih stok (sesudah - sebelum), memutakhirkan kuantitas batch, dan membukukan log audit."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PenyesuaianStokRequest"
+      responses:
+        "200":
+          description: "Penyesuaian stok berhasil disimpan dan dicatat di buku audit"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PenyesuaianStokResponse"
+        "400":
+          description: "Permintaan tidak valid"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandarGalatResponse"
+        "404":
+          description: "Batch obat tidak ditemukan"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandarGalatResponse"
+        "422":
+          description: "Nilai stok fisik bernilai negatif"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandarGalatResponse"
+
+  /penyesuaian-stok/riwayat:
+    get:
+      tags:
+        - "Penyesuaian Stok (Stock Opname)"
+      summary: "Riwayat Audit Trail Penyesuaian Stok"
+      description: "Mengambil daftar kronologis riwayat seluruh transaksi penyesuaian stock opname rak apotek."
+      parameters:
+        - name: batch_id
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 50
+      responses:
+        "200":
+          description: "Riwayat penyesuaian stok berhasil dimuat"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sukses:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/StockLogItem"
+
+  /penyesuaian-stok/scan-kartu:
+    post:
+      tags:
+        - "Penyesuaian Stok (Stock Opname)"
+      summary: "Pindai Kartu Stok Fisik via AI Vision"
+      description: "Mengekstrak angka sisa stok fisik dari citra foto kartu stok gantung rak menggunakan Gemini Multimodal OCR."
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file_kartu
+              properties:
+                file_kartu:
+                  type: string
+                  format: binary
+                  description: "Berkas foto kartu stok (JPG, PNG, WEBP, maks. 5 MB)"
+      responses:
+        "200":
+          description: "Foto kartu stok berhasil dipindai oleh model ekstraksi"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScanKartuResponse"
+        "400":
+          description: "Berkas bukan citra gambar valid"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandarGalatResponse"
+        "413":
+          description: "Ukuran berkas melebihi 5 MB"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandarGalatResponse"
+        "422":
+          description: "Citra buram atau angka tidak terdeteksi"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandarGalatResponse"
+
+  /faktur/ekstraksi:
+    post:
+      tags:
+        - "Faktur & AI Vision"
+      summary: "Ekstraksi OCR Faktur Fisik via AI Vision"
+      description: "Menerima foto lembaran faktur pengiriman obat dari PBF, melakukan pemindaian OCR terstruktur via Gemini Multimodal Vision untuk nomor faktur, PBF, dan tabel item obat."
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file_faktur
+              properties:
+                file_faktur:
+                  type: string
+                  format: binary
+                  description: "Berkas citra lembar faktur pengiriman PBF (JPG, PNG, WEBP, maks. 5 MB)"
+      responses:
+        "200":
+          description: "Foto faktur berhasil dipindai oleh model ekstraksi"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FakturEkstraksiResponse"
+        "400":
+          description: "Berkas bukan gambar valid"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandarGalatResponse"
+        "413":
+          description: "Ukuran berkas melebihi 5 MB"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandarGalatResponse"
+        "422":
+          description: "Gambar buram atau tidak terbaca (disertai penanda alihkan_ke_manual: true)"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandarGalatResponse"
+        "503":
+          description: "Layanan AI Vision mengalami timeout atau kuota habis"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandarGalatResponse"
+
+  /faktur/simpan-batch:
+    post:
+      tags:
+        - "Faktur & AI Vision"
+      summary: "Pendaftaran Atomik Batch Obat Baru dari Faktur"
+      description: "Menyimpan kumpulan sediaan obat hasil verifikasi koreksi faktur secara atomik, secara otomatis menghitung batas retur PBF, mengevaluasi status retur, dan menjalankan inferensi skor risiko Machine Learning."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/BatchCreateItem"
+      responses:
+        "201":
+          description: "Kumpulan batch obat berhasil didaftarkan ke inventori"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchSimpanResponse"
+        "400":
+          description: "Data batch tidak valid (kuantitas <= 0 atau tanggal exp lampau)"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandarGalatResponse"
+        "422":
+          description: "Obat ID atau distributor ID tidak ditemukan"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandarGalatResponse"
+
+  /kalender/milestones:
+    get:
+      tags:
+        - "Kalender Tenggat"
+      summary: "Daftar Tonggak Jatuh Tempo Retur & Kedaluwarsa Bulanan"
+      description: "Mengambil daftar seluruh kejadian kritis jatuh tempo retur dan kedaluwarsa pada bulan dan tahun tertentu."
+      parameters:
+        - name: bulan
+          in: query
+          required: true
+          description: "Bulan kalender (1 - 12)"
+          schema:
+            type: integer
+            example: 11
+        - name: tahun
+          in: query
+          required: true
+          description: "Tahun kalender (contoh: 2026)"
+          schema:
+            type: integer
+            example: 2026
+      responses:
+        "200":
+          description: "Daftar kejadian milestones bulanan berhasil dimuat"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MilestonesResponse"
+
+  /kalender/export.ics:
+    get:
+      tags:
+        - "Kalender Tenggat"
+      summary: "Ekspor Berkas Kalender Standar RFC 5545 (.ics)"
+      description: "Mengunduh berkas kalender MIME text/calendar (.ics) berisi agenda jatuh tempo retur dan kedaluwarsa obat untuk sinkronisasi ke Google Calendar / Outlook."
+      parameters:
+        - name: bulan
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: tahun
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: "Berkas kalender .ics berhasil digenerate"
+          content:
+            text/calendar:
+              schema:
+                type: string
+                example: "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Apotek Asahan Farma//SIMAAF Kalender 1.0//ID\n..."
+
+  /pengaturan:
+    get:
+      tags:
+        - "Pengaturan & Master Data"
+      summary: "Pemuatan Konfigurasi Sistem Apotek"
+      description: "Mengambil parameter acuan global sistem, tanggal simulasi, dan ambang batas peringatan operasional."
+      responses:
+        "200":
+          description: "Pengaturan sistem berhasil dimuat"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sukses:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/PengaturanSistem"
+    put:
+      tags:
+        - "Pengaturan & Master Data"
+      summary: "Pembaruan Parameter Operasional Sistem"
+      description: "Memperbarui parameter konfigurasi apotek dan ambang batas pengingat. Wajib peran admin."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PengaturanSistem"
+      responses:
+        "200":
+          description: "Pengaturan sistem berhasil diperbarui"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sukses:
+                    type: boolean
+                    example: true
+                  pesan:
+                    type: string
+                    example: "Pengaturan sistem berhasil diperbarui"
+                  data:
+                    $ref: "#/components/schemas/PengaturanSistem"
+        "403":
+          description: "Ditolak: Hanya admin yang dapat mengubah pengaturan sistem"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandarGalatResponse"
+
+  /distributor:
+    get:
+      tags:
+        - "Pengaturan & Master Data"
+      summary: "Direktori Master 14 PBF & Kebijakan Retur"
+      description: "Menampilkan daftar 14 Pedagang Besar Farmasi rekanan resmi Apotek Asahan Farma dan matriks aturan bulan returnya."
+      responses:
+        "200":
+          description: "Daftar distributor PBF berhasil dimuat"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sukses:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/DistributorItem"
+
+  /pengaturan/aturan-retur/{distributor_id}:
+    put:
+      tags:
+        - "Pengaturan & Master Data"
+      summary: "Pembaruan Aturan Bulan Retur PBF & Rekalkulasi Berantai Batch"
+      description: "Memperbarui aturan klausul bulan retur PBF tertentu dan secara otomatis menghitung ulang batas retur seluruh batch aktif yang berelasi di database. Wajib peran admin."
+      parameters:
+        - name: distributor_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AturanReturUpdateRequest"
+      responses:
+        "200":
+          description: "Aturan retur distributor berhasil diperbarui dan batch terkait dihitung ulang"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AturanReturUpdateResponse"
+        "403":
+          description: "Ditolak: Hanya admin yang dapat mengubah aturan retur distributor"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandarGalatResponse"
+        "404":
+          description: "Distributor tidak ditemukan"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandarGalatResponse"
+
+  /obat:
+    get:
+      tags:
+        - "Pengaturan & Master Data"
+      summary: "Katalog Master 18 Sediaan Obat Farmasi"
+      description: "Mengambil katalog 18 master sediaan obat apotek lengkap dengan kode referensi, kategori terapeutik, satuan, safety stock, dan harga jual konsumen."
+      parameters:
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: kategori
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "Master obat berhasil dimuat"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sukses:
+                    type: boolean
+                    example: true
+                  pesan:
+                    type: string
+                    example: "Master obat berhasil dimuat"
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ObatItem"
+
+  /pengaturan/profil-apotek:
+    get:
+      tags:
+        - "Pengaturan & Master Data"
+      summary: "Pemuatan Profil Legalitas Sarana Apotek"
+      description: "Mengambil informasi legalitas apotek (SIA, SIPA, NIB), penanggung jawab, KOP surat, dan kontak sarana."
+      responses:
+        "200":
+          description: "Profil apotek berhasil dimuat"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sukses:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/ProfilApotek"
+    put:
+      tags:
+        - "Pengaturan & Master Data"
+      summary: "Pembaruan Profil Legalitas Sarana Apotek"
+      description: "Memperbarui profil apotek, legalitas izin perizinan, dan format penomoran BAP. Wajib peran admin."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProfilApotek"
+      responses:
+        "200":
+          description: "Profil sarana apotek berhasil diperbarui"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sukses:
+                    type: boolean
+                    example: true
+                  pesan:
+                    type: string
+                    example: "Profil sarana apotek berhasil diperbarui"
+                  data:
+                    $ref: "#/components/schemas/ProfilApotek"
+        "403":
+          description: "Ditolak: Hanya admin yang dapat mengubah profil apotek"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandarGalatResponse"
+
+  /pengaturan/backup:
+    post:
+      tags:
+        - "Pengaturan & Master Data"
+      summary: "Pencadangan Penuh Basis Data Sistem (JSON Dump)"
+      description: "Mengekspor arsip data komprehensif seluruh tabel basis data SIMAAF dengan validasi checksum SHA-256. Wajib peran admin."
+      responses:
+        "200":
+          description: "Pencadangan basis data berhasil dibuat"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BackupResponse"
+        "403":
+          description: "Ditolak: Akses dicadangkan untuk admin"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandarGalatResponse"
+
+  /pengaturan/restore:
+    post:
+      tags:
+        - "Pengaturan & Master Data"
+      summary: "Pemulihan Basis Data dari Arsip Cadangan"
+      description: "Memulihkan seluruh tabel basis data dari arsip dump JSON dengan verifikasi integritas checksum SHA-256 dan rollback atomik jika gagal. Wajib peran admin."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RestoreRequest"
+      responses:
+        "200":
+          description: "Basis data SIMAAF berhasil dipulihkan"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RestoreResponse"
+        "400":
+          description: "Berkas arsip rusak atau checksum tidak cocok"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandarGalatResponse"
+        "403":
+          description: "Ditolak: Akses pemulihan hanya untuk admin"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandarGalatResponse"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "Masukkan token JWT dengan format: Bearer <token>"
+
+  schemas:
+    Pengguna:
+      type: object
+      required:
+        - id
+        - nama
+        - email
+        - role
+      properties:
+        id:
+          type: integer
+          example: 1
+        nama:
+          type: string
+          example: "Ibu Anni (Komisaris)"
+        email:
+          type: string
+          format: email
+          example: "admin@apotek.local"
+        role:
+          type: string
+          enum: [admin, karyawan]
+          example: "admin"
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: "admin@apotek.local"
+        password:
+          type: string
+          format: password
+          example: "admin123"
+
+    LoginResponse:
+      type: object
+      required:
+        - sukses
+        - pesan
+        - data
+      properties:
+        sukses:
+          type: boolean
+          example: true
+        pesan:
+          type: string
+          example: "Login berhasil"
+        data:
+          type: object
+          required:
+            - token
+            - pengguna
+          properties:
+            token:
+              type: string
+              example: "mock-jwt-admin-token"
+            pengguna:
+              $ref: "#/components/schemas/Pengguna"
+
+    ModelAiTelemetri:
+      type: object
+      required:
+        - nama_model
+        - auc_score
+        - akurasi
+        - status_evaluasi
+      properties:
+        nama_model:
+          type: string
+          example: "Random Forest Classifier"
+        auc_score:
+          type: number
+          format: float
+          example: 0.91
+        akurasi:
+          type: number
+          format: float
+          example: 0.885
+        status_evaluasi:
+          type: string
+          example: "Optimal - Terverifikasi Capstone Asah 2026"
+
+    DistributorTerancamItem:
+      type: object
+      required:
+        - nama
+        - nilai
+        - batch_count
+      properties:
+        nama:
+          type: string
+          example: "PBF Enseval Putera Megatrading"
+        nilai:
+          type: number
+          format: double
+          example: 1092000.0
+        batch_count:
+          type: integer
+          example: 1
+        aturan_retur_bulan:
+          type: integer
+          example: 3
+
+    DashboardRingkasanResponse:
+      type: object
+      required:
+        - sukses
+        - pesan
+        - data
+      properties:
+        sukses:
+          type: boolean
+          example: true
+        pesan:
+          type: string
+          example: "Ringkasan metrik dashboard berhasil dikalkulasi"
+        data:
+          type: object
+          required:
+            - tanggal_acuan
+            - total_nilai_persediaan
+            - total_batch_aktif
+            - jumlah_batch_berisiko
+            - total_nilai_berisiko
+            - persentase_berisiko
+            - kepatuhan_fefo_persen
+            - model_ai_telemetri
+            - distributor_terancam
+          properties:
+            tanggal_acuan:
+              type: string
+              format: date
+              example: "2026-10-31"
+            total_nilai_persediaan:
+              type: number
+              format: double
+              example: 5614500.0
+            total_batch_aktif:
+              type: integer
+              example: 8
+            jumlah_batch_berisiko:
+              type: integer
+              example: 4
+            total_nilai_berisiko:
+              type: number
+              format: double
+              example: 2315000.0
+            persentase_berisiko:
+              type: number
+              format: float
+              example: 41.2
+            kepatuhan_fefo_persen:
+              type: number
+              format: float
+              example: 87.5
+            model_ai_telemetri:
+              $ref: "#/components/schemas/ModelAiTelemetri"
+            distributor_terancam:
+              type: array
+              items:
+                $ref: "#/components/schemas/DistributorTerancamItem"
+
+    DashboardAnalisisDsResponse:
+      type: object
+      required:
+        - sukses
+        - pesan
+        - data
+      properties:
+        sukses:
+          type: boolean
+          example: true
+        pesan:
+          type: string
+          example: "Analisis kualitatif data science berhasil dimuat"
+        data:
+          type: object
+          required:
+            - temuan_ds
+            - rekomendasi_tindakan
+          properties:
+            temuan_ds:
+              type: array
+              items:
+                type: string
+              example:
+                - "Distributor dengan aturan retur singkat (1 bulan) menyumbang 62% obat yang gagal diretur."
+                - "Obat antibiotik dan sirup anak memerlukan pemantauan ketat menjelang pergantian bulan."
+                - "Semua estimasi risiko dihitung otomatis menggunakan model klasifikasi tim Asah 2026 (AUC 0.91)."
+            rekomendasi_tindakan:
+              type: array
+              items:
+                type: string
+              example:
+                - "Negosiasi perpanjangan klausul retur PBF Bina Farma dari 1 bulan menjadi minimal 3 bulan."
+                - "Prioritaskan penggunaan fitur OCR Faktur AI untuk percepatan entri dalam 24 jam barang diterima."
+                - "Lakukan bundling resep untuk sediaan slow-moving dengan skor risiko di atas 0.80."
+
+    BatchItem:
+      type: object
+      required:
+        - id
+        - obat_id
+        - nama_obat
+        - distributor_id
+        - nama_distributor
+        - nomor_batch
+        - tanggal_masuk
+        - tanggal_kedaluwarsa
+        - jumlah_awal
+        - jumlah_saat_ini
+        - harga_beli_satuan
+        - nilai_total
+        - skor_risiko
+        - status_risiko
+        - status_retur
+      properties:
+        id:
+          type: integer
+          example: 101
+        obat_id:
+          type: integer
+          example: 3
+        nama_obat:
+          type: string
+          example: "Cefixime 100mg Kapsul"
+        distributor_id:
+          type: integer
+          example: 4
+        nama_distributor:
+          type: string
+          example: "PBF Enseval Putera Megatrading"
+        nomor_batch:
+          type: string
+          example: "CFX-2601-A"
+        tanggal_masuk:
+          type: string
+          format: date
+          example: "2026-01-15"
+        tanggal_kedaluwarsa:
+          type: string
+          format: date
+          example: "2027-02-15"
+        batas_retur:
+          type: string
+          format: date
+          nullable: true
+          example: "2026-11-15"
+        jumlah_awal:
+          type: integer
+          example: 40
+        jumlah_saat_ini:
+          type: integer
+          example: 14
+        harga_beli_satuan:
+          type: number
+          example: 78000
+        nilai_total:
+          type: number
+          example: 1092000
+        lokasi_rak:
+          type: string
+          example: "Rak Antibiotik Lt. 1"
+        skor_risiko:
+          type: number
+          format: float
+          nullable: true
+          example: 0.88
+        status_risiko:
+          type: string
+          enum: [rendah, sedang, tinggi]
+          example: "tinggi"
+        status_retur:
+          type: string
+          enum: [bisa_diretur, lewat_batas, tidak_bisa_diretur]
+          example: "bisa_diretur"
+        keterangan:
+          type: string
+          nullable: true
+          example: "Tenggat retur tinggal 15 hari dari tanggal acuan"
+
+    BatchListResponse:
+      type: object
+      required:
+        - sukses
+        - pesan
+        - data
+        - meta
+      properties:
+        sukses:
+          type: boolean
+          example: true
+        pesan:
+          type: string
+          example: "Daftar batch inventori berhasil dimuat"
+        tanggal_acuan:
+          type: string
+          format: date
+          example: "2026-10-31"
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/BatchItem"
+        meta:
+          type: object
+          required:
+            - total_data
+            - halaman
+            - limit
+            - total_halaman
+          properties:
+            total_data:
+              type: integer
+              example: 8
+            halaman:
+              type: integer
+              example: 1
+            limit:
+              type: integer
+              example: 50
+            total_halaman:
+              type: integer
+              example: 1
+
+    BatchDetailResponse:
+      type: object
+      required:
+        - sukses
+        - pesan
+        - data
+      properties:
+        sukses:
+          type: boolean
+          example: true
+        pesan:
+          type: string
+          example: "Detail batch berhasil dimuat"
+        data:
+          allOf:
+            - $ref: "#/components/schemas/BatchItem"
+            - type: object
+              properties:
+                riwayat_opname:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/StockLogItem"
+
+    MendesakReturItem:
+      type: object
+      required:
+        - id
+        - nama_obat
+        - nomor_batch
+        - nama_distributor
+        - tanggal_kedaluwarsa
+        - batas_retur
+        - jumlah_saat_ini
+        - nilai_total
+        - sisa_hari_retur
+        - urgensi
+        - status_retur
+      properties:
+        id:
+          type: integer
+          example: 101
+        nama_obat:
+          type: string
+          example: "Cefixime 100mg Kapsul"
+        nomor_batch:
+          type: string
+          example: "CFX-2601-A"
+        nama_distributor:
+          type: string
+          example: "PBF Enseval Putera Megatrading"
+        tanggal_kedaluwarsa:
+          type: string
+          format: date
+          example: "2027-02-15"
+        batas_retur:
+          type: string
+          format: date
+          example: "2026-11-15"
+        jumlah_saat_ini:
+          type: integer
+          example: 14
+        nilai_total:
+          type: number
+          example: 1092000
+        sisa_hari_retur:
+          type: integer
+          example: 15
+        urgensi:
+          type: string
+          enum: [kritis, waspada]
+          example: "kritis"
+        status_retur:
+          type: string
+          example: "bisa_diretur"
+        skor_risiko:
+          type: number
+          example: 0.88
+
+    MendekatiKedaluwarsaItem:
+      type: object
+      required:
+        - id
+        - nama_obat
+        - nomor_batch
+        - nama_distributor
+        - tanggal_kedaluwarsa
+        - jumlah_saat_ini
+        - nilai_total
+        - sisa_hari_exp
+        - urgensi
+        - status_retur
+      properties:
+        id:
+          type: integer
+          example: 102
+        nama_obat:
+          type: string
+          example: "Salep Mata Kloramfenikol 1%"
+        nomor_batch:
+          type: string
+          example: "KLM-2509-X"
+        nama_distributor:
+          type: string
+          example: "PBF Antar Mitra Sembada (AMS)"
+        tanggal_kedaluwarsa:
+          type: string
+          format: date
+          example: "2026-11-20"
+        batas_retur:
+          type: string
+          format: date
+          nullable: true
+          example: "2026-09-20"
+        jumlah_saat_ini:
+          type: integer
+          example: 6
+        nilai_total:
+          type: number
+          example: 75000
+        sisa_hari_exp:
+          type: integer
+          example: 20
+        urgensi:
+          type: string
+          enum: [kritis, waspada]
+          example: "kritis"
+        status_retur:
+          type: string
+          example: "lewat_batas"
+        skor_risiko:
+          type: number
+          example: 0.96
+
+    StokMenipisItem:
+      type: object
+      required:
+        - id
+        - nama_obat
+        - nomor_batch
+        - nama_distributor
+        - jumlah_saat_ini
+        - stok_minimum
+      properties:
+        id:
+          type: integer
+          example: 108
+        nama_obat:
+          type: string
+          example: "Metformin 500mg Tablet"
+        nomor_batch:
+          type: string
+          example: "MTF-2512-H"
+        nama_distributor:
+          type: string
+          example: "PBF Sinar Harapan Farma"
+        jumlah_saat_ini:
+          type: integer
+          example: 8
+        stok_minimum:
+          type: integer
+          example: 30
+        status_risiko:
+          type: string
+          example: "tinggi"
+
+    PengingatResponse:
+      type: object
+      required:
+        - sukses
+        - tanggal_acuan
+        - ringkasan
+        - data
+      properties:
+        sukses:
+          type: boolean
+          example: true
+        tanggal_acuan:
+          type: string
+          format: date
+          example: "2026-10-31"
+        ringkasan:
+          type: object
+          required:
+            - total_mendesak_retur
+            - total_mendekati_kedaluwarsa
+            - total_stok_menipis
+          properties:
+            total_mendesak_retur:
+              type: integer
+              example: 2
+            total_mendekati_kedaluwarsa:
+              type: integer
+              example: 2
+            total_stok_menipis:
+              type: integer
+              example: 1
+        data:
+          type: object
+          required:
+            - mendesakRetur
+            - mendekatiKedaluwarsa
+            - stokMenipis
+          properties:
+            mendesakRetur:
+              type: array
+              items:
+                $ref: "#/components/schemas/MendesakReturItem"
+            mendekatiKedaluwarsa:
+              type: array
+              items:
+                $ref: "#/components/schemas/MendekatiKedaluwarsaItem"
+            stokMenipis:
+              type: array
+              items:
+                $ref: "#/components/schemas/StokMenipisItem"
+
+    ReturBapRequest:
+      type: object
+      required:
+        - batch_ids
+      properties:
+        batch_ids:
+          type: array
+          items:
+            type: integer
+          example: [101, 103]
+        nama_driver_pbf:
+          type: string
+          example: "Budi Santoso"
+        catatan_tambahan:
+          type: string
+          example: "Pengembalian batch kritis mendekati batas retur H-15 dan H-5 kalender."
+
+    ReturBapKop:
+      type: object
+      required:
+        - nama_apotek
+        - alamat
+        - sia
+        - sipa
+        - nib
+        - apj
+      properties:
+        nama_apotek:
+          type: string
+          example: "Apotek Asahan Farma"
+        alamat:
+          type: string
+          example: "Jl. Imam Bonjol No. 331, Kel. Kisaran Timur, Kab. Asahan, Sumatera Utara 21214"
+        sia:
+          type: string
+          example: "503/SIA/042/DPMPTSP/2021"
+        sipa:
+          type: string
+          example: "19930412/SIPA_1208/2022/2041"
+        nib:
+          type: string
+          example: "1210210063257"
+        apj:
+          type: string
+          example: "apt. Nurul Hasanah, S.Farm"
+
+    ReturBapItem:
+      type: object
+      required:
+        - batch_id
+        - nama_obat
+        - nomor_batch
+        - jumlah_retur
+        - harga_beli_satuan
+        - subtotal
+      properties:
+        batch_id:
+          type: integer
+          example: 101
+        nama_obat:
+          type: string
+          example: "Cefixime 100mg Kapsul"
+        nomor_batch:
+          type: string
+          example: "CFX-2601-A"
+        jumlah_retur:
+          type: integer
+          example: 14
+        harga_beli_satuan:
+          type: number
+          example: 78000
+        subtotal:
+          type: number
+          example: 1092000
+
+    ReturBapResponse:
+      type: object
+      required:
+        - sukses
+        - pesan
+        - data
+      properties:
+        sukses:
+          type: boolean
+          example: true
+        pesan:
+          type: string
+          example: "Berita Acara Retur Fisik resmi berhasil diterbitkan"
+        data:
+          type: object
+          required:
+            - nomor_bap
+            - tanggal_bap
+            - total_item
+            - total_nilai_retur
+            - format_kop
+            - klausul
+          properties:
+            nomor_bap:
+              type: string
+              example: "BAP-RETUR/2026/11/004"
+            tanggal_bap:
+              type: string
+              format: date
+              example: "2026-10-31"
+            total_item:
+              type: integer
+              example: 2
+            total_nilai_retur:
+              type: number
+              example: 2016000
+            format_kop:
+              $ref: "#/components/schemas/ReturBapKop"
+            klausul:
+              type: string
+              example: "Obat yang diretur wajib bersegel utuh dan diverifikasi nomor batch resminya sesuai ketentuan CDOB BPOM."
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/ReturBapItem"
+
+    PenyesuaianStokRequest:
+      type: object
+      required:
+        - batch_id
+        - jumlah_sesudah
+        - alasan
+        - petugas_nama
+      properties:
+        batch_id:
+          type: integer
+          example: 101
+        jumlah_sesudah:
+          type: integer
+          minimum: 0
+          example: 14
+        alasan:
+          type: string
+          example: "Pemeriksaan rutin rak antibiotik, 2 strip kemasan sobek/rusak"
+        petugas_nama:
+          type: string
+          example: "Karyawan Shift Apotek"
+        metode_verifikasi:
+          type: string
+          default: "Manual"
+          example: "Manual"
+
+    StockLogItem:
+      type: object
+      required:
+        - id
+        - batch_id
+        - nama_obat
+        - nomor_batch
+        - jumlah_sebelum
+        - jumlah_sesudah
+        - selisih
+        - alasan
+        - petugas
+        - tanggal
+      properties:
+        id:
+          type: integer
+          example: 1
+        batch_id:
+          type: integer
+          example: 101
+        nama_obat:
+          type: string
+          example: "Cefixime 100mg Kapsul"
+        nomor_batch:
+          type: string
+          example: "CFX-2601-A"
+        jumlah_sebelum:
+          type: integer
+          example: 16
+        jumlah_sesudah:
+          type: integer
+          example: 14
+        selisih:
+          type: integer
+          example: -2
+        alasan:
+          type: string
+          example: "Pemeriksaan rutin rak antibiotik, 2 strip kemasan sobek/rusak"
+        petugas:
+          type: string
+          example: "Karyawan Shift Apotek"
+        tanggal:
+          type: string
+          example: "2026-10-28 09:30"
+
+    PenyesuaianStokResponse:
+      type: object
+      required:
+        - sukses
+        - pesan
+        - data
+      properties:
+        sukses:
+          type: boolean
+          example: true
+        pesan:
+          type: string
+          example: "Stok fisik rak berhasil disesuaikan dan dicatat di buku audit"
+        data:
+          type: object
+          required:
+            - batch
+            - log
+          properties:
+            batch:
+              type: object
+              required:
+                - id
+                - nama_obat
+                - jumlah_sebelum
+                - jumlah_saat_ini
+                - nilai_total
+              properties:
+                id:
+                  type: integer
+                  example: 101
+                nama_obat:
+                  type: string
+                  example: "Cefixime 100mg Kapsul"
+                jumlah_sebelum:
+                  type: integer
+                  example: 16
+                jumlah_saat_ini:
+                  type: integer
+                  example: 14
+                nilai_total:
+                  type: number
+                  example: 1092000
+            log:
+              $ref: "#/components/schemas/StockLogItem"
+
+    ScanKartuResponse:
+      type: object
+      required:
+        - sukses
+        - pesan
+        - data
+      properties:
+        sukses:
+          type: boolean
+          example: true
+        pesan:
+          type: string
+          example: "Foto kartu stok fisik berhasil dipindai oleh model ekstraksi"
+        data:
+          type: object
+          required:
+            - angka_terbaca
+          properties:
+            angka_terbaca:
+              type: integer
+              example: 14
+            keterangan:
+              type: string
+              example: "Terbaca dari baris terakhir kartu stok fisik rak etalase"
+
+    FakturEkstraksiItem:
+      type: object
+      required:
+        - obat_id
+        - nama_obat
+        - nomor_batch
+        - tanggal_kedaluwarsa
+        - jumlah
+        - harga_beli_satuan
+        - satuan
+      properties:
+        obat_id:
+          type: integer
+          example: 1
+        nama_obat:
+          type: string
+          example: "Amoxicillin 500mg"
+        nomor_batch:
+          type: string
+          example: "AMX-2610-Z1"
+        tanggal_kedaluwarsa:
+          type: string
+          format: date
+          example: "2027-10-18"
+        jumlah:
+          type: integer
+          example: 30
+        harga_beli_satuan:
+          type: number
+          example: 42000
+        satuan:
+          type: string
+          example: "box"
+
+    FakturEkstraksiResponse:
+      type: object
+      required:
+        - sukses
+        - pesan
+        - data
+      properties:
+        sukses:
+          type: boolean
+          example: true
+        pesan:
+          type: string
+          example: "Foto faktur berhasil dipindai oleh model ekstraksi."
+        data:
+          type: object
+          required:
+            - nomor_faktur
+            - distributor_id
+            - nama_distributor
+            - tanggal_faktur
+            - items
+          properties:
+            nomor_faktur:
+              type: string
+              example: "FAK-2026/10/089-AAM"
+            distributor_id:
+              type: integer
+              example: 1
+            nama_distributor:
+              type: string
+              example: "PBF Anugrah Argon Medica (AAM) Medan"
+            tanggal_faktur:
+              type: string
+              format: date
+              example: "2026-10-18"
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/FakturEkstraksiItem"
+
+    BatchCreateItem:
+      type: object
+      required:
+        - obat_id
+        - nama_obat
+        - distributor_id
+        - nomor_batch
+        - tanggal_masuk
+        - tanggal_kedaluwarsa
+        - jumlah
+        - harga_beli_satuan
+      properties:
+        obat_id:
+          type: integer
+          example: 1
+        nama_obat:
+          type: string
+          example: "Amoxicillin 500mg"
+        distributor_id:
+          type: integer
+          example: 1
+        nomor_batch:
+          type: string
+          example: "AMX-2610-Z1"
+        tanggal_masuk:
+          type: string
+          format: date
+          example: "2026-10-31"
+        tanggal_kedaluwarsa:
+          type: string
+          format: date
+          example: "2027-10-18"
+        jumlah:
+          type: integer
+          minimum: 1
+          example: 30
+        harga_beli_satuan:
+          type: number
+          example: 42000
+        lokasi_rak:
+          type: string
+          example: "Rak Utama"
+        keterangan:
+          type: string
+          example: "Faktur No: FAK-2026/10/089-AAM"
+
+    BatchSimpanResponse:
+      type: object
+      required:
+        - sukses
+        - pesan
+        - data
+      properties:
+        sukses:
+          type: boolean
+          example: true
+        pesan:
+          type: string
+          example: "1 batch obat berhasil didaftarkan ke inventori"
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/BatchItem"
+
+    MilestoneItem:
+      type: object
+      required:
+        - type
+        - date
+        - title
+        - batch_id
+        - nama_obat
+        - nomor_batch
+        - nama_distributor
+        - stok
+        - color
+      properties:
+        type:
+          type: string
+          enum: [retur, exp]
+          example: "retur"
+        date:
+          type: string
+          format: date
+          example: "2026-11-05"
+        title:
+          type: string
+          example: "Tenggat Retur: Amoxicillin 500mg"
+        batch_id:
+          type: integer
+          example: 103
+        nama_obat:
+          type: string
+          example: "Amoxicillin 500mg"
+        nomor_batch:
+          type: string
+          example: "AMX-2604-B"
+        nama_distributor:
+          type: string
+          example: "PBF Bina Farma Medan"
+        stok:
+          type: integer
+          example: 22
+        status_retur:
+          type: string
+          example: "bisa_diretur"
+        color:
+          type: string
+          example: "rose"
+
+    MilestonesResponse:
+      type: object
+      required:
+        - sukses
+        - bulan
+        - tahun
+        - total_kejadian
+        - data
+      properties:
+        sukses:
+          type: boolean
+          example: true
+        bulan:
+          type: integer
+          example: 11
+        tahun:
+          type: integer
+          example: 2026
+        total_kejadian:
+          type: integer
+          example: 2
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/MilestoneItem"
+
+    PengaturanSistem:
+      type: object
+      required:
+        - tanggal_acuan
+        - stok_minimum_default
+        - batas_kedaluwarsa_warning_hari
+        - batas_retur_warning_hari
+      properties:
+        tanggal_acuan:
+          type: string
+          format: date
+          example: "2026-10-31"
+        stok_minimum_default:
+          type: integer
+          example: 10
+        batas_kedaluwarsa_warning_hari:
+          type: integer
+          example: 90
+        batas_retur_warning_hari:
+          type: integer
+          example: 30
+
+    DistributorItem:
+      type: object
+      required:
+        - id
+        - kode
+        - nama
+        - aturan_retur_bulan
+      properties:
+        id:
+          type: integer
+          example: 1
+        kode:
+          type: string
+          example: "DST-001"
+        nama:
+          type: string
+          example: "PBF Anugrah Argon Medica (AAM) Medan"
+        aturan_retur_bulan:
+          type: integer
+          minimum: 0
+          example: 6
+        telepon:
+          type: string
+          nullable: true
+          example: "061-7865431"
+        kontak:
+          type: string
+          nullable: true
+          example: "Budi Santoso"
+
+    AturanReturUpdateRequest:
+      type: object
+      required:
+        - aturan_retur_bulan
+      properties:
+        aturan_retur_bulan:
+          type: integer
+          minimum: 0
+          example: 3
+
+    AturanReturUpdateResponse:
+      type: object
+      required:
+        - sukses
+        - pesan
+        - data
+      properties:
+        sukses:
+          type: boolean
+          example: true
+        pesan:
+          type: string
+          example: "Aturan retur distributor berhasil diperbarui dan batas retur seluruh batch terkait telah dihitung ulang"
+        data:
+          type: object
+          required:
+            - id
+            - kode
+            - nama
+            - aturan_retur_bulan
+          properties:
+            id:
+              type: integer
+              example: 3
+            kode:
+              type: string
+              example: "DST-003"
+            nama:
+              type: string
+              example: "PBF Bina Farma Medan"
+            aturan_retur_bulan:
+              type: integer
+              example: 3
+            batch_terdampak:
+              type: integer
+              example: 1
+
+    ObatItem:
+      type: object
+      required:
+        - id
+        - kode
+        - nama
+        - kategori
+        - satuan
+        - stok_minimum
+        - harga_jual
+      properties:
+        id:
+          type: integer
+          example: 1
+        kode:
+          type: string
+          example: "OBT-001"
+        nama:
+          type: string
+          example: "Amoxicillin 500mg"
+        kategori:
+          type: string
+          example: "Antibiotik"
+        satuan:
+          type: string
+          enum: [box, botol, strip, tube]
+          example: "box"
+        stok_minimum:
+          type: integer
+          example: 15
+        harga_jual:
+          type: number
+          example: 55000
+
+    ProfilApotek:
+      type: object
+      required:
+        - nama_apotek
+        - pimpinan
+        - apoteker_pj
+        - sipa
+        - sia
+        - nib
+        - alamat
+        - telepon
+        - whatsapp
+        - email
+        - jam_operasional
+        - catatan_kaki_surat
+        - format_no_retur
+      properties:
+        nama_apotek:
+          type: string
+          example: "Apotek Asahan Farma"
+        pimpinan:
+          type: string
+          example: "Ibu Anni (Komisaris)"
+        apoteker_pj:
+          type: string
+          example: "apt. Nurul Hasanah, S.Farm"
+        sipa:
+          type: string
+          example: "19930412/SIPA_1208/2022/2041"
+        sia:
+          type: string
+          example: "503/SIA/042/DPMPTSP/2021"
+        nib:
+          type: string
+          example: "1210210063257"
+        alamat:
+          type: string
+          example: "Jl. Imam Bonjol No. 331, Kel. Kisaran Timur, Kab. Asahan, Sumatera Utara 21214"
+        telepon:
+          type: string
+          example: "(0623) 41289"
+        whatsapp:
+          type: string
+          example: "0812-6543-9870"
+        email:
+          type: string
+          format: email
+          example: "apotek.asahanfarma@gmail.com"
+        jam_operasional:
+          type: string
+          example: "Senin - Minggu: 08.00 - 22.00 WIB"
+        catatan_kaki_surat:
+          type: string
+          example: "Obat yang diretur wajib bersegel utuh dan diverifikasi nomor batch resminya."
+        format_no_retur:
+          type: string
+          example: "BAP-RETUR/{YYYY}/{MM}/{INDEX}"
+        logo_url:
+          type: string
+          nullable: true
+          example: null
+
+    BackupResponse:
+      type: object
+      required:
+        - sukses
+        - pesan
+        - data
+      properties:
+        sukses:
+          type: boolean
+          example: true
+        pesan:
+          type: string
+          example: "Pencadangan basis data SIMAAF berhasil disiapkan"
+        data:
+          type: object
+          required:
+            - nama_berkas
+            - checksum_sha256
+            - ukuran_byte
+            - total_tabel
+          properties:
+            nama_berkas:
+              type: string
+              example: "simaaf_backup_2026-10-31_143000.json"
+            checksum_sha256:
+              type: string
+              example: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            ukuran_byte:
+              type: integer
+              example: 148520
+            total_tabel:
+              type: integer
+              example: 9
+
+    RestoreRequest:
+      type: object
+      required:
+        - berkas_cadangan_base64
+        - checksum_sha256
+      properties:
+        berkas_cadangan_base64:
+          type: string
+          description: "Arsip JSON cadangan dalam format string base64"
+        checksum_sha256:
+          type: string
+          description: "Nilai hash SHA-256 berkas arsip untuk validasi integritas"
+          example: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+
+    RestoreResponse:
+      type: object
+      required:
+        - sukses
+        - pesan
+        - data
+      properties:
+        sukses:
+          type: boolean
+          example: true
+        pesan:
+          type: string
+          example: "Basis data SIMAAF berhasil dipulihkan"
+        data:
+          type: object
+          required:
+            - total_tabel_dipulihkan
+            - stempel_waktu_pemulihan
+          properties:
+            total_tabel_dipulihkan:
+              type: integer
+              example: 9
+            stempel_waktu_pemulihan:
+              type: string
+              format: date-time
+              example: "2026-10-31T15:00:00Z"
+
+    GalatDetailItem:
+      type: object
+      required:
+        - kolom
+        - pesan
+      properties:
+        kolom:
+          type: string
+          example: "nomor_batch"
+        pesan:
+          type: string
+          example: "Nomor batch wajib diisi dan tidak boleh kosong"
+
+    StandarGalatResponse:
+      type: object
+      required:
+        - sukses
+        - kode_status
+        - galat
+        - pesan
+      properties:
+        sukses:
+          type: boolean
+          example: false
+        kode_status:
+          type: integer
+          example: 400
+        galat:
+          type: string
+          example: "BAD_REQUEST"
+        pesan:
+          type: string
+          example: "Terjadi kesalahan validasi pada data yang dikirimkan."
+        alihkan_ke_manual:
+          type: boolean
+          nullable: true
+          example: false
+        detail:
+          type: array
+          items:
+            $ref: "#/components/schemas/GalatDetailItem"
