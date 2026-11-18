@@ -37,7 +37,7 @@ export function LoginPage({ onSuccess }) {
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-      <div className="max-w-md w-full premium-card p-5 sm:p-6 space-y-3 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.07)] border-slate-100">
+      <div className="max-w-md w-full bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 space-y-4 shadow-sm">
         <div className="text-center space-y-2">
           <BrandLogo className="w-16 h-16 mx-auto shadow-md border border-blue-400/20" />
           <h1 className="text-2xl font-black text-slate-900 tracking-tight pt-1">
@@ -94,7 +94,7 @@ export function LoginPage({ onSuccess }) {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-xs font-extrabold transition-all flex items-center justify-center gap-2 shadow-[0_8px_20px_-4px_rgba(5,150,105,0.4)] active:scale-95 disabled:opacity-60"
+            className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-xs font-extrabold transition-all flex items-center justify-center gap-2 shadow-sm active:scale-95 disabled:opacity-60"
           >
             {loading ? 'Memverifikasi...' : 'Masuk ke Aplikasi'}
             {!loading && <ArrowRight className="w-4 h-4" />}

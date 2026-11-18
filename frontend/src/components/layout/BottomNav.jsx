@@ -14,8 +14,11 @@ export function BottomNav({ activePage, setActivePage, urgentCount = 0 }) {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-lg z-30 px-4 pb-3 pt-1 pointer-events-none md:hidden">
-      <div className="flex items-center justify-around rounded-lg bg-white/95 backdrop-blur-xl border border-slate-200 shadow-sm px-2 py-1.5 pointer-events-auto">
+    <nav
+      aria-label="Navigasi Bawah"
+      className="fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-md border-t border-slate-200/80 z-30 md:hidden"
+    >
+      <div className="flex items-center justify-around h-16 max-w-lg mx-auto px-2">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = activePage === item.id;
@@ -25,33 +28,27 @@ export function BottomNav({ activePage, setActivePage, urgentCount = 0 }) {
               key={item.id}
               type="button"
               onClick={() => setActivePage(item.id)}
-              className={`flex flex-col items-center justify-center min-w-[48px] min-h-[48px] px-2 py-1 rounded-lg transition-all relative ${
-                isActive ? '-translate-y-0.5' : 'text-slate-400 hover:text-slate-600'
+              className={`relative flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors ${
+                isActive ? 'text-blue-600' : 'text-slate-400 hover:text-slate-600'
               }`}
               aria-label={item.label}
+              aria-current={isActive ? 'page' : undefined}
             >
-              <div
-                className={`flex items-center justify-center w-8 h-8 rounded-lg transition-all ${
-                  isActive
-                    ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/25 scale-105'
-                    : 'text-slate-500 bg-slate-50'
-                }`}
-              >
-                <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />
+              <div className="relative flex items-center justify-center">
+                <Icon size={20} strokeWidth={isActive ? 2.4 : 1.9} />
+                {item.badge > 0 && (
+                  <span className="absolute -top-1.5 -right-2.5 min-w-[16px] h-4 px-1 rounded-full bg-rose-600 text-white font-bold text-[9px] flex items-center justify-center border border-white tabular-nums">
+                    {item.badge}
+                  </span>
+                )}
               </div>
               <span
-                className={`text-[10px] font-bold tracking-tight leading-tight ${
-                  isActive ? 'text-blue-600' : 'text-slate-400'
+                className={`text-[10px] tracking-tight leading-none ${
+                  isActive ? 'font-bold text-blue-600' : 'font-medium text-slate-500'
                 }`}
               >
                 {item.label}
               </span>
-
-              {item.badge > 0 && (
-                <span className="absolute top-0.5 right-1 w-4 h-4 rounded-full bg-rose-600 text-white font-extrabold text-[9px] flex items-center justify-center border-2 border-white">
-                  {item.badge}
-                </span>
-              )}
             </button>
           );
         })}

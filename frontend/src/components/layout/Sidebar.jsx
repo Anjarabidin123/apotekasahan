@@ -27,40 +27,39 @@ export function Sidebar({
   const navItems = [
     {
       id: 'dashboard',
-      label: 'Dashboard Utama',
+      label: 'Beranda',
       icon: LayoutDashboard,
       adminOnly: true,
     },
     {
       id: 'faktur',
-      label: 'Penerimaan Faktur',
+      label: 'Input Faktur',
       icon: FileSpreadsheet,
     },
     {
       id: 'inventori',
-      label: 'Persediaan Obat',
+      label: 'Stok & Batch',
       icon: Boxes,
     },
     {
       id: 'pengingat',
-      label: 'Pengingat & Retur',
+      label: 'Retur & ED',
       icon: BellRing,
-      badge: urgentCount > 0 ? `${urgentCount} Mendesak` : null,
-      badgeColor: 'bg-rose-100 text-rose-800 border-rose-300',
+      badge: urgentCount > 0 ? `${urgentCount}` : null,
     },
     {
       id: 'penyesuaian',
-      label: 'Penyesuaian Stok (Opname)',
+      label: 'Stok Opname',
       icon: ClipboardCheck,
     },
     {
       id: 'kalender',
-      label: 'Kalender Tenggat PBF',
+      label: 'Kalender PBF',
       icon: CalendarDays,
     },
     {
       id: 'pengaturan',
-      label: 'Pengaturan Apotek',
+      label: 'Pengaturan',
       icon: Settings,
       adminOnly: true,
     },
@@ -73,41 +72,101 @@ export function Sidebar({
     }
   };
 
+  const renderNavItem = (item, { isMobileDrawer = false, compactDesktop = false }) => {
+    const Icon = item.icon;
+    const isActive = activePage === item.id;
+    const isRestricted = item.adminOnly && !isAdmin;
+
+    if (isRestricted) {
+      return (
+        <div
+          key={item.id}
+          className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-[13px] text-slate-400 select-none cursor-not-allowed opacity-60 font-medium ${
+            compactDesktop ? 'justify-center px-2' : ''
+          }`}
+          title="Khusus Akun Pemilik (Ibu Anni)"
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            <Icon className="w-4 h-4 shrink-0 text-slate-400" strokeWidth={2} />
+            {!compactDesktop && <span className="truncate">{item.label}</span>}
+          </div>
+          {!compactDesktop && <Lock className="w-3.5 h-3.5 text-slate-400 shrink-0" />}
+        </div>
+      );
+    }
+
+    return (
+      <button
+        key={item.id}
+        type="button"
+        data-testid={isMobileDrawer ? `mobile-nav-${item.id}` : undefined}
+        onClick={() => (isMobileDrawer ? handleNavClick(item.id) : setActivePage(item.id))}
+        className={`w-full flex items-center ${
+          compactDesktop ? 'justify-center px-2' : 'justify-between px-3'
+        } py-2.5 rounded-xl text-[13px] transition-all cursor-pointer text-left min-h-[42px] ${
+          isActive
+            ? 'bg-slate-900 text-white font-semibold shadow-2xs'
+            : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 font-medium'
+        }`}
+        title={compactDesktop ? item.label : undefined}
+      >
+        <div className="flex items-center gap-3 min-w-0">
+          <Icon
+            className={`w-4 h-4 shrink-0 transition-colors ${
+              isActive ? 'text-white' : 'text-slate-500'
+            }`}
+            strokeWidth={isActive ? 2.3 : 2}
+          />
+          {!compactDesktop && <span className="truncate">{item.label}</span>}
+        </div>
+
+        {!compactDesktop && item.badge && (
+          <span
+            className={`text-[10px] min-w-[20px] h-5 px-1.5 rounded-full font-bold flex items-center justify-center tabular-nums shrink-0 ${
+              isActive
+                ? 'bg-rose-500 text-white'
+                : 'bg-rose-50 text-rose-700 border border-rose-200'
+            }`}
+          >
+            {item.badge}
+          </span>
+        )}
+      </button>
+    );
+  };
+
   return (
     <>
       {isMobileOpen && (
         <div
           data-testid="mobile-drawer-backdrop"
-          className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-40 md:hidden transition-opacity duration-300"
+          className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-40 md:hidden transition-opacity duration-300"
           onClick={onCloseMobile}
           aria-hidden="true"
         />
       )}
 
+      {/* Mobile Drawer */}
       <aside
         data-testid="mobile-drawer"
-        className={`fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] bg-white border-r border-slate-200 flex flex-col md:hidden transform transition-transform duration-300 ease-in-out shadow-2xl ${
+        className={`fixed inset-y-0 left-0 z-50 w-64 max-w-[82vw] bg-white border-r border-slate-200/80 flex flex-col md:hidden transform transition-transform duration-300 ease-in-out shadow-xl ${
           isMobileOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
         role="dialog"
         aria-modal="true"
         aria-label="Menu Navigasi SIMAAF"
       >
-        <div className="p-3 border-b border-slate-200/80 bg-slate-50/70 flex items-center justify-between">
+        <div className="px-4 py-3.5 border-b border-slate-100 flex items-center justify-between">
           <div
-            onClick={() => handleNavClick('dashboard')}
-            className="flex items-center gap-3 cursor-pointer group min-w-0"
-            title="Apotek Asahan Farma - SIMAAF"
+            onClick={() => handleNavClick(isAdmin ? 'dashboard' : 'inventori')}
+            className="flex items-center gap-2.5 cursor-pointer min-w-0"
           >
-            <BrandLogo
-              logoUrl={logoUrl}
-              className="w-10 h-10 group-hover:scale-105 transition-transform border border-blue-400/20 shadow-sm shrink-0"
-            />
+            <BrandLogo logoUrl={logoUrl} className="w-8 h-8 rounded-xl shrink-0" />
             <div className="min-w-0">
-              <h2 className="text-sm font-black text-slate-950 tracking-tight truncate group-hover:text-blue-600 transition-colors">
+              <h2 className="text-sm font-extrabold text-slate-900 tracking-tight truncate">
                 SIMAAF
               </h2>
-              <p className="text-[11px] font-extrabold text-slate-600 truncate">
+              <p className="text-[11px] font-medium text-slate-500 truncate">
                 Apotek Asahan Farma
               </p>
             </div>
@@ -117,7 +176,7 @@ export function Sidebar({
             type="button"
             data-testid="mobile-drawer-close"
             onClick={onCloseMobile}
-            className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-slate-200 text-slate-500 hover:text-slate-800 transition shrink-0 active:scale-95"
+            className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition shrink-0"
             aria-label="Tutup menu navigasi"
             title="Tutup menu"
           >
@@ -125,199 +184,58 @@ export function Sidebar({
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-2 py-1 space-y-0.5">
-          <p className="px-2 pt-1 pb-1 text-[10px] font-black uppercase tracking-wider text-slate-500">
-            {isAdmin ? 'Menu Eksekutif & Operasional' : 'Menu Operasional Lapangan'}
-          </p>
-
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = activePage === item.id;
-            const isRestricted = item.adminOnly && !isAdmin;
-
-            if (isRestricted) {
-              return (
-                <div
-                  key={item.id}
-                  className="flex items-center justify-between px-2 py-1.5 rounded-lg text-[13px] tracking-tight text-slate-400 bg-transparent border border-transparent select-none cursor-not-allowed opacity-60 font-semibold min-h-[40px]"
-                  title="Khusus Akun Admin (Bu Anni)"
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <Icon className="w-4 h-4 shrink-0 text-slate-400" strokeWidth={2} />
-                    <span className="truncate">{item.label}</span>
-                  </div>
-                  <Lock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                </div>
-              );
-            }
-
-            return (
-              <button
-                key={item.id}
-                type="button"
-                data-testid={`mobile-nav-${item.id}`}
-                onClick={() => handleNavClick(item.id)}
-                className={`w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-[13px] tracking-tight transition-all text-left min-h-[40px] active:scale-[0.98] ${
-                  isActive
-                    ? 'bg-slate-800 text-white font-bold border-l-4 border-blue-600'
-                    : 'bg-transparent border border-transparent hover:bg-slate-200/50 text-slate-700 font-semibold'
-                }`}
-              >
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <Icon
-                    className={`w-4 h-4 shrink-0 transition-colors ${
-                      isActive ? 'text-white' : 'text-slate-700'
-                    }`}
-                    strokeWidth={isActive ? 2.6 : 2.2}
-                  />
-                  <span className="truncate tracking-tight">{item.label}</span>
-                </div>
-
-                {item.badge && (
-                  <span
-                    className={`text-[9px] px-2 py-0.5 rounded-md font-black shrink-0 ${
-                      isActive
-                        ? 'bg-white/25 text-white'
-                        : item.badgeColor
-                        ? `${item.badgeColor} border`
-                        : 'bg-slate-200 text-slate-800 border border-slate-300/80'
-                    }`}
-                  >
-                    {item.badge}
-                  </span>
-                )}
-              </button>
-            );
-          })}
+        <div className="flex-1 overflow-y-auto px-3 py-3 space-y-1">
+          {navItems.map((item) => renderNavItem(item, { isMobileDrawer: true, compactDesktop: false }))}
         </div>
 
-        <div className="p-3 m-3 rounded-lg bg-slate-50 border border-slate-200 text-xs space-y-1 shadow-2xs shrink-0">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">
-              Kisaran Timur
-            </span>
-            <span className="inline-flex items-center gap-1 text-[10px] text-emerald-600 font-black">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              Sistem Aktif
-            </span>
-          </div>
-          <p className="font-black text-slate-900 text-[11px] truncate">Jl. Imam Bonjol No.331</p>
-          <p className="text-[10px] text-slate-500 font-mono font-semibold">NIB: 1210210063257</p>
+        <div className="p-3 m-3 rounded-xl bg-slate-50 border border-slate-200/80 text-xs space-y-0.5 shrink-0">
+          <p className="font-bold text-slate-800 text-[11px] truncate">Jl. Imam Bonjol No.331</p>
+          <p className="text-[10px] text-slate-500 font-mono">Kisaran Timur • NIB 1210210063257</p>
         </div>
       </aside>
 
+      {/* Desktop Sidebar */}
       <aside
         data-testid="desktop-sidebar"
-        className={`hidden md:flex bg-slate-100/80 border-r border-slate-200/90 flex-col transition-all duration-300 z-40 select-none shadow-[1px_0_12px_rgba(0,0,0,0.03)] backdrop-blur-md shrink-0 ${
-          isCollapsed ? 'w-20' : 'w-80'
+        className={`hidden md:flex bg-white border-r border-slate-200/80 flex-col transition-all duration-300 z-40 select-none shrink-0 ${
+          isCollapsed ? 'w-20' : 'w-60'
         }`}
       >
         <div
-          onClick={() => setActivePage('dashboard')}
-          className="p-5 border-b border-slate-200/80 bg-white/70 flex items-center gap-4 hover:bg-white transition-colors group cursor-pointer"
+          onClick={() => setActivePage(isAdmin ? 'dashboard' : 'inventori')}
+          className={`h-14 px-4 border-b border-slate-200/80 flex items-center ${
+            isCollapsed ? 'justify-center' : 'gap-2.5'
+          } hover:bg-slate-50/60 transition-colors cursor-pointer`}
           title="Apotek Asahan Farma - SIMAAF"
         >
-          <BrandLogo
-            logoUrl={logoUrl}
-            className="w-10 h-10 group-hover:scale-105 transition-transform border border-blue-400/20 shadow-sm shrink-0"
-          />
+          <BrandLogo logoUrl={logoUrl} className="w-8 h-8 rounded-xl shrink-0" />
           {!isCollapsed && (
             <div className="min-w-0 flex-1">
-              <h2 className="text-sm font-black text-slate-950 tracking-tight truncate group-hover:text-blue-600 transition-colors">
+              <h2 className="text-sm font-extrabold text-slate-900 tracking-tight truncate">
                 SIMAAF
               </h2>
-              <p className="text-[11px] font-extrabold text-slate-600 truncate">
+              <p className="text-[10px] font-medium text-slate-500 truncate">
                 Apotek Asahan Farma
               </p>
             </div>
           )}
         </div>
 
-        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-1">
-          {!isCollapsed && (
-            <p className="px-2 pt-1 pb-2 text-[10px] font-black uppercase tracking-wider text-slate-500">
-              {isAdmin ? 'Menu Eksekutif & Operasional' : 'Menu Operasional Lapangan'}
-            </p>
-          )}
-
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = activePage === item.id;
-            const isRestricted = item.adminOnly && !isAdmin;
-
-            if (isRestricted) {
-              return (
-                <div
-                  key={item.id}
-                  className="flex items-center justify-between px-5 py-2.5 rounded-lg text-[13px] tracking-tight text-slate-400 bg-transparent border border-transparent select-none cursor-not-allowed opacity-60 font-semibold min-h-[48px]"
-                  title="Khusus Akun Admin (Bu Anni)"
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <Icon className="w-4 h-4 shrink-0 text-slate-400" strokeWidth={2} />
-                    {!isCollapsed && <span className="truncate">{item.label}</span>}
-                  </div>
-                  {!isCollapsed && <Lock className="w-3.5 h-3.5 text-slate-400 shrink-0" />}
-                </div>
-              );
-            }
-
-            return (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => setActivePage(item.id)}
-                className={`w-full flex items-center justify-between px-5 py-2.5 rounded-lg text-[13px] tracking-tight transition-all group cursor-pointer text-left min-h-[48px] ${
-                  isActive
-                    ? 'bg-slate-800 text-white font-bold border-l-4 border-blue-600'
-                    : 'bg-transparent border border-transparent hover:bg-slate-200/50 text-slate-700 font-semibold'
-                }`}
-                title={isCollapsed ? item.label : undefined}
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <Icon
-                    className={`w-4 h-4 shrink-0 transition-colors ${
-                      isActive
-                        ? 'text-white'
-                        : 'text-slate-700 group-hover:text-blue-600'
-                    }`}
-                    strokeWidth={isActive ? 2.6 : 2.2}
-                  />
-                  {!isCollapsed && (
-                    <span className="truncate tracking-tight">{item.label}</span>
-                  )}
-                </div>
-
-                {!isCollapsed && item.badge && (
-                  <span
-                    className={`text-[9px] px-2 py-0.5 rounded-md font-black shrink-0 ${
-                      isActive
-                        ? 'bg-white/25 text-white'
-                        : item.badgeColor
-                        ? `${item.badgeColor} border`
-                        : 'bg-slate-200 text-slate-800 border border-slate-300/80'
-                    }`}
-                  >
-                    {item.badge}
-                  </span>
-                )}
-              </button>
-            );
-          })}
+        <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+          {navItems.map((item) => renderNavItem(item, { isMobileDrawer: false, compactDesktop: isCollapsed }))}
         </div>
 
         {!isCollapsed && (
-          <div className="p-3 m-3 rounded-lg bg-slate-50 border border-slate-200 text-xs space-y-1 shadow-2xs">
+          <div className="p-3 m-3 rounded-xl bg-slate-50 border border-slate-200/80 text-xs space-y-0.5">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">
-                Kisaran Timur
-              </span>
-              <span className="inline-flex items-center gap-1 text-[10px] text-emerald-600 font-black">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                Sistem Aktif
+              <span className="text-[10px] font-semibold text-slate-500">Kisaran Timur</span>
+              <span className="inline-flex items-center gap-1 text-[10px] text-emerald-600 font-semibold">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                Aktif
               </span>
             </div>
-            <p className="font-black text-slate-900 text-[11px] truncate">Jl. Imam Bonjol No.331</p>
-            <p className="text-[10px] text-slate-500 font-mono font-semibold">NIB: 1210210063257</p>
+            <p className="font-bold text-slate-800 text-[11px] truncate">Jl. Imam Bonjol No.331</p>
+            <p className="text-[10px] text-slate-500 font-mono">NIB: 1210210063257</p>
           </div>
         )}
       </aside>

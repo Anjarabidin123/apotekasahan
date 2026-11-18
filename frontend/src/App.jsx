@@ -72,13 +72,13 @@ function MainApp() {
 
   const getPageTitle = () => {
     switch (activePage) {
-      case 'dashboard': return 'Dashboard Ringkasan Inventori';
-      case 'faktur': return 'Penerimaan Obat & Ekstraksi Faktur';
-      case 'inventori': return 'Tabel Persediaan & Agregasi Batch';
-      case 'pengingat': return 'Pusat Pengingat Tenggat Retur & Kedaluwarsa';
-      case 'penyesuaian': return 'Penyesuaian Stok (Cek Fisik Rak)';
-      case 'kalender': return 'Kalender Jadwal Jatuh Tempo';
-      case 'pengaturan': return 'Pengaturan Aturan Retur Distributor';
+      case 'dashboard': return 'Beranda';
+      case 'faktur': return 'Input Faktur';
+      case 'inventori': return 'Stok & Batch';
+      case 'pengingat': return 'Pengingat Retur';
+      case 'penyesuaian': return 'Stok Opname';
+      case 'kalender': return 'Kalender PBF';
+      case 'pengaturan': return 'Pengaturan';
       default: return 'SIMAAF';
     }
   };
@@ -102,6 +102,9 @@ function MainApp() {
           onNavigateToInventori={() => setActivePage('inventori')}
           onNavigateToFaktur={() => setActivePage('faktur')}
           onNavigateToKalender={() => setActivePage('kalender')}
+          onNavigateToPenyesuaian={() => setActivePage('penyesuaian')}
+          onNavigateToPengaturan={() => setActivePage('pengaturan')}
+          tanggalAcuan={tanggalAcuan}
         />
       )}
 
