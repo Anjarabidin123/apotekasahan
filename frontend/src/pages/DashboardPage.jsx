@@ -1,30 +1,22 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../services/api';
-import { MetricCard } from '../components/common/MetricCard';
-import { StatusReturBadge, StatusRisikoBadge } from '../components/common/StatusBadge';
+import { StatusReturBadge } from '../components/common/StatusBadge';
 import {
   Wallet,
   AlertTriangle,
   Boxes,
-  TrendingDown,
   Building2,
   Lightbulb,
   ArrowRight,
-  Sparkles,
   Eye,
   EyeOff,
   Clock,
   ShieldCheck,
-  FileSpreadsheet,
   RefreshCw,
   Plus,
-  Terminal,
-  ExternalLink,
   CheckCircle2,
-  AlertCircle,
   FileText,
-  Calendar,
-  SendHorizontal
+  Calendar
 } from 'lucide-react';
 
 export function DashboardPage({ onNavigateToPengingat, onNavigateToInventori, onNavigateToFaktur, onNavigateToKalender }) {
@@ -138,7 +130,7 @@ export function DashboardPage({ onNavigateToPengingat, onNavigateToInventori, on
                 Sistem Aktif
               </span>
             </div>
-            <p className="text-xs text-slate-500 mt-0.5 flex items-center gap-2">
+            <p className="text-xs text-slate-500 mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5">
               <span>Kisaran Timur, Asahan</span>
               <span>•</span>
               <span className="font-semibold text-slate-700">
@@ -148,11 +140,10 @@ export function DashboardPage({ onNavigateToPengingat, onNavigateToInventori, on
           </div>
         </div>
 
-        {/* Action Header Buttons */}
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
           <button
             onClick={loadDashboard}
-            className="btn-outline h-9"
+            className="btn-outline min-h-[44px] sm:min-h-0 h-11 sm:h-9 px-3.5"
             title="Segarkan Data Terkini"
           >
             <RefreshCw className="w-3.5 h-3.5 text-slate-500" />
@@ -161,7 +152,7 @@ export function DashboardPage({ onNavigateToPengingat, onNavigateToInventori, on
 
           <button
             onClick={onNavigateToKalender}
-            className="btn-outline h-9"
+            className="btn-outline min-h-[44px] sm:min-h-0 h-11 sm:h-9 px-3.5"
             title="Lihat Kalender Tenggat"
           >
             <Calendar className="w-3.5 h-3.5 text-slate-500" />
@@ -171,7 +162,7 @@ export function DashboardPage({ onNavigateToPengingat, onNavigateToInventori, on
           {onNavigateToFaktur && (
             <button
               onClick={onNavigateToFaktur}
-              className="btn-primary h-9 px-4"
+              className="btn-primary min-h-[44px] sm:min-h-0 h-11 sm:h-9 px-4"
               title="Input Faktur Pembelian Baru"
             >
               <Plus className="w-4 h-4" />
@@ -183,7 +174,6 @@ export function DashboardPage({ onNavigateToPengingat, onNavigateToInventori, on
 
       
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Metric 1: Nilai Persediaan */}
         <div className="bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-5 shadow-sm hover:border-slate-300 hover:shadow-sm transition-all flex flex-col justify-between">
           <div>
             <div className="flex items-start justify-between gap-3 mb-2">
@@ -202,10 +192,11 @@ export function DashboardPage({ onNavigateToPengingat, onNavigateToInventori, on
               <button
                 type="button"
                 onClick={() => setHideValue(!hideValue)}
-                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg transition"
+                className="text-slate-400 hover:text-slate-600 p-2 sm:p-1 rounded-lg transition min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 flex items-center justify-center shrink-0"
                 title={hideValue ? 'Tampilkan Nominal' : 'Sembunyikan'}
+                aria-label={hideValue ? 'Tampilkan Nominal' : 'Sembunyikan Nominal'}
               >
-                {hideValue ? <EyeOff size={15} /> : <Eye size={15} />}
+                {hideValue ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
           </div>
@@ -214,7 +205,6 @@ export function DashboardPage({ onNavigateToPengingat, onNavigateToInventori, on
           </p>
         </div>
 
-        {/* Metric 2: Stok Berisiko Hangus */}
         <div
           onClick={onNavigateToPengingat}
           className="bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-5 shadow-sm hover:border-rose-300 hover:shadow-sm transition-all flex flex-col justify-between cursor-pointer group"
@@ -244,7 +234,6 @@ export function DashboardPage({ onNavigateToPengingat, onNavigateToInventori, on
           </p>
         </div>
 
-        {/* Metric 3: Batch Mendesak Diretur */}
         <div
           onClick={onNavigateToPengingat}
           className="bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-5 shadow-sm hover:border-amber-300 hover:shadow-sm transition-all flex flex-col justify-between cursor-pointer group"
@@ -274,7 +263,6 @@ export function DashboardPage({ onNavigateToPengingat, onNavigateToInventori, on
           </p>
         </div>
 
-        {/* Metric 4: Kepatuhan Penataan FEFO */}
         <div className="bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-5 shadow-sm hover:border-slate-300 hover:shadow-sm transition-all flex flex-col justify-between">
           <div>
             <div className="flex items-start justify-between gap-3 mb-2">
@@ -303,9 +291,7 @@ export function DashboardPage({ onNavigateToPengingat, onNavigateToInventori, on
 
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Kolom Kiri (2 Kolom): Daftar Batch Berisiko & Rekomendasi Tindakan */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Card: Daftar Batch Berisiko */}
           <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
               <div>
@@ -321,10 +307,11 @@ export function DashboardPage({ onNavigateToPengingat, onNavigateToInventori, on
               </div>
 
               {/* Filter Tabs */}
-              <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-semibold self-start sm:self-auto">
+              <div className="w-full sm:w-auto overflow-x-auto no-scrollbar flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-semibold self-start sm:self-auto">
                 <button
+                  type="button"
                   onClick={() => setFilterRisk('semua')}
-                  className={`px-3 py-1 rounded-lg transition ${
+                  className={`px-3 py-2 sm:py-1 min-h-[44px] sm:min-h-0 rounded-lg transition shrink-0 ${
                     filterRisk === 'semua'
                       ? 'bg-white text-slate-900 shadow-sm font-bold'
                       : 'text-slate-500 hover:text-slate-800'
@@ -333,8 +320,9 @@ export function DashboardPage({ onNavigateToPengingat, onNavigateToInventori, on
                   Semua ({urgentBatches.length})
                 </button>
                 <button
+                  type="button"
                   onClick={() => setFilterRisk('mendesak')}
-                  className={`px-3 py-1 rounded-lg transition ${
+                  className={`px-3 py-2 sm:py-1 min-h-[44px] sm:min-h-0 rounded-lg transition shrink-0 ${
                     filterRisk === 'mendesak'
                       ? 'bg-white text-amber-700 shadow-sm font-bold'
                       : 'text-slate-500 hover:text-slate-800'
@@ -343,8 +331,9 @@ export function DashboardPage({ onNavigateToPengingat, onNavigateToInventori, on
                   Mendesak (2)
                 </button>
                 <button
+                  type="button"
                   onClick={() => setFilterRisk('lewat')}
-                  className={`px-3 py-1 rounded-lg transition ${
+                  className={`px-3 py-2 sm:py-1 min-h-[44px] sm:min-h-0 rounded-lg transition shrink-0 ${
                     filterRisk === 'lewat'
                       ? 'bg-white text-rose-700 shadow-sm font-bold'
                       : 'text-slate-500 hover:text-slate-800'
@@ -355,7 +344,6 @@ export function DashboardPage({ onNavigateToPengingat, onNavigateToInventori, on
               </div>
             </div>
 
-            {/* List of Urgent Batches */}
             <div className="space-y-3">
               {filteredUrgent.map((item) => (
                 <div
@@ -364,7 +352,7 @@ export function DashboardPage({ onNavigateToPengingat, onNavigateToInventori, on
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div className="min-w-0">
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                         <h4 className="text-xs font-bold text-slate-900 truncate">
                           {item.nama_obat}
                         </h4>
@@ -378,7 +366,7 @@ export function DashboardPage({ onNavigateToPengingat, onNavigateToInventori, on
                       </p>
                     </div>
 
-                    <div className="text-right shrink-0">
+                    <div className="text-left sm:text-right shrink-0 mt-1 sm:mt-0 flex sm:block justify-between items-baseline">
                       <span className="text-xs font-black text-slate-900 block">
                         {formatRupiah(item.nilai)}
                       </span>
@@ -388,16 +376,16 @@ export function DashboardPage({ onNavigateToPengingat, onNavigateToInventori, on
                     </div>
                   </div>
 
-                  {/* Recommendation pill */}
-                  <div className="pt-2 border-t border-slate-200/60 flex items-center justify-between gap-3 text-xs">
+                  <div className="pt-2 border-t border-slate-200/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs">
                     <p className="text-[11px] text-slate-600 flex items-center gap-1.5 line-clamp-1">
                       <Lightbulb className="w-3.5 h-3.5 text-amber-500 shrink-0" />
                       <span>{item.rekomendasi}</span>
                     </p>
 
                     <button
+                      type="button"
                       onClick={onNavigateToPengingat}
-                      className="btn-outline h-7 px-2.5 text-[11px] font-bold shrink-0 text-blue-600 hover:text-blue-700"
+                      className="btn-outline min-h-[44px] sm:min-h-[28px] h-11 sm:h-7 px-3 text-xs sm:text-[11px] font-bold shrink-0 text-blue-600 hover:text-blue-700 w-full sm:w-auto justify-center"
                     >
                       Proses Retur
                       <ArrowRight className="w-3 h-3 ml-1" />
@@ -408,7 +396,6 @@ export function DashboardPage({ onNavigateToPengingat, onNavigateToInventori, on
             </div>
           </div>
 
-          {/* Card: Rekomendasi Operasional & Kepatuhan Rak */}
           <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm space-y-4">
             <div className="flex items-center gap-2.5 border-b border-slate-100 pb-3">
               <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center shrink-0">
@@ -448,7 +435,7 @@ export function DashboardPage({ onNavigateToPengingat, onNavigateToInventori, on
                     2
                   </span>
                   <h4 className="text-xs font-bold text-slate-900">
-                    Monitoring Obat Slow-Moving
+                    Pemantauan Obat Perputaran Lambat
                   </h4>
                 </div>
                 <p className="text-[11px] text-slate-600 leading-relaxed">
@@ -462,9 +449,7 @@ export function DashboardPage({ onNavigateToPengingat, onNavigateToInventori, on
           </div>
         </div>
 
-        {/* Kolom Kanan (1 Kolom): Evaluasi Distributor, Kepatuhan FEFO & Aksi Cepat */}
         <div className="space-y-6">
-          {/* Card: Evaluasi Distributor */}
           <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
@@ -473,7 +458,7 @@ export function DashboardPage({ onNavigateToPengingat, onNavigateToInventori, on
                 </span>
                 <h3 className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
                   <Building2 className="w-4 h-4 text-blue-600" />
-                  Distributor Terancam
+                  Distributor Berisiko Retur
                 </h3>
               </div>
               <button
@@ -505,7 +490,6 @@ export function DashboardPage({ onNavigateToPengingat, onNavigateToInventori, on
                         </span>
                       </div>
                     </div>
-                    {/* Visual Progress Bar */}
                     <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
                       <div
                         className="bg-blue-600 h-full rounded-full transition-all duration-500"
@@ -518,7 +502,6 @@ export function DashboardPage({ onNavigateToPengingat, onNavigateToInventori, on
             </div>
           </div>
 
-          {/* Card: Kepatuhan FEFO (First Expired First Out) */}
           <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
@@ -542,7 +525,6 @@ export function DashboardPage({ onNavigateToPengingat, onNavigateToInventori, on
             </div>
           </div>
 
-          {/* Card: Aksi Cepat & Ekspor Dokumen */}
           <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm space-y-3">
             <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">
               Aksi Cepat & Ekspor
@@ -550,8 +532,9 @@ export function DashboardPage({ onNavigateToPengingat, onNavigateToInventori, on
 
             <div className="space-y-2">
               <button
+                type="button"
                 onClick={onNavigateToPengingat}
-                className="w-full btn-outline justify-between py-2.5 text-xs text-slate-700"
+                className="w-full btn-outline justify-between py-3 min-h-[44px] text-xs text-slate-700"
               >
                 <span className="flex items-center gap-2">
                   <FileText className="w-4 h-4 text-blue-600" />
@@ -561,8 +544,9 @@ export function DashboardPage({ onNavigateToPengingat, onNavigateToInventori, on
               </button>
 
               <button
+                type="button"
                 onClick={onNavigateToInventori}
-                className="w-full btn-outline justify-between py-2.5 text-xs text-slate-700"
+                className="w-full btn-outline justify-between py-3 min-h-[44px] text-xs text-slate-700"
               >
                 <span className="flex items-center gap-2">
                   <Boxes className="w-4 h-4 text-slate-500" />

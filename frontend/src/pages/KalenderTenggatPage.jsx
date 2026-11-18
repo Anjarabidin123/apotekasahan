@@ -4,23 +4,17 @@ import {
   Calendar as CalendarIcon,
   ChevronLeft,
   ChevronRight,
-  Clock,
   AlertTriangle,
   Download,
   Printer,
-  Building2,
-  Boxes,
-  ArrowRight,
   CheckCircle2,
-  CalendarCheck2,
-  RotateCcw,
-  Sparkles
+  CalendarCheck2
 } from 'lucide-react';
 
 export function KalenderTenggatPage() {
   const [batches, setBatches] = useState([]);
   const [currentYear, setCurrentYear] = useState(2026);
-  const [currentMonth, setCurrentMonth] = useState(10); // 0-indexed: 10 = November 2026 (periode acuan capstone)
+  const [currentMonth, setCurrentMonth] = useState(10); // 0-indexed: 10 = November 2026
   const [selectedDate, setSelectedDate] = useState('2026-11-05');
 
   useEffect(() => {
@@ -136,9 +130,7 @@ export function KalenderTenggatPage() {
           </p>
         </div>
 
-        {/* Action Controls & Navigation */}
         <div className="flex items-center gap-2 flex-wrap">
-          {/* Month Navigator Pills */}
           <div className="inline-flex items-center rounded-xl border border-slate-200 bg-slate-50 p-1 shadow-xs">
             <button
               onClick={handlePrevMonth}
@@ -162,7 +154,7 @@ export function KalenderTenggatPage() {
           <button
             onClick={handleResetToAcuan}
             className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition shadow-xs cursor-pointer"
-            title="Reset ke Periode Acuan Capstone (Nov 2026)"
+            title="Kembali ke Bulan Acuan (Nov 2026)"
           >
             <CalendarCheck2 className="w-3.5 h-3.5 text-blue-600" />
             <span>Nov 2026</span>
@@ -183,11 +175,8 @@ export function KalenderTenggatPage() {
         </div>
       </div>
 
-      
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        {/* Kolom Kiri: Kalender Grid Interaktif (8 Kolom) */}
         <div className="lg:col-span-8 bg-white rounded-2xl border border-slate-200/90 p-4 shadow-sm space-y-3">
-          {/* Bar Info & Ringkasan Cepat */}
           <div className="flex items-center justify-between pb-2.5 border-b border-slate-100 flex-wrap gap-2">
             <div className="flex items-center gap-2">
               <span className="text-xs font-extrabold text-slate-800">
@@ -197,7 +186,6 @@ export function KalenderTenggatPage() {
               <span className="text-[11px] text-slate-500">Klik tanggal untuk melihat rincian batch</span>
             </div>
 
-            {/* Quick Metrics Badges */}
             <div className="flex items-center gap-1.5">
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-[10px] font-extrabold">
                 <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
@@ -210,7 +198,6 @@ export function KalenderTenggatPage() {
             </div>
           </div>
 
-          {/* Nama Hari */}
           <div className="grid grid-cols-7 text-center text-[10px] font-black text-slate-400 py-1 uppercase tracking-wider">
             <span className="text-rose-500">Min</span>
             <span>Sen</span>
@@ -221,7 +208,6 @@ export function KalenderTenggatPage() {
             <span>Sab</span>
           </div>
 
-          {/* Grid Hari Kalender */}
           <div className="grid grid-cols-7 gap-1 text-center text-xs">
             {Array.from({ length: firstDayIndex }).map((_, i) => (
               <div key={`empty-${i}`} className="h-16 p-1 rounded-xl bg-slate-50/50 border border-transparent" />
@@ -279,7 +265,6 @@ export function KalenderTenggatPage() {
             })}
           </div>
 
-          {/* Legenda Indikator */}
           <div className="flex items-center justify-between pt-2.5 border-t border-slate-100 text-[11px] text-slate-500 flex-wrap gap-2">
             <div className="flex items-center gap-3">
               <span className="flex items-center gap-1.5 font-medium">
@@ -302,14 +287,12 @@ export function KalenderTenggatPage() {
           </div>
         </div>
 
-        {/* Kolom Kanan: Detail Inspeksi & Agenda Bulan Ini (4 Kolom) */}
         <div className="lg:col-span-4 space-y-4">
-          {/* Card 1: Detail Tanggal Terpilih */}
           <div className="bg-white rounded-2xl border border-slate-200/90 p-4 shadow-sm space-y-3">
             <div className="flex items-center justify-between pb-2 border-b border-slate-100">
               <div>
                 <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">
-                  Detail Tanggal
+                  Rincian Tanggal
                 </span>
                 <h4 className="text-sm font-black text-slate-900 mt-0.5">
                   {selectedDate}
@@ -330,7 +313,6 @@ export function KalenderTenggatPage() {
               </div>
             ) : (
               <div className="space-y-2.5">
-                {/* Event Retur */}
                 {selectedEvents.returEvents.map((b) => (
                   <div
                     key={`retur-${b.id}`}
@@ -369,7 +351,6 @@ export function KalenderTenggatPage() {
                   </div>
                 ))}
 
-                {/* Event Kedaluwarsa */}
                 {selectedEvents.expEvents.map((b) => (
                   <div
                     key={`exp-${b.id}`}
@@ -409,7 +390,6 @@ export function KalenderTenggatPage() {
             </button>
           </div>
 
-          {/* Card 2: Agenda Tonggak Kritis Bulan Ini (Kompak & Teratur) */}
           <div className="bg-white rounded-2xl border border-slate-200/90 p-4 shadow-sm space-y-2.5">
             <div className="flex items-center justify-between pb-2 border-b border-slate-100">
               <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
@@ -442,7 +422,7 @@ export function KalenderTenggatPage() {
                               : 'bg-amber-100 text-amber-800'
                           }`}
                         >
-                          {m.type === 'retur' ? 'Retur' : 'Expired'}
+                          {m.type === 'retur' ? 'Retur' : 'Kedaluwarsa'}
                         </span>
                         <span className="text-xs font-bold text-slate-900 truncate">
                           {m.batch.nama_obat}

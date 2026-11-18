@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Design System Tokens - Clean Slate & Royal Blue  */
+/* Design tokens: palet warna dan radius */
 :root {
   --radius: 1rem;
   --background: #f8fafc;

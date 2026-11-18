@@ -8,17 +8,10 @@ import {
   AlertTriangle,
   History,
   Save,
-  RotateCcw,
-  ArrowRight,
-  TrendingDown,
-  TrendingUp,
   Clock,
-  User,
-  ShieldCheck,
   PackageCheck,
   Building2,
   Calendar,
-  Layers,
   Plus,
   Minus
 } from 'lucide-react';
@@ -141,7 +134,6 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
 
   return (
     <div className="space-y-4">
-      {/* Header Halaman */}
       <div className="border-b border-slate-200/80 pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div>
           <div className="flex items-center gap-2">
@@ -167,7 +159,6 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
         </div>
       </div>
 
-      {/* Banner Jika Obat Terpilih Otomatis dari Pengingat Retur */}
       {preselectedBatch && (
         <div className="p-3 rounded-xl bg-blue-50 border border-blue-200 text-xs text-blue-900 flex items-center justify-between gap-3 shadow-xs">
           <div className="flex items-center gap-2">
@@ -196,12 +187,9 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
         </div>
       )}
 
-      {/* Layout 2 Kolom Vercel-Style: Formulir Alur & Panel Audit Log */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
-        {/* Kolom Kiri: Formulir 3 Langkah Alur Cek Fisik (7 Kolom) */}
         <div className="lg:col-span-7 bg-white rounded-2xl border border-slate-200/90 p-5 shadow-sm space-y-5">
           <form onSubmit={handleSubmit} className="space-y-5">
-            {/* LANGKAH 1: PILIH OBAT DI RAK */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <label className="text-xs font-black text-slate-800 flex items-center gap-1.5">
@@ -215,7 +203,6 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
                 </span>
               </div>
 
-              {/* Input Pencarian Cepat */}
               <div className="relative">
                 <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-3" />
                 <input
@@ -227,7 +214,6 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
                 />
               </div>
 
-              {/* Dropdown Pemilihan Batch */}
               <select
                 value={selectedBatchId}
                 onChange={(e) => handleBatchChange(e.target.value)}
@@ -240,7 +226,6 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
                 ))}
               </select>
 
-              {/* Rincian Identitas Batch yang Sedang Dipilih */}
               {selectedBatch && (
                 <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/70 text-xs space-y-1.5">
                   <div className="flex items-center justify-between">
@@ -265,7 +250,6 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
               )}
             </div>
 
-            {/* LANGKAH 2: HITUNG FISIK DI RAK & LIHAT SELISIH */}
             {selectedBatch && (
               <div className="space-y-2 pt-2 border-t border-slate-100">
                 <label className="text-xs font-black text-slate-800 flex items-center gap-1.5">
@@ -275,63 +259,61 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
                   <span>Hitung Jumlah Fisik di Rak & Lihat Selisih</span>
                 </label>
 
-                {/* Kotak Perbandingan 3-Pod */}
-                <div className="grid grid-cols-3 gap-2 p-3 rounded-xl bg-slate-50/90 border border-slate-200/80 text-center items-center">
-                  {/* Pod 1: Tercatat di Komputer */}
-                  <div className="p-2.5 rounded-lg bg-white border border-slate-200 shadow-2xs">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 sm:p-4 rounded-2xl bg-slate-50/90 border border-slate-200/80 items-stretch text-center">
+                  <div className="p-3 rounded-xl bg-white border border-slate-200 shadow-2xs flex flex-col justify-between">
                     <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">
                       Tercatat Sistem
                     </span>
-                    <span className="text-xl font-black text-slate-800 leading-tight block mt-0.5">
+                    <span className="text-2xl font-black text-slate-800 leading-tight block my-1">
                       {selectedBatch.jumlah_saat_ini}
                     </span>
-                    <span className="text-[9px] text-slate-400 font-medium block">
-                      {selectedBatch.satuan || 'unit'}
+                    <span className="text-[10px] text-slate-500 font-medium block">
+                      {selectedBatch.satuan || 'unit'} di sistem
                     </span>
                   </div>
 
-                  {/* Pod 2: Input Hitung Fisik Rak */}
-                  <div className="p-2.5 rounded-lg bg-white border-2 border-blue-500 shadow-2xs">
+                  <div className="p-3 rounded-xl bg-white border-2 border-blue-500 shadow-sm flex flex-col justify-between">
                     <span className="text-[10px] text-blue-600 font-extrabold uppercase tracking-wider block">
                       Hitungan Fisik Rak
                     </span>
-                    <div className="flex items-center justify-center gap-1 mt-0.5">
+                    <div className="flex items-center justify-center gap-2 my-1.5">
                       <button
                         type="button"
                         onClick={() => adjustJumlahFisik(-1)}
-                        className="w-6 h-6 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold flex items-center justify-center"
+                        className="w-12 h-12 sm:w-10 sm:h-10 min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 font-bold flex items-center justify-center transition shadow-2xs"
                         title="Kurang 1"
+                        aria-label="Kurang 1 hitungan fisik"
                       >
-                        <Minus className="w-3 h-3" />
+                        <Minus className="w-4 h-4" />
                       </button>
                       <input
                         type="number"
                         min="0"
                         value={jumlahFisik}
                         onChange={(e) => setJumlahFisik(e.target.value)}
-                        className="w-12 h-7 text-center text-lg font-black rounded border border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-blue-700 bg-blue-50/30"
+                        className="w-20 sm:w-16 h-12 sm:h-10 text-center text-xl font-black rounded-xl border border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-blue-700 bg-blue-50/30"
                       />
                       <button
                         type="button"
                         onClick={() => adjustJumlahFisik(1)}
-                        className="w-6 h-6 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold flex items-center justify-center"
+                        className="w-12 h-12 sm:w-10 sm:h-10 min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold flex items-center justify-center transition shadow-xs"
                         title="Tambah 1"
+                        aria-label="Tambah 1 hitungan fisik"
                       >
-                        <Plus className="w-3 h-3" />
+                        <Plus className="w-4 h-4" />
                       </button>
                     </div>
-                    <span className="text-[9px] text-blue-600 font-bold block mt-0.5">
-                      di rak saat ini
+                    <span className="text-[10px] text-blue-600 font-bold block">
+                      aktual di rak fisik
                     </span>
                   </div>
 
-                  {/* Pod 3: Selisih Otomatis */}
-                  <div className="p-2.5 rounded-lg bg-white border border-slate-200 shadow-2xs">
+                  <div className="p-3 rounded-xl bg-white border border-slate-200 shadow-2xs flex flex-col justify-between">
                     <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">
                       Selisih Deviasi
                     </span>
                     <span
-                      className={`text-xl font-black leading-tight block mt-0.5 ${
+                      className={`text-2xl font-black leading-tight block my-1 ${
                         selisih < 0
                           ? 'text-rose-600'
                           : selisih > 0
@@ -342,7 +324,7 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
                       {selisih > 0 ? `+${selisih}` : selisih}
                     </span>
                     <span
-                      className={`text-[9px] font-bold block ${
+                      className={`text-[10px] font-bold block ${
                         selisih < 0
                           ? 'text-rose-500'
                           : selisih > 0
@@ -351,7 +333,7 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
                       }`}
                     >
                       {selisih === 0
-                        ? 'Sesuai'
+                        ? 'Sesuai Rak'
                         : selisih < 0
                         ? 'Kurang di Rak'
                         : 'Lebih di Rak'}
@@ -361,7 +343,6 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
               </div>
             )}
 
-            {/* LANGKAH 3: PILIH ALASAN PENYESUAIAN */}
             <div className="space-y-2 pt-2 border-t border-slate-100">
               <label className="text-xs font-black text-slate-800 flex items-center gap-1.5">
                 <span className="w-5 h-5 rounded-full bg-blue-600 text-white text-[11px] font-black flex items-center justify-center">
@@ -370,8 +351,7 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
                 <span>Pilih Alasan / Penyebab Selisih</span>
               </label>
 
-              {/* 4 Tombol Cepat Alasan yang Masuk Akal */}
-              <div className="grid grid-cols-2 gap-1.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {[
                   'Pemeriksaan rutin rak (stok cocok)',
                   'Obat terjual ke pasien',
@@ -382,31 +362,29 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
                     key={txt}
                     type="button"
                     onClick={() => setAlasan(txt)}
-                    className={`text-[11px] p-2 rounded-xl border text-left transition-all cursor-pointer ${
+                    className={`text-xs p-3 min-h-[44px] rounded-xl border text-left transition-all cursor-pointer flex items-center ${
                       alasan === txt
                         ? 'bg-blue-50 border-blue-400 text-blue-900 font-black ring-1 ring-blue-500/20'
                         : 'bg-slate-50/70 border-slate-200 text-slate-600 hover:bg-white hover:border-slate-300 font-semibold'
                     }`}
                   >
-                    {txt}
+                    <span>{txt}</span>
                   </button>
                 ))}
               </div>
 
-              {/* Catatan Tambahan Opsional */}
               <div className="pt-1">
                 <input
                   type="text"
                   placeholder="Catatan tambahan (contoh: 2 botol sirup retak terbentur saat susun rak)..."
                   value={catatanKhusus}
                   onChange={(e) => setCatatanKhusus(e.target.value)}
-                  className="w-full text-xs h-9 px-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  className="w-full text-xs h-11 sm:h-9 px-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                 />
               </div>
             </div>
 
-            {/* Tombol Simpan & Submit */}
-            <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
+            <div className="pt-3 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <span className="text-[11px] text-slate-500">
                 Pencatat: <strong>{user?.nama || 'Petugas Apotek'}</strong>
               </span>
@@ -414,7 +392,7 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
               <button
                 type="submit"
                 disabled={loading}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-sm active:scale-95 cursor-pointer disabled:opacity-50"
+                className="inline-flex items-center justify-center gap-2 px-5 py-3 h-12 sm:h-10 min-h-[44px] rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-sm active:scale-95 cursor-pointer disabled:opacity-50 w-full sm:w-auto"
               >
                 <Save className="w-4 h-4" />
                 <span>{loading ? 'Menyimpan...' : 'Simpan & Perbarui Stok Rak'}</span>
@@ -423,7 +401,6 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
           </form>
         </div>
 
-        {/* Kolom Kanan: Panel Riwayat & Audit Trail Log (5 Kolom) */}
         <div className="lg:col-span-5 bg-white rounded-2xl border border-slate-200/90 p-5 shadow-sm space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <div>
@@ -440,7 +417,6 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
             </span>
           </div>
 
-          {/* Quick Metrics Audit */}
           <div className="grid grid-cols-2 gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-center">
             <div>
               <span className="text-[10px] text-slate-400 uppercase font-bold block">
@@ -495,7 +471,7 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
                 <div className="flex items-center gap-2 text-[10px] text-slate-400 font-mono">
                   <span>Batch: {log.nomor_batch}</span>
                   <span>•</span>
-                  <span>{log.jumlah_sebelum} $\rightarrow$ {log.jumlah_sesudah}</span>
+                  <span>{log.jumlah_sebelum} → {log.jumlah_sesudah}</span>
                 </div>
 
                 <p className="text-[11px] text-slate-600 leading-relaxed italic bg-white/80 p-1.5 rounded-lg border border-slate-100">

@@ -3,25 +3,20 @@ import { api } from '../services/api';
 import {
   UploadCloud,
   FileText,
-  Sparkles,
   CheckCircle2,
   AlertTriangle,
   Plus,
   Trash2,
   Save,
-  RotateCcw,
-  Camera,
   Image as ImageIcon,
-  Building2,
-  Layers,
-  ArrowRight
+  Camera
 } from 'lucide-react';
 
 export function FakturInputPage({ onBatchSaved }) {
   const [distributors, setDistributors] = useState([]);
   const [obatList, setObatList] = useState([]);
   
-  // State upload & AI
+  // State unggah dokumen dan pemrosesan faktur
   const [isProcessing, setIsProcessing] = useState(false);
   const [extractionResult, setExtractionResult] = useState(null);
   const [previewImage, setPreviewImage] = useState(null);
@@ -168,7 +163,6 @@ export function FakturInputPage({ onBatchSaved }) {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
         <div>
           <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 block mb-0.5">
@@ -176,14 +170,13 @@ export function FakturInputPage({ onBatchSaved }) {
           </span>
           <h2 className="text-base font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
             <FileText className="w-5 h-5 text-blue-600" />
-            Penerimaan Obat & Pemindaian Faktur (OCR)
+            Penerimaan Obat & Pemindaian Faktur
           </h2>
           <p className="text-xs text-slate-500">
             Unggah foto lembaran faktur distributor untuk pembacaan otomatis nomor batch dan tanggal kedaluwarsa.
           </p>
         </div>
 
-        {/* Demo Button */}
         <button
           type="button"
           onClick={handleSimulateDummyInvoice}
@@ -209,39 +202,56 @@ export function FakturInputPage({ onBatchSaved }) {
         </div>
       )}
 
-      {/* Bagian 1: Zona Drop Foto / Kamera */}
       <div className="premium-card p-6 space-y-3">
         <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 block">
           1. Unggah Foto Lembaran Faktur Fisik
         </span>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-          <div className="md:col-span-2">
-            <label className="border-2 border-dashed border-slate-200 hover:border-blue-500 rounded-2xl p-6 text-center flex flex-col items-center justify-center cursor-pointer bg-slate-50/50 hover:bg-blue-50/30 transition-all group">
-              <div className="w-12 h-12 rounded-2xl bg-white shadow-sm border border-slate-100 flex items-center justify-center text-slate-400 group-hover:text-blue-600 group-hover:scale-105 transition-all mb-2">
-                <UploadCloud className="w-6 h-6" />
+          <div className="md:col-span-2 space-y-3">
+            <div className="border-2 border-dashed border-slate-200 hover:border-blue-500 rounded-2xl p-5 text-center flex flex-col items-center justify-center bg-slate-50/50 hover:bg-blue-50/30 transition-all">
+              <div className="w-12 h-12 rounded-2xl bg-white shadow-sm border border-slate-100 flex items-center justify-center text-slate-400 mb-2">
+                <UploadCloud className="w-6 h-6 text-blue-600" />
               </div>
               <p className="text-xs font-bold text-slate-800">
-                Pilih foto faktur dari galeri atau kamera HP
+                Unggah Berkas atau Ambil Foto Faktur Fisik
               </p>
               <p className="text-[11px] text-slate-400 mt-0.5">
                 Format JPG, PNG, atau WEBP (Maksimal 5 MB)
               </p>
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => handleFileUpload(e.target.files?.[0])}
-              />
-            </label>
+
+              <div className="flex flex-col sm:flex-row items-center gap-2 mt-3 w-full sm:w-auto">
+                <label className="btn-outline h-11 min-h-[44px] px-4 rounded-xl cursor-pointer flex items-center justify-center gap-2 text-xs font-bold text-slate-700 w-full sm:w-auto">
+                  <UploadCloud className="w-4 h-4 text-blue-600" />
+                  <span>Pilih dari Galeri</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => handleFileUpload(e.target.files?.[0])}
+                  />
+                </label>
+                <label className="btn-primary h-11 min-h-[44px] px-4 rounded-xl cursor-pointer flex items-center justify-center gap-2 text-xs font-bold text-white w-full sm:w-auto">
+                  <Camera className="w-4 h-4" />
+                  <span>Ambil Foto Kamera HP</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    className="hidden"
+                    onChange={(e) => handleFileUpload(e.target.files?.[0])}
+                  />
+                </label>
+              </div>
+            </div>
           </div>
 
-          {/* Kotak Status AI Vision */}
+          {/* Status Pemrosesan Dokumen */}
           <div className="h-full min-h-[130px] rounded-2xl border border-slate-100 bg-slate-50/70 p-4 flex flex-col items-center justify-center text-center">
             {isProcessing ? (
               <div className="space-y-2">
                 <div className="w-7 h-7 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto" />
-                <p className="text-xs font-bold text-slate-800">Sistem OCR membaca dokumen faktur...</p>
+                <p className="text-xs font-bold text-slate-800">Memindai dokumen faktur...</p>
                 <p className="text-[10px] text-slate-400">Mengekstrak nomor batch, tanggal ED, dan harga beli</p>
               </div>
             ) : previewImage ? (
@@ -262,7 +272,6 @@ export function FakturInputPage({ onBatchSaved }) {
         </div>
       </div>
 
-      {/* Bagian 2: Data Pengiriman */}
       <div className="premium-card p-6 space-y-3.5">
         <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 block">
           2. Pengaturan Distributor & Tanggal Masuk
@@ -313,12 +322,11 @@ export function FakturInputPage({ onBatchSaved }) {
         </div>
       </div>
 
-      {/* Bagian 3: Tabel Review & Koreksi Manual */}
       <div className="premium-card overflow-hidden">
         <div className="p-5 border-b border-slate-100 flex items-center justify-between flex-wrap gap-2">
           <div>
             <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 block mb-0.5">
-              3. Review Data Item
+              3. Tinjau Rincian Obat
             </span>
             <h3 className="text-sm font-extrabold text-slate-900">
               Daftar Batch Obat yang Akan Didaftarkan
@@ -328,7 +336,7 @@ export function FakturInputPage({ onBatchSaved }) {
           <button
             type="button"
             onClick={handleAddRow}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition active:scale-95"
+            className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 min-h-[44px] sm:min-h-0 h-11 sm:h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition active:scale-95"
           >
             <Plus className="w-4 h-4" />
             <span>Tambah Baris Manual</span>
@@ -340,93 +348,188 @@ export function FakturInputPage({ onBatchSaved }) {
             Belum ada obat yang dimasukkan. Silakan unggah foto faktur atau klik <strong>Tambah Baris Manual</strong>.
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="bg-slate-50/80 border-b border-slate-100 text-slate-500 font-extrabold uppercase tracking-wider text-[10px]">
-                  <th className="py-3 px-4">Nama Obat</th>
-                  <th className="py-3 px-4">Nomor Batch</th>
-                  <th className="py-3 px-4">Tgl Kedaluwarsa</th>
-                  <th className="py-3 px-4">Jumlah</th>
-                  <th className="py-3 px-4">Harga Beli Satuan (Rp)</th>
-                  <th className="py-3 px-4 text-center">Aksi</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {items.map((item, idx) => (
-                  <tr key={idx} className="hover:bg-slate-50/60 transition">
-                    <td className="py-2.5 px-4">
-                      <select
-                        value={item.obat_id}
-                        onChange={(e) => updateItem(idx, 'obat_id', e.target.value)}
-                        className="w-full text-xs h-9 px-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 font-semibold"
-                      >
-                        {obatList.map((o) => (
-                          <option key={o.id} value={o.id}>
-                            {o.nama} ({o.satuan})
-                          </option>
-                        ))}
-                      </select>
-                    </td>
+          <>
+            {/* Mobile / Tablet Card View */}
+            <div className="block md:hidden divide-y divide-slate-100">
+              {items.map((item, idx) => (
+                <div key={idx} className="p-4 space-y-3 bg-white">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-extrabold text-blue-700 bg-blue-50 border border-blue-200 px-2.5 py-1 rounded-lg">
+                      Item #{idx + 1}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveRow(idx)}
+                      className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-xl transition"
+                      title="Hapus Baris"
+                      aria-label={`Hapus baris obat item ${idx + 1}`}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
 
-                    <td className="py-2.5 px-4">
+                  <div>
+                    <label className="block text-[10px] font-extrabold uppercase text-slate-400 mb-1">
+                      Nama Obat
+                    </label>
+                    <select
+                      value={item.obat_id}
+                      onChange={(e) => updateItem(idx, 'obat_id', e.target.value)}
+                      className="w-full text-xs h-11 px-3 rounded-xl border border-slate-200 font-bold bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      {obatList.map((o) => (
+                        <option key={o.id} value={o.id}>
+                          {o.nama} ({o.satuan})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <div>
+                      <label className="block text-[10px] font-extrabold uppercase text-slate-400 mb-1">
+                        Nomor Batch
+                      </label>
                       <input
                         type="text"
                         value={item.nomor_batch}
                         onChange={(e) => updateItem(idx, 'nomor_batch', e.target.value)}
                         placeholder="BMX2610A"
-                        className="w-full text-xs h-9 px-2.5 rounded-xl border border-slate-200 font-mono focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="w-full text-xs h-11 px-3 rounded-xl border border-slate-200 font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
-                    </td>
-
-                    <td className="py-2.5 px-4">
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-extrabold uppercase text-slate-400 mb-1">
+                        Tgl Kedaluwarsa
+                      </label>
                       <input
                         type="date"
                         value={item.tanggal_kedaluwarsa}
                         onChange={(e) => updateItem(idx, 'tanggal_kedaluwarsa', e.target.value)}
-                        className="w-full text-xs h-9 px-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium"
+                        className="w-full text-xs h-11 px-2.5 rounded-xl border border-slate-200 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
-                    </td>
+                    </div>
+                  </div>
 
-                    <td className="py-2.5 px-4 w-28">
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <div>
+                      <label className="block text-[10px] font-extrabold uppercase text-slate-400 mb-1">
+                        Jumlah
+                      </label>
                       <input
                         type="number"
                         min="1"
                         value={item.jumlah}
                         onChange={(e) => updateItem(idx, 'jumlah', e.target.value)}
-                        className="w-full text-xs h-9 px-2.5 rounded-xl border border-slate-200 text-center font-black focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="w-full text-xs h-11 px-3 rounded-xl border border-slate-200 text-center font-black focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
-                    </td>
-
-                    <td className="py-2.5 px-4 w-40">
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-extrabold uppercase text-slate-400 mb-1">
+                        Harga Satuan (Rp)
+                      </label>
                       <input
                         type="number"
                         step="500"
                         value={item.harga_beli_satuan}
                         onChange={(e) => updateItem(idx, 'harga_beli_satuan', e.target.value)}
-                        className="w-full text-xs h-9 px-2.5 rounded-xl border border-slate-200 text-right font-bold focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="w-full text-xs h-11 px-3 rounded-xl border border-slate-200 text-right font-bold focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
-                    </td>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
 
-                    <td className="py-2.5 px-4 text-center">
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveRow(idx)}
-                        className="p-1.5 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition"
-                        title="Hapus baris"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </td>
+            {/* Desktop Table View */}
+            <div className="overflow-x-auto hidden md:block">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="bg-slate-50/80 border-b border-slate-100 text-slate-500 font-extrabold uppercase tracking-wider text-[10px]">
+                    <th className="py-3 px-4">Nama Obat</th>
+                    <th className="py-3 px-4">Nomor Batch</th>
+                    <th className="py-3 px-4">Tgl Kedaluwarsa</th>
+                    <th className="py-3 px-4">Jumlah</th>
+                    <th className="py-3 px-4">Harga Beli Satuan (Rp)</th>
+                    <th className="py-3 px-4 text-center">Aksi</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {items.map((item, idx) => (
+                    <tr key={idx} className="hover:bg-slate-50/60 transition">
+                      <td className="py-2.5 px-4">
+                        <select
+                          value={item.obat_id}
+                          onChange={(e) => updateItem(idx, 'obat_id', e.target.value)}
+                          className="w-full text-xs h-9 px-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 font-semibold"
+                        >
+                          {obatList.map((o) => (
+                            <option key={o.id} value={o.id}>
+                              {o.nama} ({o.satuan})
+                            </option>
+                          ))}
+                        </select>
+                      </td>
+
+                      <td className="py-2.5 px-4">
+                        <input
+                          type="text"
+                          value={item.nomor_batch}
+                          onChange={(e) => updateItem(idx, 'nomor_batch', e.target.value)}
+                          placeholder="BMX2610A"
+                          className="w-full text-xs h-9 px-2.5 rounded-xl border border-slate-200 font-mono focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        />
+                      </td>
+
+                      <td className="py-2.5 px-4">
+                        <input
+                          type="date"
+                          value={item.tanggal_kedaluwarsa}
+                          onChange={(e) => updateItem(idx, 'tanggal_kedaluwarsa', e.target.value)}
+                          className="w-full text-xs h-9 px-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium"
+                        />
+                      </td>
+
+                      <td className="py-2.5 px-4 w-28">
+                        <input
+                          type="number"
+                          min="1"
+                          value={item.jumlah}
+                          onChange={(e) => updateItem(idx, 'jumlah', e.target.value)}
+                          className="w-full text-xs h-9 px-2.5 rounded-xl border border-slate-200 text-center font-black focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        />
+                      </td>
+
+                      <td className="py-2.5 px-4 w-40">
+                        <input
+                          type="number"
+                          step="500"
+                          value={item.harga_beli_satuan}
+                          onChange={(e) => updateItem(idx, 'harga_beli_satuan', e.target.value)}
+                          className="w-full text-xs h-9 px-2.5 rounded-xl border border-slate-200 text-right font-bold focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        />
+                      </td>
+
+                      <td className="py-2.5 px-4 text-center">
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveRow(idx)}
+                          className="p-1.5 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition"
+                          title="Hapus baris"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
 
         {items.length > 0 && (
-          <div className="p-4 bg-slate-50/70 border-t border-slate-100 flex items-center justify-between">
+          <div className="p-4 bg-slate-50/70 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <span className="text-xs font-bold text-slate-600">
               {items.length} item obat siap didaftarkan ke inventori
             </span>
@@ -434,7 +537,7 @@ export function FakturInputPage({ onBatchSaved }) {
               type="button"
               onClick={handleSaveBatches}
               disabled={isProcessing}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold transition shadow-sm active:scale-95 disabled:opacity-60"
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 min-h-[44px] rounded-2xl bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold transition shadow-sm active:scale-95 disabled:opacity-60 w-full sm:w-auto"
             >
               <Save className="w-4 h-4" />
               <span>{isProcessing ? 'Menyimpan...' : 'Konfirmasi & Simpan ke Inventori'}</span>

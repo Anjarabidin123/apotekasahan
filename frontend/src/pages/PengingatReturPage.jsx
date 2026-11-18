@@ -10,22 +10,15 @@ import {
   ArrowRight,
   Boxes,
   CheckCircle2,
-  Sparkles,
   Search,
   Filter,
   ArrowUpDown,
-  Download,
-  FileSpreadsheet,
   FileText,
   Printer,
-  Phone,
   LayoutList,
   LayoutGrid,
   CheckSquare,
-  Square,
-  AlertCircle,
-  ExternalLink,
-  ShieldAlert
+  Square
 } from 'lucide-react';
 
 export function PengingatReturPage({ onNavigateToPenyesuaian }) {
@@ -38,6 +31,7 @@ export function PengingatReturPage({ onNavigateToPenyesuaian }) {
   const [sortBy, setSortBy] = useState('urgensi'); // 'urgensi', 'nilai_desc', 'nama_asc', 'stok_asc'
   const [selectedBatchIds, setSelectedBatchIds] = useState([]);
   const [bulkSuccessMsg, setBulkSuccessMsg] = useState('');
+  const [bapModalData, setBapModalData] = useState({ isOpen: false, batches: [] });
 
   useEffect(() => {
     loadPengingat();
@@ -139,10 +133,18 @@ export function PengingatReturPage({ onNavigateToPenyesuaian }) {
   };
 
   const handleBulkPrintReturn = () => {
-    setBulkSuccessMsg(
-      `Berita Acara Retur Fisik untuk ${selectedBatchIds.length} batch telah disiapkan untuk dicetak!`
-    );
-    setTimeout(() => setBulkSuccessMsg(''), 4500);
+    const selectedBatches = filteredAndSortedList.filter((b) => selectedBatchIds.includes(b.id));
+    setBapModalData({
+      isOpen: true,
+      batches: selectedBatches.length > 0 ? selectedBatches : filteredAndSortedList,
+    });
+  };
+
+  const handleOpenSingleBap = (item) => {
+    setBapModalData({
+      isOpen: true,
+      batches: [item],
+    });
   };
 
   if (loading || !data) {
@@ -307,26 +309,26 @@ export function PengingatReturPage({ onNavigateToPenyesuaian }) {
       
       <div className="bg-white rounded-2xl border border-slate-200/80 p-3 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
         {/* Kiri: Search Input */}
-        <div className="relative flex-1 max-w-md">
+        <div className="relative flex-1 max-w-md w-full">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Cari nama obat, nomor batch, atau distributor..."
-            className="w-full text-xs h-9 pl-9 pr-3 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+            className="w-full text-xs h-11 sm:h-9 pl-9 pr-3 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
           />
         </div>
 
         {/* Kanan: Filter PBF, Sorting, & Toggle Table/Cards */}
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap w-full md:w-auto">
           {/* Dropdown Filter PBF */}
-          <div className="flex items-center gap-1.5 text-xs text-slate-600">
+          <div className="flex items-center gap-1.5 text-xs text-slate-600 flex-1 sm:flex-initial">
             <Filter className="w-3.5 h-3.5 text-slate-400 shrink-0" />
             <select
               value={filterPbf}
               onChange={(e) => setFilterPbf(e.target.value)}
-              className="text-xs h-9 px-2.5 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-medium"
+              className="text-xs h-11 sm:h-9 px-2.5 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-medium w-full sm:w-auto"
             >
               <option value="semua">Semua PBF ({uniquePbfs.length})</option>
               {uniquePbfs.map((pbf, idx) => (
@@ -338,12 +340,12 @@ export function PengingatReturPage({ onNavigateToPenyesuaian }) {
           </div>
 
           {/* Sorting */}
-          <div className="flex items-center gap-1.5 text-xs text-slate-600">
+          <div className="flex items-center gap-1.5 text-xs text-slate-600 flex-1 sm:flex-initial">
             <ArrowUpDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="text-xs h-9 px-2.5 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-medium"
+              className="text-xs h-11 sm:h-9 px-2.5 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-medium w-full sm:w-auto"
             >
               <option value="urgensi">Tenggat Terdekat</option>
               <option value="nilai_desc">Nilai Terbesar (Rp)</option>
@@ -352,27 +354,31 @@ export function PengingatReturPage({ onNavigateToPenyesuaian }) {
             </select>
           </div>
 
-          {/* View Mode Switcher */}
+          {/* View Mode Switcher (with >= 44x44px touch targets on mobile) */}
           <div className="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200">
             <button
+              type="button"
               onClick={() => setViewMode('table')}
-              className={`p-1.5 rounded-lg text-xs transition ${
+              className={`w-11 h-11 sm:w-8 sm:h-8 min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 flex items-center justify-center rounded-lg text-xs transition ${
                 viewMode === 'table'
                   ? 'bg-white text-blue-600 font-bold shadow-xs'
                   : 'text-slate-500 hover:text-slate-800'
               }`}
-              title="Tampilan Tabel Berdensitas Tinggi (Compact Table)"
+              title="Tampilan Tabel Ringkas"
+              aria-label="Tampilan Tabel Ringkas"
             >
               <LayoutList className="w-4 h-4" />
             </button>
             <button
+              type="button"
               onClick={() => setViewMode('cards')}
-              className={`p-1.5 rounded-lg text-xs transition ${
+              className={`w-11 h-11 sm:w-8 sm:h-8 min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 flex items-center justify-center rounded-lg text-xs transition ${
                 viewMode === 'cards'
                   ? 'bg-white text-blue-600 font-bold shadow-xs'
                   : 'text-slate-500 hover:text-slate-800'
               }`}
-              title="Tampilan Kartu Ringkas (Compact Grid)"
+              title="Tampilan Kartu"
+              aria-label="Tampilan Kartu"
             >
               <LayoutGrid className="w-4 h-4" />
             </button>
@@ -439,7 +445,7 @@ export function PengingatReturPage({ onNavigateToPenyesuaian }) {
                   <th className="py-2.5 px-3 font-extrabold">Tenggat Retur & ED</th>
                   <th className="py-2.5 px-3 font-extrabold text-right">Sisa Stok</th>
                   <th className="py-2.5 px-3 font-extrabold text-right">Nilai Total</th>
-                  <th className="py-2.5 px-3 font-extrabold text-center">Risiko AI</th>
+                  <th className="py-2.5 px-3 font-extrabold text-center">Tingkat Risiko</th>
                   <th className="py-2.5 px-3 font-extrabold text-center">Aksi Cepat</th>
                 </tr>
               </thead>
@@ -463,7 +469,6 @@ export function PengingatReturPage({ onNavigateToPenyesuaian }) {
                           isSelected ? 'bg-blue-50/60' : ''
                         }`}
                       >
-                        {/* Checkbox */}
                         <td className="py-2 px-3 text-center">
                           <button
                             type="button"
@@ -478,7 +483,6 @@ export function PengingatReturPage({ onNavigateToPenyesuaian }) {
                           </button>
                         </td>
 
-                        {/* Nama Obat & Batch */}
                         <td className="py-2.5 px-3">
                           <div className="flex items-center gap-2">
                             <span className="font-extrabold text-slate-900 truncate max-w-[200px] block">
@@ -490,14 +494,12 @@ export function PengingatReturPage({ onNavigateToPenyesuaian }) {
                           </div>
                         </td>
 
-                        {/* Distributor PBF */}
                         <td className="py-2.5 px-3 text-slate-600 truncate max-w-[180px]">
                           <span className="font-semibold text-slate-800 block truncate">
                             {item.nama_distributor || '-'}
                           </span>
                         </td>
 
-                        {/* Tenggat Retur & ED */}
                         <td className="py-2.5 px-3">
                           <div className="flex items-center gap-2">
                             {item.sisa_hari_retur !== undefined ? (
@@ -517,7 +519,6 @@ export function PengingatReturPage({ onNavigateToPenyesuaian }) {
                           </div>
                         </td>
 
-                        {/* Sisa Stok */}
                         <td className="py-2.5 px-3 text-right">
                           <span className="font-black text-slate-900 block text-xs">
                             {item.jumlah_saat_ini}
@@ -525,7 +526,6 @@ export function PengingatReturPage({ onNavigateToPenyesuaian }) {
                           <span className="text-[10px] text-slate-400">unit di rak</span>
                         </td>
 
-                        {/* Nilai Total */}
                         <td className="py-2.5 px-3 text-right">
                           <span
                             className={`font-black text-xs block ${
@@ -536,7 +536,6 @@ export function PengingatReturPage({ onNavigateToPenyesuaian }) {
                           </span>
                         </td>
 
-                        {/* Status Risiko AI */}
                         <td className="py-2.5 px-3 text-center">
                           <StatusRisikoBadge
                             status={item.status_risiko}
@@ -544,10 +543,10 @@ export function PengingatReturPage({ onNavigateToPenyesuaian }) {
                           />
                         </td>
 
-                        {/* Aksi Cepat */}
                         <td className="py-2.5 px-3 text-center">
                           <div className="flex items-center justify-center gap-1.5">
                             <button
+                              type="button"
                               onClick={() =>
                                 onNavigateToPenyesuaian && onNavigateToPenyesuaian(item)
                               }
@@ -558,13 +557,11 @@ export function PengingatReturPage({ onNavigateToPenyesuaian }) {
                             </button>
 
                             <button
-                              onClick={() => {
-                                alert(
-                                  `Surat Pengajuan Retur untuk ${item.nama_obat} (Batch ${item.nomor_batch}) kepada ${item.nama_distributor} telah digenerate sesuai klausul kebijakan retur.`
-                                );
-                              }}
-                              className="p-1 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-600 transition"
+                              type="button"
+                              onClick={() => handleOpenSingleBap(item)}
+                              className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-600 transition"
                               title="Buat Berita Acara Retur"
+                              aria-label={`Buat Berita Acara Retur untuk ${item.nama_obat}`}
                             >
                               <FileText className="w-3.5 h-3.5 text-blue-600" />
                             </button>
@@ -578,7 +575,6 @@ export function PengingatReturPage({ onNavigateToPenyesuaian }) {
             </table>
           </div>
 
-          {/* Table Footer info */}
           <div className="p-3 bg-slate-50 border-t border-slate-200/80 flex items-center justify-between text-xs text-slate-500">
             <span>
               Menampilkan <strong>{filteredAndSortedList.length}</strong> batch obat
@@ -587,23 +583,42 @@ export function PengingatReturPage({ onNavigateToPenyesuaian }) {
           </div>
         </div>
       ) : (
-        
+        /* Mobile / Cards View with Full Feature Parity */
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
           {filteredAndSortedList.map((item) => (
             <div
               key={item.id}
-              className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-xs hover:border-slate-300 hover:shadow-sm transition-all space-y-2.5"
+              className={`bg-white rounded-2xl border p-4 shadow-xs transition-all space-y-3 ${
+                selectedBatchIds.includes(item.id)
+                  ? 'border-blue-400 ring-2 ring-blue-500/20 bg-blue-50/20'
+                  : 'border-slate-200/80 hover:border-slate-300'
+              }`}
             >
               <div className="flex items-start justify-between gap-2">
-                <div>
-                  <h4 className="text-xs font-bold text-slate-900 line-clamp-1">
-                    {item.nama_obat}
-                  </h4>
-                  <span className="font-mono text-[10px] text-slate-500 bg-slate-100 border border-slate-200 px-1 rounded font-semibold mt-0.5 inline-block">
-                    {item.nomor_batch}
-                  </span>
+                <div className="flex items-start gap-2 min-w-0">
+                  <button
+                    type="button"
+                    onClick={() => toggleSelectOne(item.id)}
+                    className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-blue-600 transition -ml-2 -mt-2 shrink-0"
+                    title={selectedBatchIds.includes(item.id) ? 'Batalkan pilihan' : 'Pilih batch'}
+                    aria-label={`Pilih batch ${item.nomor_batch}`}
+                  >
+                    {selectedBatchIds.includes(item.id) ? (
+                      <CheckSquare className="w-5 h-5 text-blue-600" />
+                    ) : (
+                      <Square className="w-5 h-5 text-slate-400" />
+                    )}
+                  </button>
+                  <div className="min-w-0">
+                    <h4 className="text-xs font-bold text-slate-900 line-clamp-1">
+                      {item.nama_obat}
+                    </h4>
+                    <span className="font-mono text-[10px] text-slate-500 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded font-semibold mt-0.5 inline-block">
+                      {item.nomor_batch}
+                    </span>
+                  </div>
                 </div>
-                <div className="text-right">
+                <div className="text-right shrink-0">
                   <span className="text-xs font-black text-slate-900 block">
                     {formatRupiah(item.nilai_total)}
                   </span>
@@ -611,6 +626,12 @@ export function PengingatReturPage({ onNavigateToPenyesuaian }) {
                     {item.jumlah_saat_ini} tersisa
                   </span>
                 </div>
+              </div>
+
+              {/* Status Badges Parity */}
+              <div className="flex flex-wrap items-center gap-1.5">
+                <StatusReturBadge status={item.status_retur} batasRetur={item.batas_retur} />
+                <StatusRisikoBadge status={item.status_risiko} skor={item.skor_risiko} />
               </div>
 
               <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-[11px] space-y-1">
@@ -630,20 +651,178 @@ export function PengingatReturPage({ onNavigateToPenyesuaian }) {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between pt-1">
-                <StatusRisikoBadge status={item.status_risiko} skor={item.skor_risiko} />
+              {/* Action Buttons with >=44px touch targets on mobile */}
+              <div className="flex items-center gap-2 pt-1 border-t border-slate-100">
                 <button
+                  type="button"
+                  onClick={() => handleOpenSingleBap(item)}
+                  className="btn-outline h-11 min-h-[44px] px-3 text-xs font-bold text-slate-700 flex-1 flex items-center justify-center gap-1.5"
+                  title="Buat Berita Acara Retur"
+                >
+                  <FileText className="w-3.5 h-3.5 text-blue-600" />
+                  <span>Dokumen BAP</span>
+                </button>
+                <button
+                  type="button"
                   onClick={() =>
                     onNavigateToPenyesuaian && onNavigateToPenyesuaian(item)
                   }
-                  className="btn-outline h-7 px-2.5 text-[11px] font-bold text-blue-600 hover:text-blue-700"
+                  className="btn-primary h-11 min-h-[44px] px-3 text-xs font-bold flex-1 flex items-center justify-center gap-1.5"
+                  title="Cek Fisik Rak & Penyesuaian Stok"
                 >
-                  Cek Rak
-                  <ArrowRight className="w-3 h-3 ml-1" />
+                  <span>Cek Rak</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* ========================================================
+          Scrollable BAP Modal Dialog (Official Pharmacy Document)
+      ======================================================== */}
+      {bapModalData.isOpen && (
+        <div
+          data-testid="bap-modal"
+          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-y-auto"
+          onClick={() => setBapModalData({ isOpen: false, batches: [] })}
+        >
+          <div
+            className="bg-white rounded-2xl max-w-2xl w-full my-auto shadow-2xl border border-slate-200 flex flex-col max-h-[90vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/70 shrink-0">
+              <div>
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-rose-600 block">
+                  Dokumen Resmi Retur Farmasi
+                </span>
+                <h3 className="text-sm font-black text-slate-900 flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-blue-600" />
+                  Berita Acara Pengembalian (BAP) Obat
+                </h3>
+              </div>
+              <button
+                type="button"
+                data-testid="bap-modal-close"
+                onClick={() => setBapModalData({ isOpen: false, batches: [] })}
+                className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-200/60 transition"
+                aria-label="Tutup dialog BAP"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Scrollable Content */}
+            <div className="p-4 sm:p-6 overflow-y-auto space-y-4 text-xs flex-1">
+              {/* Pharmacy Letterhead */}
+              <div className="text-center pb-4 border-b border-slate-200">
+                <h2 className="text-base font-black text-slate-950 tracking-tight">
+                  APOTEK ASAHAN FARMA
+                </h2>
+                <p className="text-slate-600 text-[11px] font-medium">
+                  Jl. Imam Bonjol No.331, Kisaran Timur, Kab. Asahan, Sumatera Utara
+                </p>
+                <p className="text-slate-400 text-[10px] font-mono">
+                  NIB: 1210210063257 • SIA: 442/012/SIA/DPMPTSP/2022 • APJ: Ibu Anni, S.Farm., Apt.
+                </p>
+              </div>
+
+              <div className="space-y-1">
+                <h4 className="font-bold text-slate-900 text-xs">
+                  BERITA ACARA PENGEMBALIAN BATCH OBAT (BAP)
+                </h4>
+                <p className="text-slate-500 text-[11px]">
+                  Diterbitkan pada tanggal <strong>{new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</strong> untuk pengembalian produk obat mendekati kedaluwarsa sesuai klausul retur PBF distributor rekanan.
+                </p>
+              </div>
+
+              {/* Batches Table in BAP */}
+              <div className="border border-slate-200 rounded-xl overflow-x-auto">
+                <table className="w-full text-left text-[11px] min-w-[480px]">
+                  <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold">
+                    <tr>
+                      <th className="py-2 px-3">No</th>
+                      <th className="py-2 px-3">Nama Obat</th>
+                      <th className="py-2 px-3">No. Batch</th>
+                      <th className="py-2 px-3">Distributor</th>
+                      <th className="py-2 px-3">ED</th>
+                      <th className="py-2 px-3 text-center">Unit</th>
+                      <th className="py-2 px-3 text-right">Nilai Estimasi</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {bapModalData.batches.map((b, idx) => (
+                      <tr key={b.id || idx}>
+                        <td className="py-2 px-3 text-slate-400">{idx + 1}</td>
+                        <td className="py-2 px-3 font-bold text-slate-900">{b.nama_obat}</td>
+                        <td className="py-2 px-3 font-mono">{b.nomor_batch || b.no_batch}</td>
+                        <td className="py-2 px-3 text-slate-600">{b.nama_distributor || b.pbf}</td>
+                        <td className="py-2 px-3 text-rose-600 font-medium">{b.tanggal_kedaluwarsa || b.ed}</td>
+                        <td className="py-2 px-3 text-center font-bold">{b.jumlah_saat_ini || b.stok}</td>
+                        <td className="py-2 px-3 text-right font-bold text-slate-900">
+                          {formatRupiah(b.nilai_total || b.nilai)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot className="bg-slate-50 border-t border-slate-200 font-extrabold">
+                    <tr>
+                      <td colSpan={6} className="py-2 px-3 text-right">Total Nilai Pengajuan Retur:</td>
+                      <td className="py-2 px-3 text-right text-blue-700">
+                        {formatRupiah(
+                          bapModalData.batches.reduce((acc, curr) => acc + (curr.nilai_total || curr.nilai || 0), 0)
+                        )}
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+
+              {/* Signature area */}
+              <div className="grid grid-cols-2 gap-4 pt-4 text-center text-xs">
+                <div className="space-y-12">
+                  <p className="text-slate-500 font-medium">Apoteker Penanggung Jawab,</p>
+                  <div>
+                    <p className="font-bold text-slate-900 underline">Ibu Anni, S.Farm., Apt.</p>
+                    <p className="text-[10px] text-slate-400">SIP: 19850412/SIPA-012/2022</p>
+                  </div>
+                </div>
+                <div className="space-y-12">
+                  <p className="text-slate-500 font-medium">Petugas Ekspedisi / PBF,</p>
+                  <div>
+                    <p className="font-bold text-slate-900 underline">( ............................................ )</p>
+                    <p className="text-[10px] text-slate-400">Nama Terang & Cap Distributor</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-slate-100 bg-slate-50/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 shrink-0">
+              <span className="text-[11px] text-slate-500 font-medium">
+                Kepatuhan Standar CDOB BPOM • SIMAAF
+              </span>
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <button
+                  type="button"
+                  onClick={() => window.print()}
+                  className="btn-primary min-h-[44px] flex-1 sm:flex-initial flex items-center justify-center gap-1.5"
+                >
+                  <Printer className="w-4 h-4" />
+                  <span>Cetak Dokumen BAP</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setBapModalData({ isOpen: false, batches: [] })}
+                  className="btn-outline min-h-[44px] px-4"
+                >
+                  Tutup
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

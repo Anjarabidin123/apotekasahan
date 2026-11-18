@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { BrandLogo } from '../components/common/BrandLogo';
-import { Pill, Lock, Mail, AlertCircle, ArrowRight, Sparkles } from 'lucide-react';
+import { Lock, Mail, AlertCircle, ArrowRight } from 'lucide-react';
 
 export function LoginPage({ onSuccess }) {
   const { login } = useAuth();
@@ -38,7 +38,6 @@ export function LoginPage({ onSuccess }) {
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
       <div className="max-w-md w-full premium-card p-8 sm:p-10 space-y-6 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.07)] border-slate-100">
-        {/* Header Logo */}
         <div className="text-center space-y-2">
           <BrandLogo className="w-16 h-16 mx-auto shadow-md border border-blue-400/20" />
           <h1 className="text-2xl font-black text-slate-900 tracking-tight pt-1">
@@ -102,10 +101,9 @@ export function LoginPage({ onSuccess }) {
           </button>
         </form>
 
-        {/* Akses Cepat Demo Akun (Pill Buttons) */}
         <div className="pt-4 border-t border-slate-100">
           <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest text-center block mb-2.5">
-            Akun Demo Capstone Asah 2026
+            Pilihan Akun Uji Coba
           </span>
           <div className="grid grid-cols-2 gap-2.5">
             <button
@@ -117,7 +115,7 @@ export function LoginPage({ onSuccess }) {
                 <span className="font-extrabold text-emerald-900">Ibu Anni</span>
                 <span className="text-[9px] px-1.5 py-0.5 bg-emerald-200 text-emerald-900 rounded-full font-black">Admin</span>
               </div>
-              <p className="text-[10px] text-emerald-700 font-normal">Akses penuh komisaris</p>
+              <p className="text-[10px] text-emerald-700 font-normal">Akses penuh pemilik apotek</p>
             </button>
 
             <button
@@ -127,7 +125,7 @@ export function LoginPage({ onSuccess }) {
             >
               <div className="flex items-center justify-between mb-0.5">
                 <span className="font-extrabold text-slate-800">Karyawan</span>
-                <span className="text-[9px] px-1.5 py-0.5 bg-slate-200 text-slate-700 rounded-full font-black">Staff</span>
+                <span className="text-[9px] px-1.5 py-0.5 bg-slate-200 text-slate-700 rounded-full font-black">Staf</span>
               </div>
               <p className="text-[10px] text-slate-500 font-normal">Input faktur & stok</p>
             </button>

@@ -241,7 +241,7 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
           </div>
           <div>
             <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-              <span>Pusat Kontrol CMS & Profil Apotek</span>
+              <span>Pengaturan Sarana & Profil Apotek</span>
               <span className="w-2 h-2 rounded-full bg-emerald-500" />
             </h1>
             <p className="text-xs text-slate-500 mt-0.5">
@@ -250,7 +250,6 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
           </div>
         </div>
 
-        {/* Action Buttons Kanan */}
         <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
           <button
             type="button"
@@ -290,7 +289,7 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
       <div className="flex items-center gap-2 overflow-x-auto pb-1">
         {[
           { id: 'identitas', label: 'Identitas & Legalitas', icon: Building2 },
-          { id: 'dokumen', label: 'CMS Dokumen & PDF', icon: FileText },
+          { id: 'dokumen', label: 'Format Dokumen & PDF', icon: FileText },
           { id: 'kategori', label: `Kategori & Ambang Stok (${kategoriList.length})`, icon: Wallet },
           { id: 'rekanan', label: `Master PBF (${distributors.length} Rekanan)`, icon: Building2 },
         ].map((tab) => {
@@ -317,7 +316,6 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
       
       {activeTab === 'identitas' && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {/* Card Kiri: Identitas Resmi Apotek & Logo */}
           <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
             <div className="border-b border-slate-100 pb-3">
               <h3 className="text-sm font-black text-slate-900 flex items-center gap-2">
@@ -329,10 +327,9 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
               </p>
             </div>
 
-            {/* Logo Section */}
             <div className="space-y-3">
               <label className="text-xs font-black text-slate-700 block">
-                Logo / Brand Mark Resmi Apotek
+                Logo Resmi Apotek
               </label>
               
               <div className="flex flex-col sm:flex-row sm:items-center gap-4 p-3.5 rounded-2xl bg-slate-50/70 border border-slate-200/80">
@@ -591,15 +588,14 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
               </div>
             </div>
 
-            {/* Parameter Tanggal Acuan Sistem */}
             <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-black text-slate-900 flex items-center gap-1.5">
                   <Calendar className="w-4 h-4 text-amber-500" />
-                  <span>Tanggal Acuan Sistem (Simulasi Capstone)</span>
+                  <span>Tanggal Acuan Sistem</span>
                 </span>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
-                  Fixed Date
+                  Tanggal Acuan
                 </span>
               </div>
               <input
@@ -700,7 +696,7 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
                 <span>Kategori Golongan Obat & Ambang Pengaman</span>
               </h3>
               <p className="text-xs text-slate-500 mt-0.5">
-                Atur stok minimum pengaman (safety stock) dan jendela peringatan per kategori farmasi.
+                Atur stok minimum pengaman stok dan jendela peringatan per kategori farmasi.
               </p>
             </div>
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Clock, CheckCircle2, XCircle, ShieldAlert, Sparkles, AlertTriangle } from 'lucide-react';
+import { Clock, CheckCircle2, XCircle, ShieldAlert, AlertTriangle } from 'lucide-react';
 
 export function StatusReturBadge({ status, batasRetur, sisaHari }) {
   if (status === 'lewat_batas') {
@@ -42,7 +42,7 @@ export function StatusRisikoBadge({ status, skor }) {
     return (
       <span
         className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200"
-        title={`Skor Prediksi Model AI: ${skor || 0.85}`}
+        title={`Tingkat Risiko: ${Math.round((skor || 0.85) * 100)}%`}
       >
         <ShieldAlert className="w-3 h-3 text-rose-600 shrink-0" />
         Risiko Tinggi
@@ -54,7 +54,7 @@ export function StatusRisikoBadge({ status, skor }) {
     return (
       <span
         className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200"
-        title={`Skor Prediksi Model AI: ${skor || 0.5}`}
+        title={`Tingkat Risiko: ${Math.round((skor || 0.5) * 100)}%`}
       >
         <AlertTriangle className="w-3 h-3 text-amber-600 shrink-0" />
         Risiko Sedang
@@ -65,9 +65,9 @@ export function StatusRisikoBadge({ status, skor }) {
   return (
     <span
       className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200"
-      title={`Skor Prediksi Model AI: ${skor || 0.2}`}
+      title={`Tingkat Risiko: ${Math.round((skor || 0.2) * 100)}%`}
     >
-      <Sparkles className="w-3 h-3 text-emerald-600 shrink-0" />
+      <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />
       Aman
     </span>
   );

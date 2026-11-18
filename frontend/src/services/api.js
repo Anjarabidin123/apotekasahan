@@ -61,7 +61,7 @@ export function hitungSelisihHari(targetDateStr, refDateStr) {
 }
 
 export const api = {
-  // --- AUTH ---
+  // Autentikasi
   async login(email, password) {
     await new Promise((r) => setTimeout(r, 400)); // simulasi delay jaringan
     if (email === 'admin@apotek.local' && password === 'admin123') {
@@ -93,7 +93,7 @@ export const api = {
     localStorage.removeItem('simaaf_user');
   },
 
-  // --- MASTER OBAT & DISTRIBUTOR ---
+  // Master data obat dan distributor
   async getObatList() {
     return INITIAL_OBAT;
   },
@@ -102,7 +102,7 @@ export const api = {
     return getStorage(STORAGE_KEYS.DISTRIBUTORS, DISTRIBUTORS);
   },
 
-  // --- BATCH INVENTORI ---
+  // Inventori batch obat
   async getBatches(filters = {}) {
     await new Promise((r) => setTimeout(r, 200));
     let list = getStorage(STORAGE_KEYS.BATCHES, INITIAL_BATCHES);
@@ -201,20 +201,20 @@ export const api = {
     return { sukses: true, data: createdBatches };
   },
 
-  // --- EKSTRAKSI FAKTUR (SIMULASI AI GEMINI) ---
+  // Ekstraksi faktur penerimaan
   async ekstrakFakturFoto(file) {
-    // Simulasi waktu proses ekstraksi OCR Gemini (2.5 detik)
+    // Simulasi latensi pemrosesan dokumen (2.5 detik)
     await new Promise((r) => setTimeout(r, 2200));
     
-    // Kembalikan data ekstraksi dummy terstruktur
+    // Kembalikan data ekstraksi terstruktur
     return {
       sukses: true,
       data: SAMPLE_FAKTUR_EXTRACTION,
-      pesan: 'Foto faktur berhasil dipindai oleh model ekstraksi.'
+      pesan: 'Foto faktur berhasil dipindai dan diproses.'
     };
   },
 
-  // --- PENGINGAT & ALERT ---
+  // Pemantauan tenggat dan peringatan
   async getPengingat() {
     await new Promise((r) => setTimeout(r, 200));
     const batches = getStorage(STORAGE_KEYS.BATCHES, INITIAL_BATCHES);
@@ -274,7 +274,7 @@ export const api = {
     };
   },
 
-  // --- PENYESUAIAN STOK (STOCK OPNAME) ---
+  // Penyesuaian stok (stock opname)
   async simpanPenyesuaianStok(batchId, jumlahSesudah, alasan, petugasNama = 'Karyawan') {
     await new Promise((r) => setTimeout(r, 300));
     const batches = getStorage(STORAGE_KEYS.BATCHES, INITIAL_BATCHES);
@@ -317,7 +317,7 @@ export const api = {
     return getStorage(STORAGE_KEYS.LOGS, INITIAL_STOCK_LOGS);
   },
 
-  // --- DASHBOARD SUMMARY ---
+  // Ringkasan dashboard
   async getDashboardSummary() {
     await new Promise((r) => setTimeout(r, 200));
     const batches = getStorage(STORAGE_KEYS.BATCHES, INITIAL_BATCHES);
@@ -361,13 +361,13 @@ export const api = {
         temuan_ds: [
           'Distributor dengan aturan retur singkat (1 bulan) menyumbang 62% obat yang gagal diretur.',
           'Obat antibiotik dan sirup anak memerlukan pemantauan ketat menjelang pergantian bulan.',
-          'Semua estimasi risiko dihitung otomatis menggunakan model klasifikasi tim Asah 2026.'
+          'Semua estimasi risiko dihitung otomatis berdasarkan sisa hari retur dan masa kedaluwarsa obat.'
         ]
       }
     };
   },
 
-  // --- PENGATURAN ---
+  // Pengaturan operasional
   async getSettings() {
     return getStorage(STORAGE_KEYS.SETTINGS, INITIAL_SETTINGS);
   },

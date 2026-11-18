@@ -14,8 +14,8 @@ export function BottomNav({ activePage, setActivePage, urgentCount = 0 }) {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-lg z-50 px-4 pb-3 pt-1 pointer-events-none md:hidden">
-      <div className="flex items-center justify-around rounded-3xl bg-white/95 backdrop-blur-xl border border-slate-200/80 shadow-[0_10px_35px_-5px_rgba(0,0,0,0.12)] px-2 py-2 pointer-events-auto">
+    <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-lg z-30 px-4 pb-3 pt-1 pointer-events-none md:hidden">
+      <div className="flex items-center justify-around rounded-3xl bg-white/95 backdrop-blur-xl border border-slate-200/80 shadow-[0_10px_35px_-5px_rgba(0,0,0,0.12)] px-2 py-1.5 pointer-events-auto">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = activePage === item.id;
@@ -23,13 +23,15 @@ export function BottomNav({ activePage, setActivePage, urgentCount = 0 }) {
           return (
             <button
               key={item.id}
+              type="button"
               onClick={() => setActivePage(item.id)}
-              className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-2xl transition-all relative ${
+              className={`flex flex-col items-center justify-center min-w-[48px] min-h-[48px] px-2 py-1 rounded-2xl transition-all relative ${
                 isActive ? '-translate-y-0.5' : 'text-slate-400 hover:text-slate-600'
               }`}
+              aria-label={item.label}
             >
               <div
-                className={`flex items-center justify-center w-10 h-10 rounded-2xl transition-all ${
+                className={`flex items-center justify-center w-8 h-8 rounded-xl transition-all ${
                   isActive
                     ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/25 scale-105'
                     : 'text-slate-500 bg-slate-50'
@@ -38,7 +40,7 @@ export function BottomNav({ activePage, setActivePage, urgentCount = 0 }) {
                 <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />
               </div>
               <span
-                className={`text-[10px] font-bold tracking-tight ${
+                className={`text-[10px] font-bold tracking-tight leading-tight ${
                   isActive ? 'text-blue-600' : 'text-slate-400'
                 }`}
               >
@@ -46,7 +48,7 @@ export function BottomNav({ activePage, setActivePage, urgentCount = 0 }) {
               </span>
 
               {item.badge > 0 && (
-                <span className="absolute top-0 right-1 w-4 h-4 rounded-full bg-rose-600 text-white font-extrabold text-[9px] flex items-center justify-center border-2 border-white">
+                <span className="absolute top-0.5 right-1 w-4 h-4 rounded-full bg-rose-600 text-white font-extrabold text-[9px] flex items-center justify-center border-2 border-white">
                   {item.badge}
                 </span>
               )}

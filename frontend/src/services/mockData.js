@@ -1,5 +1,5 @@
 // Dataset sintetis & konfigurasi awal SIMAAF
-// Mengacu pada spesifikasi proyek Capstone Asah 2026 (Apotek Asahan Farma)
+// Data awal persediaan dan distributor Apotek Asahan Farma
 
 export const DISTRIBUTORS = [
   { id: 1, kode: 'DST-001', nama: 'PBF Anugrah Argon Medica (AAM) Medan', aturan_retur_bulan: 6, telepon: '061-7865431', kontak: 'Budi Santoso' },
@@ -228,7 +228,7 @@ export const INITIAL_STOCK_LOGS = [
   }
 ];
 
-// Contoh template ekstraksi faktur dummy untuk demonstrasi fitur AI
+// Contoh template ekstraksi faktur untuk demonstrasi alur penerimaan
 export const SAMPLE_FAKTUR_EXTRACTION = {
   nomor_faktur: 'FAK-2026/10/089-AAM',
   distributor_id: 1,
