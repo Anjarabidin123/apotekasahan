@@ -70,9 +70,9 @@ export function InventoriBatchPage({ onSelectBatchForAdjustment }) {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* Header dan bilah filter */}
-      <div className="bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-5 shadow-card space-y-3.5">
+      <div className="bg-white rounded-2xl border border-slate-200/90 p-4 shadow-card space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
             <h2 className="text-base font-bold text-slate-900 tracking-tight flex items-center gap-2">
@@ -91,7 +91,7 @@ export function InventoriBatchPage({ onSelectBatchForAdjustment }) {
 
         {/* Interactive Filter Pills */}
         <div className="space-y-2 pt-1 border-t border-slate-100">
-          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1">
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
             <span className="text-[10px] font-extrabold uppercase text-slate-400 shrink-0 mr-1">
               Filter Risiko:
             </span>
@@ -105,7 +105,7 @@ export function InventoriBatchPage({ onSelectBatchForAdjustment }) {
                 key={pill.id}
                 type="button"
                 onClick={() => setRisikoFilter(pill.id)}
-                className={`px-3 py-2 sm:py-1 min-h-[44px] sm:min-h-0 rounded-xl text-xs font-bold transition shrink-0 ${
+                className={`px-3 py-1 min-h-[40px] sm:min-h-0 rounded-xl text-xs font-bold transition shrink-0 ${
                   risikoFilter === pill.id
                     ? 'bg-blue-600 text-white shadow-xs'
                     : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
@@ -116,7 +116,7 @@ export function InventoriBatchPage({ onSelectBatchForAdjustment }) {
             ))}
           </div>
 
-          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1">
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
             <span className="text-[10px] font-extrabold uppercase text-slate-400 shrink-0 mr-1">
               Filter Retur:
             </span>
@@ -130,7 +130,7 @@ export function InventoriBatchPage({ onSelectBatchForAdjustment }) {
                 key={pill.id}
                 type="button"
                 onClick={() => setReturFilter(pill.id)}
-                className={`px-3 py-2 sm:py-1 min-h-[44px] sm:min-h-0 rounded-xl text-xs font-bold transition shrink-0 ${
+                className={`px-3 py-1 min-h-[40px] sm:min-h-0 rounded-xl text-xs font-bold transition shrink-0 ${
                   returFilter === pill.id
                     ? 'bg-blue-600 text-white shadow-xs'
                     : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
@@ -143,7 +143,7 @@ export function InventoriBatchPage({ onSelectBatchForAdjustment }) {
         </div>
 
         {/* Search, Dropdowns, and Action Buttons */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 pt-2 border-t border-slate-100">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 pt-2 border-t border-slate-100">
           <div className="relative">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3.5 sm:top-2.5" />
             <input

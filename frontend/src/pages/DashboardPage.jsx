@@ -110,7 +110,7 @@ export function DashboardPage({ onNavigateToPengingat, onNavigateToInventori, on
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-1 border-b border-slate-200/80">
         <div className="flex items-center gap-3.5">
@@ -173,8 +173,8 @@ export function DashboardPage({ onNavigateToPengingat, onNavigateToInventori, on
       </div>
 
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-5 shadow-sm hover:border-slate-300 hover:shadow-sm transition-all flex flex-col justify-between">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="bg-white rounded-2xl border border-slate-200/80 p-3 sm:p-4 shadow-sm hover:border-slate-300 hover:shadow-sm transition-all flex flex-col justify-between">
           <div>
             <div className="flex items-start justify-between gap-3 mb-2">
               <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
@@ -207,7 +207,7 @@ export function DashboardPage({ onNavigateToPengingat, onNavigateToInventori, on
 
         <div
           onClick={onNavigateToPengingat}
-          className="bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-5 shadow-sm hover:border-rose-300 hover:shadow-sm transition-all flex flex-col justify-between cursor-pointer group"
+          className="bg-white rounded-2xl border border-slate-200/80 p-3 sm:p-4 shadow-sm hover:border-rose-300 hover:shadow-sm transition-all flex flex-col justify-between cursor-pointer group"
         >
           <div>
             <div className="flex items-start justify-between gap-3 mb-2">
@@ -236,7 +236,7 @@ export function DashboardPage({ onNavigateToPengingat, onNavigateToInventori, on
 
         <div
           onClick={onNavigateToPengingat}
-          className="bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-5 shadow-sm hover:border-amber-300 hover:shadow-sm transition-all flex flex-col justify-between cursor-pointer group"
+          className="bg-white rounded-2xl border border-slate-200/80 p-3 sm:p-4 shadow-sm hover:border-amber-300 hover:shadow-sm transition-all flex flex-col justify-between cursor-pointer group"
         >
           <div>
             <div className="flex items-start justify-between gap-3 mb-2">
@@ -263,7 +263,7 @@ export function DashboardPage({ onNavigateToPengingat, onNavigateToInventori, on
           </p>
         </div>
 
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-5 shadow-sm hover:border-slate-300 hover:shadow-sm transition-all flex flex-col justify-between">
+        <div className="bg-white rounded-2xl border border-slate-200/80 p-3 sm:p-4 shadow-sm hover:border-slate-300 hover:shadow-sm transition-all flex flex-col justify-between">
           <div>
             <div className="flex items-start justify-between gap-3 mb-2">
               <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
@@ -290,10 +290,10 @@ export function DashboardPage({ onNavigateToPengingat, onNavigateToInventori, on
       </div>
 
       
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="lg:col-span-2 space-y-4">
+          <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-2">
               <div>
                 <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">
                   Prioritas Tindakan Cepat
@@ -307,11 +307,11 @@ export function DashboardPage({ onNavigateToPengingat, onNavigateToInventori, on
               </div>
 
               {/* Filter Tabs */}
-              <div className="w-full sm:w-auto overflow-x-auto no-scrollbar flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-semibold self-start sm:self-auto">
+              <div className="w-full sm:w-auto overflow-x-auto no-scrollbar flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg text-xs font-semibold self-start sm:self-auto">
                 <button
                   type="button"
                   onClick={() => setFilterRisk('semua')}
-                  className={`px-3 py-2 sm:py-1 min-h-[44px] sm:min-h-0 rounded-lg transition shrink-0 ${
+                  className={`px-3 py-1.5 min-h-[36px] sm:min-h-0 rounded-md transition shrink-0 ${
                     filterRisk === 'semua'
                       ? 'bg-white text-slate-900 shadow-sm font-bold'
                       : 'text-slate-500 hover:text-slate-800'
@@ -322,7 +322,7 @@ export function DashboardPage({ onNavigateToPengingat, onNavigateToInventori, on
                 <button
                   type="button"
                   onClick={() => setFilterRisk('mendesak')}
-                  className={`px-3 py-2 sm:py-1 min-h-[44px] sm:min-h-0 rounded-lg transition shrink-0 ${
+                  className={`px-3 py-1.5 min-h-[36px] sm:min-h-0 rounded-md transition shrink-0 ${
                     filterRisk === 'mendesak'
                       ? 'bg-white text-amber-700 shadow-sm font-bold'
                       : 'text-slate-500 hover:text-slate-800'
@@ -333,7 +333,7 @@ export function DashboardPage({ onNavigateToPengingat, onNavigateToInventori, on
                 <button
                   type="button"
                   onClick={() => setFilterRisk('lewat')}
-                  className={`px-3 py-2 sm:py-1 min-h-[44px] sm:min-h-0 rounded-lg transition shrink-0 ${
+                  className={`px-3 py-1.5 min-h-[36px] sm:min-h-0 rounded-md transition shrink-0 ${
                     filterRisk === 'lewat'
                       ? 'bg-white text-rose-700 shadow-sm font-bold'
                       : 'text-slate-500 hover:text-slate-800'
@@ -344,29 +344,29 @@ export function DashboardPage({ onNavigateToPengingat, onNavigateToInventori, on
               </div>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-2">
               {filteredUrgent.map((item) => (
                 <div
                   key={item.id}
-                  className="p-4 rounded-xl border border-slate-200/80 bg-slate-50/50 hover:bg-white hover:border-slate-300 transition-all space-y-2.5"
+                  className="p-3 rounded-lg border border-slate-200/80 bg-slate-50/50 hover:bg-white hover:border-slate-300 transition-all space-y-2"
                 >
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                     <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                      <div className="flex flex-wrap items-center gap-1.5">
                         <h4 className="text-xs font-bold text-slate-900 truncate">
                           {item.nama_obat}
                         </h4>
-                        <span className="text-[11px] font-mono text-slate-500 bg-white border border-slate-200 px-1.5 py-0.2 rounded">
+                        <span className="text-[10px] font-mono text-slate-500 bg-white border border-slate-200 px-1 py-0 rounded">
                           {item.no_batch}
                         </span>
                         <StatusReturBadge status={item.status} sisaHari={item.sisa_hari} />
                       </div>
-                      <p className="text-[11px] text-slate-500 mt-0.5">
+                      <p className="text-[10px] text-slate-500 mt-0.5">
                         Distributor: <strong className="text-slate-700">{item.pbf}</strong> • Stok: {item.stok}
                       </p>
                     </div>
 
-                    <div className="text-left sm:text-right shrink-0 mt-1 sm:mt-0 flex sm:block justify-between items-baseline">
+                    <div className="text-left sm:text-right shrink-0 mt-0.5 sm:mt-0 flex sm:block justify-between items-baseline">
                       <span className="text-xs font-black text-slate-900 block">
                         {formatRupiah(item.nilai)}
                       </span>
@@ -376,16 +376,16 @@ export function DashboardPage({ onNavigateToPengingat, onNavigateToInventori, on
                     </div>
                   </div>
 
-                  <div className="pt-2 border-t border-slate-200/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs">
-                    <p className="text-[11px] text-slate-600 flex items-center gap-1.5 line-clamp-1">
-                      <Lightbulb className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                  <div className="pt-2 border-t border-slate-200/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                    <p className="text-[10px] text-slate-600 flex items-center gap-1.5 line-clamp-1">
+                      <Lightbulb className="w-3 h-3 text-amber-500 shrink-0" />
                       <span>{item.rekomendasi}</span>
                     </p>
 
                     <button
                       type="button"
                       onClick={onNavigateToPengingat}
-                      className="btn-outline min-h-[44px] sm:min-h-[28px] h-11 sm:h-7 px-3 text-xs sm:text-[11px] font-bold shrink-0 text-blue-600 hover:text-blue-700 w-full sm:w-auto justify-center"
+                      className="btn-outline min-h-[36px] sm:min-h-[24px] h-9 sm:h-6 px-2 text-[10px] font-bold shrink-0 text-blue-600 hover:text-blue-700 w-full sm:w-auto justify-center"
                     >
                       Proses Retur
                       <ArrowRight className="w-3 h-3 ml-1" />
@@ -396,101 +396,101 @@ export function DashboardPage({ onNavigateToPengingat, onNavigateToInventori, on
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm space-y-4">
-            <div className="flex items-center gap-2.5 border-b border-slate-100 pb-3">
-              <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center shrink-0">
-                <CheckCircle2 className="w-4 h-4" />
+          <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm space-y-3">
+            <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
+              <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center shrink-0">
+                <CheckCircle2 className="w-3.5 h-3.5" />
               </div>
               <div>
                 <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">
                   Rekomendasi Operasional
                 </span>
-                <h3 className="text-sm font-bold text-slate-900">
+                <h3 className="text-xs font-bold text-slate-900">
                   Evaluasi Kepatuhan & Efisiensi Stok Rak
                 </h3>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-              <div className="p-3.5 rounded-xl border border-slate-200/80 bg-slate-50/60 space-y-1.5">
-                <div className="flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-blue-100 text-blue-800 font-black text-[10px] flex items-center justify-center shrink-0">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="p-3 rounded-lg border border-slate-200/80 bg-slate-50/60 space-y-1">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-4 h-4 rounded-full bg-blue-100 text-blue-800 font-black text-[9px] flex items-center justify-center shrink-0">
                     1
                   </span>
-                  <h4 className="text-xs font-bold text-slate-900">
+                  <h4 className="text-[10px] font-bold text-slate-900">
                     Perbedaan Tenggat Retur Distributor
                   </h4>
                 </div>
-                <p className="text-[11px] text-slate-600 leading-relaxed">
-                  PBF Merapi Utama Pharma memberi batas aman 45 hari sebelum ED, sementara PBF Kimia Farma TD hanya 15 hari. Pastikan faktur diverifikasi segera setelah barang tiba.
+                <p className="text-[10px] text-slate-600 leading-relaxed">
+                  PBF Merapi Utama Pharma memberi batas aman 45 hari sebelum ED, sementara PBF Kimia Farma TD hanya 15 hari.
                 </p>
-                <div className="pt-2 text-[10px] font-semibold text-blue-600 flex items-center gap-1">
-                  <span>Tindakan: Verifikasi faktur maksimal 24 jam setelah obat diterima.</span>
+                <div className="pt-1 text-[9px] font-semibold text-blue-600 flex items-center gap-1">
+                  <span>Tindakan: Verifikasi faktur maksimal 24 jam.</span>
                 </div>
               </div>
 
-              <div className="p-3.5 rounded-xl border border-slate-200/80 bg-slate-50/60 space-y-1.5">
-                <div className="flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-indigo-100 text-indigo-800 font-black text-[10px] flex items-center justify-center shrink-0">
+              <div className="p-3 rounded-lg border border-slate-200/80 bg-slate-50/60 space-y-1">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-4 h-4 rounded-full bg-indigo-100 text-indigo-800 font-black text-[9px] flex items-center justify-center shrink-0">
                     2
                   </span>
-                  <h4 className="text-xs font-bold text-slate-900">
+                  <h4 className="text-[10px] font-bold text-slate-900">
                     Pemantauan Obat Perputaran Lambat
                   </h4>
                 </div>
-                <p className="text-[11px] text-slate-600 leading-relaxed">
-                  Ibuprofen 400mg memiliki tren perputaran lambat (12 strip/bulan vs 80 strip stok di rak). Berpotensi mendekati tanggal kedaluwarsa sebelum terjual habis.
+                <p className="text-[10px] text-slate-600 leading-relaxed">
+                  Ibuprofen 400mg memiliki tren perputaran lambat (12 strip/bulan vs 80 strip stok).
                 </p>
-                <div className="pt-2 text-[10px] font-semibold text-indigo-600 flex items-center gap-1">
-                  <span>Tindakan: Utamakan pengeluaran batch terdekat atau ajukan retur dini.</span>
+                <div className="pt-1 text-[9px] font-semibold text-indigo-600 flex items-center gap-1">
+                  <span>Tindakan: Utamakan pengeluaran batch terdekat.</span>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="space-y-6">
-          <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div className="space-y-4">
+          <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm space-y-3">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
               <div>
                 <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">
                   Evaluasi Risiko PBF
                 </span>
-                <h3 className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                  <Building2 className="w-4 h-4 text-blue-600" />
+                <h3 className="text-[10px] font-bold text-slate-900 flex items-center gap-1">
+                  <Building2 className="w-3.5 h-3.5 text-blue-600" />
                   Distributor Berisiko Retur
                 </h3>
               </div>
               <button
                 onClick={onNavigateToInventori}
-                className="text-xs text-blue-600 hover:text-blue-700 font-bold flex items-center gap-0.5"
+                className="text-[10px] text-blue-600 hover:text-blue-700 font-bold flex items-center gap-0.5"
               >
                 Lihat Semua
                 <ArrowRight className="w-3 h-3" />
               </button>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-2">
               {data.distributor_terancam.map((d, idx) => {
                 const maxVal = data.distributor_terancam[0].nilai || 1;
                 const percent = Math.min(100, Math.round((d.nilai / maxVal) * 100));
 
                 return (
-                  <div key={idx} className="space-y-1">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-bold text-slate-800 truncate max-w-[150px]">
+                  <div key={idx} className="space-y-0.5">
+                    <div className="flex items-center justify-between text-[10px]">
+                      <span className="font-bold text-slate-800 truncate max-w-[120px]">
                         {d.nama}
                       </span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] text-slate-400">
+                      <div className="flex items-center gap-1">
+                        <span className="text-[9px] text-slate-400">
                           {d.batch_count} batch
                         </span>
-                        <span className="font-bold text-slate-900 text-xs">
+                        <span className="font-bold text-slate-900 text-[10px]">
                           {formatRupiah(d.nilai)}
                         </span>
                       </div>
                     </div>
-                    <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                    <div className="w-full bg-slate-100 h-1 rounded-full overflow-hidden">
                       <div
                         className="bg-blue-600 h-full rounded-full transition-all duration-500"
                         style={{ width: `${percent}%` }}
@@ -502,57 +502,57 @@ export function DashboardPage({ onNavigateToPengingat, onNavigateToInventori, on
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm space-y-3">
+          <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
                 Kepatuhan Pengeluaran Obat
               </span>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
                 87.5% FEFO
               </span>
             </div>
 
-            <h3 className="text-xs font-bold text-slate-900">
+            <h3 className="text-[10px] font-bold text-slate-900">
               Prinsip First Expired First Out
             </h3>
 
-            <p className="text-[11px] text-slate-500 leading-relaxed">
-              Sebanyak 7 dari 8 batch obat keluar dari rak sesuai tanggal kedaluwarsa terdekat. Hanya 1 batch obat batuk yang berada di baris belakang rak depan.
+            <p className="text-[10px] text-slate-500 leading-relaxed">
+              Sebanyak 7 dari 8 batch obat keluar dari rak sesuai tanggal kedaluwarsa terdekat.
             </p>
 
-            <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+            <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
               <div className="bg-emerald-500 h-full rounded-full" style={{ width: '87.5%' }} />
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm space-y-3">
+          <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm space-y-2">
             <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">
               Aksi Cepat & Ekspor
             </span>
 
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <button
                 type="button"
                 onClick={onNavigateToPengingat}
-                className="w-full btn-outline justify-between py-3 min-h-[44px] text-xs text-slate-700"
+                className="w-full btn-outline justify-between py-2 min-h-[36px] text-[10px] text-slate-700"
               >
-                <span className="flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-blue-600" />
+                <span className="flex items-center gap-1.5">
+                  <FileText className="w-3.5 h-3.5 text-blue-600" />
                   <span>Buat Surat Pengajuan Retur</span>
                 </span>
-                <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
+                <ArrowRight className="w-3 h-3 text-slate-400" />
               </button>
 
               <button
                 type="button"
                 onClick={onNavigateToInventori}
-                className="w-full btn-outline justify-between py-3 min-h-[44px] text-xs text-slate-700"
+                className="w-full btn-outline justify-between py-2 min-h-[36px] text-[10px] text-slate-700"
               >
-                <span className="flex items-center gap-2">
-                  <Boxes className="w-4 h-4 text-slate-500" />
+                <span className="flex items-center gap-1.5">
+                  <Boxes className="w-3.5 h-3.5 text-slate-500" />
                   <span>Ekspor Laporan Stok (Excel)</span>
                 </span>
-                <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
+                <ArrowRight className="w-3 h-3 text-slate-400" />
               </button>
             </div>
           </div>

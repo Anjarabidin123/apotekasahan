@@ -75,9 +75,6 @@ export function Sidebar({
 
   return (
     <>
-      {/* ========================================================
-          1. Mobile Drawer Backdrop Overlay
-      ======================================================== */}
       {isMobileOpen && (
         <div
           data-testid="mobile-drawer-backdrop"
@@ -87,9 +84,6 @@ export function Sidebar({
         />
       )}
 
-      {/* ========================================================
-          2. Mobile Off-Canvas Drawer (md:hidden)
-      ======================================================== */}
       <aside
         data-testid="mobile-drawer"
         className={`fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] bg-white border-r border-slate-200 flex flex-col md:hidden transform transition-transform duration-300 ease-in-out shadow-2xl ${
@@ -99,8 +93,7 @@ export function Sidebar({
         aria-modal="true"
         aria-label="Menu Navigasi SIMAAF"
       >
-        {/* Drawer Header */}
-        <div className="p-4 border-b border-slate-200/80 bg-slate-50/70 flex items-center justify-between">
+        <div className="p-3 border-b border-slate-200/80 bg-slate-50/70 flex items-center justify-between">
           <div
             onClick={() => handleNavClick('dashboard')}
             className="flex items-center gap-3 cursor-pointer group min-w-0"
@@ -120,7 +113,6 @@ export function Sidebar({
             </div>
           </div>
 
-          {/* Close Button (>= 44x44px touch target) */}
           <button
             type="button"
             data-testid="mobile-drawer-close"
@@ -133,8 +125,7 @@ export function Sidebar({
           </button>
         </div>
 
-        {/* Drawer Nav Items */}
-        <div className="flex-1 overflow-y-auto px-3 py-3 space-y-1.5">
+        <div className="flex-1 overflow-y-auto px-2 py-1 space-y-0.5">
           <p className="px-2 pt-1 pb-1 text-[10px] font-black uppercase tracking-wider text-slate-500">
             {isAdmin ? 'Menu Eksekutif & Operasional' : 'Menu Operasional Lapangan'}
           </p>
@@ -148,7 +139,7 @@ export function Sidebar({
               return (
                 <div
                   key={item.id}
-                  className="flex items-center justify-between px-3 py-3 rounded-xl text-[13px] tracking-tight text-slate-400 bg-slate-50/50 border border-slate-200/50 select-none cursor-not-allowed opacity-60 font-bold min-h-[44px]"
+                  className="flex items-center justify-between px-2 py-1.5 rounded-xl text-[13px] tracking-tight text-slate-400 bg-slate-50/50 border border-slate-200/50 select-none cursor-not-allowed opacity-60 font-bold min-h-[40px]"
                   title="Khusus Akun Admin (Bu Anni)"
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
@@ -166,7 +157,7 @@ export function Sidebar({
                 type="button"
                 data-testid={`mobile-nav-${item.id}`}
                 onClick={() => handleNavClick(item.id)}
-                className={`w-full flex items-center justify-between px-3 py-3 rounded-xl text-[13px] tracking-tight transition-all text-left min-h-[44px] active:scale-[0.98] ${
+                className={`w-full flex items-center justify-between px-2 py-1.5 rounded-xl text-[13px] tracking-tight transition-all text-left min-h-[40px] active:scale-[0.98] ${
                   isActive
                     ? 'bg-blue-600 text-white font-black shadow-md shadow-blue-600/30 ring-1 ring-blue-500 border border-blue-600'
                     : 'bg-white border border-slate-200/80 hover:bg-slate-50 hover:border-blue-400 hover:text-blue-600 text-slate-900 font-extrabold shadow-2xs'
@@ -200,7 +191,6 @@ export function Sidebar({
           })}
         </div>
 
-        {/* Drawer Footer */}
         <div className="p-3 m-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs space-y-1 shadow-2xs shrink-0">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">
@@ -216,9 +206,6 @@ export function Sidebar({
         </div>
       </aside>
 
-      {/* ========================================================
-          3. Desktop Sidebar (hidden md:flex)
-      ======================================================== */}
       <aside
         data-testid="desktop-sidebar"
         className={`hidden md:flex bg-slate-100/80 border-r border-slate-200/90 flex-col transition-all duration-300 z-40 select-none shadow-[1px_0_12px_rgba(0,0,0,0.03)] backdrop-blur-md shrink-0 ${
@@ -246,7 +233,7 @@ export function Sidebar({
           )}
         </div>
 
-        <div className="flex-1 overflow-y-auto px-3 py-2 space-y-1.5">
+        <div className="flex-1 overflow-y-auto px-3 py-1 space-y-0.5">
           {!isCollapsed && (
             <p className="px-2 pt-1 pb-1 text-[10px] font-black uppercase tracking-wider text-slate-500">
               {isAdmin ? 'Menu Eksekutif & Operasional' : 'Menu Operasional Lapangan'}
@@ -262,7 +249,7 @@ export function Sidebar({
               return (
                 <div
                   key={item.id}
-                  className="flex items-center justify-between px-3 py-2.5 rounded-xl text-[13px] tracking-tight text-slate-400 bg-slate-50/50 border border-slate-200/50 select-none cursor-not-allowed opacity-60 font-bold min-h-[44px]"
+                  className="flex items-center justify-between px-2 py-1.5 rounded-xl text-[13px] tracking-tight text-slate-400 bg-slate-50/50 border border-slate-200/50 select-none cursor-not-allowed opacity-60 font-bold min-h-[40px]"
                   title="Khusus Akun Admin (Bu Anni)"
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
@@ -279,7 +266,7 @@ export function Sidebar({
                 key={item.id}
                 type="button"
                 onClick={() => setActivePage(item.id)}
-                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-[13px] tracking-tight transition-all group cursor-pointer text-left min-h-[44px] ${
+                className={`w-full flex items-center justify-between px-2 py-1.5 rounded-xl text-[13px] tracking-tight transition-all group cursor-pointer text-left min-h-[40px] ${
                   isActive
                     ? 'bg-blue-600 text-white font-black shadow-md shadow-blue-600/30 ring-1 ring-blue-500 border border-blue-600'
                     : 'bg-white/80 border border-slate-200/80 hover:bg-white hover:border-blue-400 hover:text-blue-600 text-slate-900 font-extrabold shadow-2xs'

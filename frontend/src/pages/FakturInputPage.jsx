@@ -162,7 +162,7 @@ export function FakturInputPage({ onBatchSaved }) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
         <div>
           <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 block mb-0.5">
@@ -202,7 +202,7 @@ export function FakturInputPage({ onBatchSaved }) {
         </div>
       )}
 
-      <div className="premium-card p-6 space-y-3">
+      <div className="premium-card p-4 space-y-3">
         <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 block">
           1. Unggah Foto Lembaran Faktur Fisik
         </span>
@@ -272,7 +272,7 @@ export function FakturInputPage({ onBatchSaved }) {
         </div>
       </div>
 
-      <div className="premium-card p-6 space-y-3.5">
+      <div className="premium-card p-4 space-y-3.5">
         <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 block">
           2. Pengaturan Distributor & Tanggal Masuk
         </span>

@@ -232,7 +232,7 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
         <div className="flex items-center gap-3">
@@ -317,7 +317,7 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
       
       {activeTab === 'identitas' && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
+          <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs space-y-3">
             <div className="border-b border-slate-100 pb-3">
               <h3 className="text-sm font-black text-slate-900 flex items-center gap-2">
                 <Building2 className="w-4 h-4 text-blue-600" />
@@ -1100,7 +1100,7 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
       
       {showSupportModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl border border-slate-200 animate-in fade-in zoom-in-95">
+          <div className="bg-white rounded-2xl max-w-md w-full p-4 space-y-4 shadow-xl border border-slate-200 animate-in fade-in zoom-in-95">
             <div className="flex items-center justify-between border-b border-slate-100 pb-2">
               <h4 className="text-sm font-black text-slate-900 flex items-center gap-2">
                 <LifeBuoy className="w-4 h-4 text-indigo-600" />

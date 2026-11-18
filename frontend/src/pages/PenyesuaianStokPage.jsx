@@ -133,7 +133,7 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
   const netSelisih = riwayat.reduce((acc, curr) => acc + (curr.selisih || 0), 0);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <div className="border-b border-slate-200/80 pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div>
           <div className="flex items-center gap-2">
@@ -188,8 +188,8 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
-        <div className="lg:col-span-7 bg-white rounded-2xl border border-slate-200/90 p-5 shadow-sm space-y-5">
-          <form onSubmit={handleSubmit} className="space-y-5">
+        <div className="lg:col-span-7 bg-white rounded-2xl border border-slate-200/90 p-3 shadow-sm space-y-3">
+          <form onSubmit={handleSubmit} className="space-y-3">
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <label className="text-xs font-black text-slate-800 flex items-center gap-1.5">
@@ -401,7 +401,7 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
           </form>
         </div>
 
-        <div className="lg:col-span-5 bg-white rounded-2xl border border-slate-200/90 p-5 shadow-sm space-y-4">
+        <div className="lg:col-span-5 bg-white rounded-2xl border border-slate-200/90 p-4 shadow-sm space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <div>
               <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">

@@ -112,9 +112,9 @@ export function KalenderTenggatPage() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200/90 shadow-sm">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white p-3 rounded-2xl border border-slate-200/90 shadow-sm">
         <div>
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-blue-600" />
@@ -327,7 +327,7 @@ export function KalenderTenggatPage() {
             </div>
 
             {selectedEvents.returEvents.length === 0 && selectedEvents.expEvents.length === 0 ? (
-              <div className="p-5 rounded-xl bg-slate-50/70 border border-slate-100 text-center space-y-1.5">
+              <div className="p-4 rounded-xl bg-slate-50/70 border border-slate-100 text-center space-y-1.5">
                 <CheckCircle2 className="w-6 h-6 text-emerald-500 mx-auto opacity-80" />
                 <p className="text-xs font-bold text-slate-800">Tidak Ada Jatuh Tempo</p>
                 <p className="text-[11px] text-slate-400 leading-relaxed">

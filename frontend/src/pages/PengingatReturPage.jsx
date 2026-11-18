@@ -163,7 +163,7 @@ export function PengingatReturPage({ onNavigateToPenyesuaian }) {
     .reduce((acc, curr) => acc + (curr.nilai_total || 0), 0);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-3">
       
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200/80 pb-3">
         <div>
@@ -220,13 +220,13 @@ export function PengingatReturPage({ onNavigateToPenyesuaian }) {
       )}
 
       
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
         <button
           onClick={() => {
             setActiveTab('retur');
             setSelectedBatchIds([]);
           }}
-          className={`p-3.5 rounded-2xl border text-left transition-all active:scale-[0.99] flex items-center justify-between cursor-pointer ${
+          className={`p-3 rounded-2xl border text-left transition-all active:scale-[0.99] flex items-center justify-between cursor-pointer ${
             activeTab === 'retur'
               ? 'bg-rose-50/60 border-rose-300 ring-2 ring-rose-500/20 shadow-xs'
               : 'bg-white border-slate-200/80 hover:border-slate-300 shadow-xs'
@@ -254,7 +254,7 @@ export function PengingatReturPage({ onNavigateToPenyesuaian }) {
             setActiveTab('kedaluwarsa');
             setSelectedBatchIds([]);
           }}
-          className={`p-3.5 rounded-2xl border text-left transition-all active:scale-[0.99] flex items-center justify-between cursor-pointer ${
+          className={`p-3 rounded-2xl border text-left transition-all active:scale-[0.99] flex items-center justify-between cursor-pointer ${
             activeTab === 'kedaluwarsa'
               ? 'bg-amber-50/60 border-amber-300 ring-2 ring-amber-500/20 shadow-xs'
               : 'bg-white border-slate-200/80 hover:border-slate-300 shadow-xs'
@@ -282,7 +282,7 @@ export function PengingatReturPage({ onNavigateToPenyesuaian }) {
             setActiveTab('menipis');
             setSelectedBatchIds([]);
           }}
-          className={`p-3.5 rounded-2xl border text-left transition-all active:scale-[0.99] flex items-center justify-between cursor-pointer ${
+          className={`p-3 rounded-2xl border text-left transition-all active:scale-[0.99] flex items-center justify-between cursor-pointer ${
             activeTab === 'menipis'
               ? 'bg-blue-50/60 border-blue-300 ring-2 ring-blue-500/20 shadow-xs'
               : 'bg-white border-slate-200/80 hover:border-slate-300 shadow-xs'
@@ -685,7 +685,7 @@ export function PengingatReturPage({ onNavigateToPenyesuaian }) {
       {bapModalData.isOpen && (
         <div
           data-testid="bap-modal"
-          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-y-auto"
+          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 overflow-y-auto"
           onClick={() => setBapModalData({ isOpen: false, batches: [] })}
         >
           <div
@@ -715,7 +715,7 @@ export function PengingatReturPage({ onNavigateToPenyesuaian }) {
             </div>
 
             {/* Scrollable Content */}
-            <div className="p-4 sm:p-6 overflow-y-auto space-y-4 text-xs flex-1">
+            <div className="p-3 sm:p-4 overflow-y-auto space-y-3 text-xs flex-1">
               {/* Pharmacy Letterhead */}
               <div className="text-center pb-4 border-b border-slate-200">
                 <h2 className="text-base font-black text-slate-950 tracking-tight">

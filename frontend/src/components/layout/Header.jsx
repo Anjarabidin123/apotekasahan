@@ -21,8 +21,8 @@ export function Header({
   };
 
   return (
-    <header className="h-16 border-b border-slate-200/80 bg-white/95 backdrop-blur-md sticky top-0 z-30 flex items-center justify-between px-3 sm:px-6 w-full max-w-full">
-      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+    <header className="h-14 border-b border-slate-200/80 bg-white/95 backdrop-blur-md sticky top-0 z-30 flex items-center justify-between px-2 sm:px-4 w-full max-w-full">
+      <div className="flex items-center gap-1 sm:gap-2 min-w-0">
         {/* Mobile Hamburger Button (>= 44x44px touch target) */}
         <button
           type="button"
@@ -67,7 +67,7 @@ export function Header({
         </div>
       </div>
 
-      <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+      <div className="flex items-center gap-1 sm:gap-2 shrink-0">
         <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold">
           <Calendar className="w-3.5 h-3.5 text-blue-600 shrink-0" />
           <span>Acuan: <strong className="text-slate-900">{tanggalAcuan || '2026-10-31'}</strong></span>
