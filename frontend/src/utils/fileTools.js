@@ -524,9 +524,9 @@ export async function parseUploadedDocument(file, obatList = [], distributors = 
         const fallback = await api.ekstrakFakturFoto(file);
         return {
           sukses: true,
-          metode: 'Mode Lokal (Fallback)',
+          metode: 'Data Simulasi (Fallback)',
           data: fallback.data,
-          pesan: `Token AI gagal terhubung (${err.message}). Menampilkan data contoh agar input tetap berjalan.`,
+          pesan: `Token AI gagal terhubung (${err.message}). Menampilkan data simulasi agar input tetap berjalan.`,
         };
       }
     }
@@ -534,9 +534,9 @@ export async function parseUploadedDocument(file, obatList = [], distributors = 
     const sim = await api.ekstrakFakturFoto(file);
     return {
       sukses: true,
-      metode: isPdf ? 'Pemindaian PDF Demo Lokal' : 'Pemindaian Demo Lokal',
+      metode: isPdf ? 'Pemindaian PDF Simulasi' : 'Pemindaian Simulasi',
       data: sim.data,
-      pesan: `Berkas "${file.name}" dimuat dalam mode lokal. Isi Token Gemini di Pengaturan untuk membaca PDF/foto secara otomatis.`,
+      pesan: `Berkas "${file.name}" dimuat dengan data simulasi. Masukkan Token AI jika ingin mengekstrak foto faktur asli.`,
     };
   }
 
