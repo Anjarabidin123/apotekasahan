@@ -114,8 +114,8 @@ export function Sidebar({
           compactDesktop ? 'justify-center px-1.5' : 'justify-between px-2.5'
         } py-1.5 rounded-xl text-[13px] tracking-tight transition-all duration-150 cursor-pointer text-left min-h-[42px] border active:scale-[0.98] ${
           isActive
-            ? 'bg-blue-600 text-white font-bold border-blue-600 shadow-[0_4px_12px_rgba(37,99,235,0.24)]'
-            : 'bg-white/85 hover:bg-white text-slate-700 hover:text-slate-950 font-semibold border-slate-200/90 hover:border-blue-300/80 shadow-[0_1px_2px_rgba(15,23,42,0.03)] hover:shadow-xs'
+            ? 'bg-emerald-600 text-white font-bold border-emerald-600 shadow-[0_4px_12px_rgba(5,150,105,0.24)]'
+            : 'bg-white/85 hover:bg-white text-slate-700 hover:text-slate-950 font-semibold border-slate-200/90 hover:border-emerald-300/80 shadow-[0_1px_2px_rgba(15,23,42,0.03)] hover:shadow-xs'
         }`}
         title={compactDesktop ? item.label : undefined}
       >
@@ -124,7 +124,7 @@ export function Sidebar({
             className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
               isActive
                 ? 'bg-white/20 text-white'
-                : 'bg-slate-100/90 text-slate-500 group-hover:bg-blue-50 group-hover:text-blue-600'
+                : 'bg-slate-100/90 text-slate-500 group-hover:bg-emerald-50 group-hover:text-emerald-700'
             }`}
           >
             <Icon className="w-4 h-4" strokeWidth={isActive ? 2.4 : 2.1} />
@@ -136,7 +136,7 @@ export function Sidebar({
           <span
             className={`text-[11px] min-w-[20px] h-5 px-1.5 rounded-full font-bold flex items-center justify-center tabular-nums shrink-0 ${
               isActive
-                ? 'bg-white text-blue-700'
+                ? 'bg-white text-emerald-700'
                 : 'bg-rose-600 text-white'
             }`}
           >
@@ -148,16 +148,15 @@ export function Sidebar({
   };
 
   return (
-    /* Sidebar Desktop dengan Garis Batas & Bayangan Pemisah ke Konten */
     <aside
       data-testid="desktop-sidebar"
-      className={`hidden md:flex bg-[#f8faff] border-r border-slate-200/90 shadow-[4px_0_18px_-4px_rgba(15,23,42,0.07)] text-slate-900 flex-col transition-all duration-300 z-40 select-none shrink-0 relative ${
+      className={`hidden md:flex bg-[#f6fbf8] border-r border-emerald-950/10 shadow-[4px_0_18px_-4px_rgba(6,78,59,0.06)] text-slate-900 flex-col transition-all duration-300 z-40 select-none shrink-0 relative ${
         isCollapsed ? 'w-[76px]' : 'w-[228px]'
       }`}
     >
       <div
         onClick={() => setActivePage(isAdmin ? 'dashboard' : 'inventori')}
-        className={`h-14 px-3.5 border-b border-slate-200/80 bg-white/75 flex items-center ${
+        className={`h-14 px-3.5 border-b border-emerald-950/10 bg-white/80 flex items-center ${
           isCollapsed ? 'justify-center' : 'gap-2.5'
         } cursor-pointer group`}
         title="Apotek Asahan Farma - SIMAAF"
@@ -168,7 +167,7 @@ export function Sidebar({
             <h2 className="text-[15px] font-black text-slate-950 tracking-tight truncate leading-none">
               SIMAAF
             </h2>
-            <p className="text-[11px] font-semibold text-blue-600 truncate mt-0.5 leading-none">
+            <p className="text-[11px] font-semibold text-emerald-700 truncate mt-0.5 leading-none">
               Apotek Asahan Farma
             </p>
           </div>
@@ -202,7 +201,7 @@ export function Sidebar({
             </span>
           </div>
           <p className="text-slate-500 truncate">Jl. Imam Bonjol No. 331</p>
-          <p className="text-[10px] text-slate-400 font-mono">NIB 1210210063257</p>
+          <p className="text-[10px] text-slate-400">Pengawasan Stok &amp; Retur</p>
         </div>
       )}
     </aside>

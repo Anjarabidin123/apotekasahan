@@ -1,14 +1,43 @@
-import React from 'react';
-import { FileText, Printer, X } from 'lucide-react';
+import React, { useState } from 'react';
+import { CheckCircle2, FileText, Printer, X } from 'lucide-react';
 import { formatRupiah } from '../../utils/formatters';
 
-export function BeritaAcaraModal({ isOpen, batches, apotekProfile, onClose }) {
+export function BeritaAcaraModal({
+  isOpen,
+  batches,
+  apotekProfile,
+  onClose,
+  onConfirmRetur,
+}) {
+  const [catatanRetur, setCatatanRetur] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
   if (!isOpen) return null;
+
+  const actionableBatches = (batches || []).filter(
+    (b) =>
+      b.status_retur !== 'lewat_batas' &&
+      b.status_retur !== 'tidak_bisa_diretur' &&
+      b.status_retur !== 'sudah_diretur' &&
+      b.status_retur !== 'dibuang' &&
+      (b.jumlah_saat_ini ?? b.stok ?? 0) > 0
+  );
 
   const totalNilai = batches.reduce(
     (acc, curr) => acc + (curr.nilai_total || curr.nilai || 0),
     0
   );
+
+  const handleConfirm = async () => {
+    if (!onConfirmRetur || actionableBatches.length === 0) return;
+    setSubmitting(true);
+    try {
+      await onConfirmRetur(actionableBatches, catatanRetur);
+      setCatatanRetur('');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <div
@@ -23,7 +52,7 @@ export function BeritaAcaraModal({ isOpen, batches, apotekProfile, onClose }) {
         <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/70 shrink-0">
           <div>
             <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-              <FileText className="w-4 h-4 text-blue-600" />
+              <FileText className="w-4 h-4 text-emerald-600" />
               Berita Acara Pengembalian (BAP) Obat
             </h3>
             <p className="text-[11px] text-slate-500 mt-0.5">Dokumen resmi pengajuan retur PBF</p>
@@ -48,7 +77,7 @@ export function BeritaAcaraModal({ isOpen, batches, apotekProfile, onClose }) {
               {apotekProfile?.alamat || 'Jl. Imam Bonjol No.331, Kisaran Timur, Kab. Asahan, Sumatera Utara'}
             </p>
             <p className="text-slate-400 text-[10px] font-mono">
-              NIB: {apotekProfile?.nib || '1210210063257'} • SIA: {apotekProfile?.sia || '503/SIA/042/DPMPTSP/2021'} • APJ: {apotekProfile?.apoteker_pj || 'apt. Nurul Hasanah, S.Farm'}
+              SIA: {apotekProfile?.sia || '503/SIA/042/DPMPTSP/2021'} • APJ: {apotekProfile?.apoteker_pj || 'apt. Nurul Hasanah, S.Farm'}
             </p>
           </div>
 
@@ -97,7 +126,7 @@ export function BeritaAcaraModal({ isOpen, batches, apotekProfile, onClose }) {
             ))}
             <div className="p-3 bg-slate-50 border-t border-slate-200 flex items-center justify-between font-extrabold">
               <span className="text-slate-700">Total Pengajuan Retur</span>
-              <span className="text-blue-700 tabular-nums">{formatRupiah(totalNilai)}</span>
+              <span className="text-emerald-700 tabular-nums">{formatRupiah(totalNilai)}</span>
             </div>
           </div>
 
@@ -136,7 +165,7 @@ export function BeritaAcaraModal({ isOpen, batches, apotekProfile, onClose }) {
               <tfoot className="bg-slate-50 border-t border-slate-200 font-extrabold">
                 <tr>
                   <td colSpan={6} className="py-2 px-3 text-right">Total Nilai Pengajuan Retur:</td>
-                  <td className="py-2 px-3 text-right text-blue-700 whitespace-nowrap">
+                  <td className="py-2 px-3 text-right text-emerald-700 whitespace-nowrap">
                     {formatRupiah(totalNilai)}
                   </td>
                 </tr>
@@ -166,26 +195,53 @@ export function BeritaAcaraModal({ isOpen, batches, apotekProfile, onClose }) {
           </div>
         </div>
 
-        <div className="p-4 border-t border-slate-100 bg-slate-50/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 shrink-0">
-          <span className="text-[11px] text-slate-500 font-medium">
-            Standar CDOB BPOM • SIMAAF
-          </span>
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            <button
-              type="button"
-              onClick={() => window.print()}
-              className="btn-primary min-h-[44px] flex-1 sm:flex-initial flex items-center justify-center gap-1.5 cursor-pointer"
-            >
-              <Printer className="w-4 h-4" />
-              <span>Cetak Dokumen BAP</span>
-            </button>
-            <button
-              type="button"
-              onClick={onClose}
-              className="btn-outline min-h-[44px] px-4 cursor-pointer"
-            >
-              Tutup
-            </button>
+        <div className="p-4 border-t border-slate-100 bg-slate-50/80 space-y-2.5 shrink-0">
+          {onConfirmRetur && actionableBatches.length > 0 && (
+            <input
+              type="text"
+              value={catatanRetur}
+              onChange={(e) => setCatatanRetur(e.target.value)}
+              placeholder="Catatan penyerahan retur ke PBF (opsional)..."
+              className="w-full h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+            />
+          )}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+            <span className="text-[11px] text-slate-500 font-medium">
+              Dokumen Internal Retur PBF • SIMAAF
+            </span>
+            <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+              {onConfirmRetur && actionableBatches.length > 0 && (
+                <button
+                  type="button"
+                  data-testid="bap-confirm-retur-btn"
+                  disabled={submitting}
+                  onClick={handleConfirm}
+                  className="btn-primary min-h-[44px] flex-1 sm:flex-initial flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-60"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>
+                    {submitting
+                      ? 'Mencatat...'
+                      : `Konfirmasi & Catat Retur (${actionableBatches.length})`}
+                  </span>
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="btn-outline min-h-[44px] flex-1 sm:flex-initial flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <Printer className="w-4 h-4 text-emerald-600" />
+                <span>Cetak Dokumen BAP</span>
+              </button>
+              <button
+                type="button"
+                onClick={onClose}
+                className="btn-outline min-h-[44px] px-4 cursor-pointer"
+              >
+                Tutup
+              </button>
+            </div>
           </div>
         </div>
       </div>

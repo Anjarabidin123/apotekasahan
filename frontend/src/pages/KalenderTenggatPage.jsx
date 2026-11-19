@@ -34,7 +34,7 @@ const STORAGE_NOTES_KEY = 'simaaf_calendar_notes';
 
 const KATEGORI_CATATAN = [
   { id: 'merah', label: 'Tandai Merah / Penting', chipClass: 'bg-rose-600 text-white' },
-  { id: 'pbf', label: 'Jadwal Sales PBF', chipClass: 'bg-blue-600 text-white' },
+  { id: 'pbf', label: 'Jadwal Sales PBF', chipClass: 'bg-teal-600 text-white' },
   { id: 'opname', label: 'Cek Rak / Opname', chipClass: 'bg-emerald-600 text-white' },
 ];
 
@@ -423,7 +423,7 @@ export function KalenderTenggatPage() {
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="text-base sm:text-lg font-extrabold text-slate-900 flex items-center gap-2">
-              <span className="p-2 rounded-xl bg-blue-50 text-blue-600 shrink-0">
+              <span className="p-2 rounded-xl bg-emerald-50 text-emerald-600 shrink-0">
                 <CalendarIcon className="w-4 h-4 sm:w-5 sm:h-5" />
               </span>
               <span>Kalender Operasional &amp; Tenggat PBF</span>
@@ -431,6 +431,9 @@ export function KalenderTenggatPage() {
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-bold">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               Hari Ini: {formatShortDateId(realTodayIso)}
+            </span>
+            <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-[10.5px] font-bold">
+              Data Simulasi
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-1">
@@ -450,7 +453,7 @@ export function KalenderTenggatPage() {
           <button
             type="button"
             onClick={handleExportIcs}
-            className="min-h-[42px] px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer"
+            className="min-h-[42px] px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer"
           >
             <CalendarCheck className="w-3.5 h-3.5" />
             <span>Ekspor .ICS</span>
@@ -476,7 +479,7 @@ export function KalenderTenggatPage() {
               aria-label="Pilih bulan"
               value={currentMonth}
               onChange={(e) => setCurrentMonth(Number(e.target.value))}
-              className="min-h-[44px] px-2.5 sm:px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs sm:text-sm font-extrabold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+              className="min-h-[44px] px-2.5 sm:px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs sm:text-sm font-extrabold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
             >
               {NAMA_BULAN.map((nama, idx) => (
                 <option key={nama} value={idx}>
@@ -489,7 +492,7 @@ export function KalenderTenggatPage() {
               aria-label="Pilih tahun"
               value={currentYear}
               onChange={(e) => setCurrentYear(Number(e.target.value))}
-              className="min-h-[44px] px-2.5 sm:px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs sm:text-sm font-extrabold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+              className="min-h-[44px] px-2.5 sm:px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs sm:text-sm font-extrabold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
             >
               {yearOptions.map((y) => (
                 <option key={y} value={y}>
@@ -515,8 +518,8 @@ export function KalenderTenggatPage() {
               onClick={handleJumpToday}
               className={`min-h-[40px] px-3 py-1.5 rounded-xl text-xs font-bold border transition-colors cursor-pointer ${
                 isViewingTodayMonth && selectedDate === realTodayIso
-                  ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
-                  : 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100'
+                  ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                  : 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
               }`}
             >
               Hari Ini ({realNow.getDate()} {NAMA_BULAN[realNow.getMonth()].slice(0, 3)})
@@ -552,7 +555,7 @@ export function KalenderTenggatPage() {
             { id: 'retur', label: 'Retur PBF', count: monthlyStats.returCount, active: 'bg-rose-600 text-white border-rose-600', dot: 'bg-rose-600' },
             { id: 'ed', label: 'Kedaluwarsa', count: monthlyStats.edCount, active: 'bg-amber-600 text-white border-amber-600', dot: 'bg-amber-500' },
             { id: 'libur', label: 'Tgl Merah', count: monthlyStats.redDateCount, active: 'bg-red-700 text-white border-red-700', dot: 'bg-red-600' },
-            { id: 'catatan', label: 'Catatan', count: monthlyStats.noteCount, active: 'bg-blue-600 text-white border-blue-600', dot: 'bg-blue-600' },
+            { id: 'catatan', label: 'Catatan', count: monthlyStats.noteCount, active: 'bg-teal-600 text-white border-teal-600', dot: 'bg-teal-600' },
           ].map((tab) => {
             const isActive = filterType === tab.id;
             return (
@@ -651,7 +654,7 @@ export function KalenderTenggatPage() {
                     ? 'bg-rose-50/35 text-slate-400 hover:bg-rose-50/60'
                     : 'bg-slate-100/70 text-slate-400 hover:bg-slate-100';
                 } else if (isSelected) {
-                  bgClass = 'bg-blue-50/85 ring-2 ring-inset ring-blue-600 z-10';
+                  bgClass = 'bg-emerald-50/80 ring-2 ring-inset ring-emerald-600 z-10';
                 } else if (hasUrgentRedMark || (showHolidayMark && holiday.isHoliday)) {
                   bgClass = 'bg-rose-50/80 hover:bg-rose-100/80';
                 } else if (showHolidayMark && holiday.isSunday) {
@@ -659,7 +662,7 @@ export function KalenderTenggatPage() {
                 } else if (hasEd) {
                   bgClass = 'bg-amber-50/45 hover:bg-amber-50/80';
                 } else if (isToday) {
-                  bgClass = 'bg-blue-50/45 hover:bg-blue-50/80';
+                  bgClass = 'bg-emerald-50/45 hover:bg-emerald-50/80';
                 }
 
                 // Warna angka tanggal
@@ -672,8 +675,8 @@ export function KalenderTenggatPage() {
                 } else if (isToday) {
                   dayNumberClass =
                     holiday.isRedDate || hasUrgentRedMark
-                      ? 'bg-rose-600 text-white font-extrabold ring-2 ring-blue-600 ring-offset-1 shadow-xs'
-                      : 'bg-blue-600 text-white font-extrabold shadow-xs';
+                      ? 'bg-rose-600 text-white font-extrabold ring-2 ring-emerald-600 ring-offset-1 shadow-xs'
+                      : 'bg-emerald-600 text-white font-extrabold shadow-xs';
                 } else if (hasUrgentRedMark) {
                   dayNumberClass =
                     'bg-rose-600 text-white font-extrabold shadow-xs';
@@ -725,7 +728,7 @@ export function KalenderTenggatPage() {
 
                       <div className="flex items-center gap-0.5 shrink-0">
                         {isToday && cell.inCurrentMonth && (
-                          <span className="hidden sm:inline-block px-1 py-0.5 rounded bg-blue-100 border border-blue-300 text-blue-800 text-[9px] font-extrabold leading-none">
+                          <span className="hidden sm:inline-block px-1 py-0.5 rounded bg-emerald-100 border border-emerald-300 text-emerald-800 text-[9px] font-extrabold leading-none">
                             Hari Ini
                           </span>
                         )}
@@ -761,7 +764,7 @@ export function KalenderTenggatPage() {
                           <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
                         )}
                         {hasRegularNote && !hasRedNote && (
-                          <span className="w-2 h-2 rounded-full bg-blue-600 shrink-0" />
+                          <span className="w-2 h-2 rounded-full bg-teal-600 shrink-0" />
                         )}
                       </div>
                       {(hasUrgentRedMark || (showHolidayMark && holiday.isHoliday)) && (
@@ -817,7 +820,7 @@ export function KalenderTenggatPage() {
                         return (
                           <span
                             key={item.key}
-                            className={`block truncate px-1 py-0.5 rounded-r bg-blue-50 text-blue-800 text-[10px] font-semibold leading-tight border-l-[3px] border-blue-500 ${
+                            className={`block truncate px-1 py-0.5 rounded-r bg-teal-50 text-teal-800 text-[10px] font-semibold leading-tight border-l-[3px] border-teal-500 ${
                               item.done ? 'line-through opacity-60' : ''
                             }`}
                           >
@@ -859,8 +862,12 @@ export function KalenderTenggatPage() {
               <span>Batas Kedaluwarsa (ED)</span>
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded-full bg-blue-600 shrink-0" />
-              <span>Hari Ini / Catatan Jadwal</span>
+              <span className="w-3 h-3 rounded-full bg-emerald-600 shrink-0" />
+              <span>Hari Ini</span>
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <span className="w-3 h-3 rounded-full bg-teal-600 shrink-0" />
+              <span>Catatan Jadwal PBF / Fokus Tanggal</span>
             </span>
           </div>
         </div>
@@ -877,7 +884,7 @@ export function KalenderTenggatPage() {
               </h3>
               <div className="flex flex-wrap items-center gap-1.5 mt-2">
                 {selectedDate === realTodayIso && (
-                  <span className="px-2 py-0.5 rounded-full bg-blue-600 text-white text-[10px] font-extrabold">
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[10px] font-extrabold">
                     Hari Ini
                   </span>
                 )}
@@ -899,7 +906,7 @@ export function KalenderTenggatPage() {
                 selectedHoliday.isRedDate || selectedBucket.returs.length > 0
                   ? 'bg-rose-600 border-rose-700 text-white'
                   : selectedDate === realTodayIso
-                  ? 'bg-blue-600 border-blue-700 text-white'
+                  ? 'bg-emerald-600 border-emerald-700 text-white'
                   : 'bg-slate-50 border-slate-300 text-slate-900'
               }`}
             >
@@ -1011,7 +1018,7 @@ export function KalenderTenggatPage() {
                 value={noteText}
                 onChange={(e) => setNoteText(e.target.value)}
                 placeholder="Mis. Sales PBF ambil retur / Cek rak..."
-                className="w-full min-h-[42px] px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full min-h-[42px] px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
               <div className="flex flex-wrap gap-1.5">
                 {KATEGORI_CATATAN.map((kat) => {
@@ -1050,7 +1057,9 @@ export function KalenderTenggatPage() {
                     className={`p-2.5 rounded-xl border flex items-start justify-between gap-2 ${
                       note.category === 'merah'
                         ? 'bg-rose-50 border-rose-200'
-                        : 'bg-blue-50/60 border-blue-200'
+                        : note.category === 'pbf'
+                        ? 'bg-teal-50/70 border-teal-200'
+                        : 'bg-emerald-50/60 border-emerald-200'
                     }`}
                   >
                     <button
@@ -1064,7 +1073,9 @@ export function KalenderTenggatPage() {
                             ? 'bg-emerald-600 border-emerald-600 text-white'
                             : note.category === 'merah'
                             ? 'border-rose-500 bg-white'
-                            : 'border-blue-500 bg-white'
+                            : note.category === 'pbf'
+                            ? 'border-teal-500 bg-white'
+                            : 'border-emerald-500 bg-white'
                         }`}
                       >
                         {note.done && <CheckCircle2 className="w-3 h-3" />}
@@ -1150,12 +1161,12 @@ export function KalenderTenggatPage() {
                   key={n.id}
                   type="button"
                   onClick={() => jumpToIsoDate(n.date)}
-                  className="w-full text-left p-2.5 rounded-xl bg-blue-50/60 border border-blue-200 hover:bg-blue-50 flex items-center justify-between gap-2 transition-colors cursor-pointer"
+                  className="w-full text-left p-2.5 rounded-xl bg-emerald-50/60 border border-emerald-200 hover:bg-emerald-50 flex items-center justify-between gap-2 transition-colors cursor-pointer"
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
                     <span
                       className={`w-8 h-8 rounded-lg text-white text-xs font-extrabold flex items-center justify-center shrink-0 ${
-                        n.category === 'merah' ? 'bg-rose-600' : 'bg-blue-600'
+                        n.category === 'merah' ? 'bg-rose-600' : 'bg-emerald-600'
                       }`}
                     >
                       {Number(n.date.slice(8, 10))}
@@ -1169,7 +1180,7 @@ export function KalenderTenggatPage() {
                       </p>
                     </div>
                   </div>
-                  <span className="text-[10px] font-bold text-blue-700 shrink-0">
+                  <span className="text-[10px] font-bold text-emerald-700 shrink-0">
                     Buka →
                   </span>
                 </button>
@@ -1182,7 +1193,7 @@ export function KalenderTenggatPage() {
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5 space-y-3">
           <div className="flex items-center justify-between gap-2">
             <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
-              <Clock className="w-4 h-4 text-blue-600 shrink-0" />
+              <Clock className="w-4 h-4 text-emerald-600 shrink-0" />
               <span>
                 Agenda Tenggat Batch ({NAMA_BULAN[currentMonth]} {currentYear})
               </span>

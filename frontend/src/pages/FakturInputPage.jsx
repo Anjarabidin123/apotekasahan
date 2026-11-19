@@ -54,13 +54,15 @@ export function FakturInputPage({ onBatchSaved }) {
    */
   const loadMasters = async () => {
     try {
-      const [dList, oList] = await Promise.all([
+      const [dList, oList, settings] = await Promise.all([
         api.getDistributors(),
         api.getObatList(),
+        api.getSettings().catch(() => null),
       ]);
       setDistributors(dList);
       setObatList(oList);
       if (dList.length > 0) setSelectedDistributorId(dList[0].id);
+      if (settings?.tanggal_acuan) setTanggalMasuk(settings.tanggal_acuan);
     } catch (e) {
       console.error('Gagal memuat master data:', e);
     }
@@ -106,7 +108,7 @@ export function FakturInputPage({ onBatchSaved }) {
       const res = await api.ekstrakFakturFoto(null);
       setExtractionInfo({
         fileName: 'Contoh_Faktur_PBF.jpg',
-        metode: 'Simulasi Contoh Lokal',
+        metode: 'Data Simulasi',
         pesan: 'Data contoh berhasil dimuat ke tabel koreksi.',
       });
       setSelectedDistributorId(res.data.distributor_id);
@@ -237,7 +239,7 @@ export function FakturInputPage({ onBatchSaved }) {
       {/* Bilah Alat Ringkas & Tombol 3 Kolom Seimbang */}
       <div className="bg-white rounded-2xl border border-slate-200/80 p-3.5 sm:p-4 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div className="flex items-center gap-2.5 min-w-0">
-          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
             <FileSpreadsheet className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
           <div className="min-w-0">
@@ -245,16 +247,12 @@ export function FakturInputPage({ onBatchSaved }) {
               <h2 className="text-sm sm:text-base font-bold text-slate-900">
                 Penerimaan &amp; Impor Faktur
               </h2>
-              <span
-                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${
-                  hasAiToken
-                    ? 'bg-blue-50 text-blue-700 border-blue-200'
-                    : 'bg-slate-100 text-slate-600 border-slate-200'
-                }`}
-              >
-                <Sparkles className="w-3 h-3" />
-                {hasAiToken ? `AI ${aiConfig.provider.toUpperCase()}` : 'Mode Lokal'}
-              </span>
+              {hasAiToken && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border bg-emerald-50 text-emerald-700 border-emerald-200">
+                  <Sparkles className="w-3 h-3" />
+                  {`AI ${aiConfig.provider.toUpperCase()}`}
+                </span>
+              )}
             </div>
             <p className="text-[11px] sm:text-xs text-slate-500 truncate">
               Foto faktur, Excel (.csv/.xlsx), Word, atau input manual.
@@ -268,7 +266,7 @@ export function FakturInputPage({ onBatchSaved }) {
             onClick={() => setShowAiModal(true)}
             className="inline-flex items-center justify-center gap-1 px-2 sm:px-3 min-h-[42px] sm:min-h-0 h-10 sm:h-9 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-[11px] sm:text-xs font-bold transition"
           >
-            <KeyRound className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+            <KeyRound className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
             <span className="truncate">Token AI</span>
           </button>
 
@@ -277,7 +275,7 @@ export function FakturInputPage({ onBatchSaved }) {
             onClick={downloadTemplateFakturCsv}
             className="inline-flex items-center justify-center gap-1 px-2 sm:px-3 min-h-[42px] sm:min-h-0 h-10 sm:h-9 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-[11px] sm:text-xs font-semibold transition"
           >
-            <Download className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+            <Download className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
             <span className="truncate">Template</span>
           </button>
 
@@ -285,7 +283,7 @@ export function FakturInputPage({ onBatchSaved }) {
             type="button"
             onClick={handleSimulateDummyInvoice}
             disabled={isProcessing}
-            className="inline-flex items-center justify-center gap-1 px-2 sm:px-3 min-h-[42px] sm:min-h-0 h-10 sm:h-9 rounded-xl border border-blue-200 bg-blue-50/80 hover:bg-blue-100 text-blue-700 text-[11px] sm:text-xs font-bold transition disabled:opacity-60"
+            className="inline-flex items-center justify-center gap-1 px-2 sm:px-3 min-h-[42px] sm:min-h-0 h-10 sm:h-9 rounded-xl border border-emerald-200 bg-emerald-50/80 hover:bg-emerald-100 text-emerald-700 text-[11px] sm:text-xs font-bold transition disabled:opacity-60"
           >
             <FileText className="w-3.5 h-3.5 shrink-0" />
             <span className="truncate">Contoh</span>
@@ -294,8 +292,8 @@ export function FakturInputPage({ onBatchSaved }) {
       </div>
 
       {successMsg && (
-        <div className="p-3.5 rounded-2xl bg-blue-50 border border-blue-200 text-blue-800 text-xs flex items-center gap-2.5">
-          <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0" />
+        <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2.5">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
           <span className="font-semibold">{successMsg}</span>
         </div>
       )}
@@ -319,7 +317,7 @@ export function FakturInputPage({ onBatchSaved }) {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-stretch">
-          <div className="md:col-span-2 border-2 border-dashed border-slate-200 hover:border-blue-500 rounded-2xl p-3.5 sm:p-4 flex flex-col justify-center bg-slate-50/60 hover:bg-blue-50/30 transition space-y-3">
+          <div className="md:col-span-2 border-2 border-dashed border-slate-200 hover:border-emerald-500 rounded-2xl p-3.5 sm:p-4 flex flex-col justify-center bg-slate-50/60 hover:bg-emerald-50/30 transition space-y-3">
             <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2">
               <label className="btn-primary h-11 min-h-[44px] px-3.5 rounded-xl cursor-pointer flex items-center justify-center gap-1.5 text-xs font-bold text-white">
                 <Camera className="w-4 h-4 shrink-0" />
@@ -334,7 +332,7 @@ export function FakturInputPage({ onBatchSaved }) {
               </label>
 
               <label className="btn-outline h-11 min-h-[44px] px-3.5 rounded-xl cursor-pointer flex items-center justify-center gap-1.5 text-xs font-bold text-slate-700 bg-white">
-                <UploadCloud className="w-4 h-4 text-blue-600 shrink-0" />
+                <UploadCloud className="w-4 h-4 text-emerald-600 shrink-0" />
                 <span>Pilih File</span>
                 <input
                   type="file"
@@ -347,7 +345,7 @@ export function FakturInputPage({ onBatchSaved }) {
               <button
                 type="button"
                 onClick={handleAddRow}
-                className="col-span-2 sm:col-span-1 h-11 min-h-[44px] px-3.5 rounded-xl bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 text-xs font-bold inline-flex items-center justify-center gap-1.5 transition"
+                className="col-span-2 sm:col-span-1 h-11 min-h-[44px] px-3.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 text-xs font-bold inline-flex items-center justify-center gap-1.5 transition"
               >
                 <Plus className="w-4 h-4 shrink-0" />
                 <span>Tambah Obat Manual</span>
@@ -365,7 +363,7 @@ export function FakturInputPage({ onBatchSaved }) {
           >
             {isProcessing ? (
               <div className="space-y-2">
-                <div className="w-7 h-7 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto" />
+                <div className="w-7 h-7 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto" />
                 <p className="text-xs font-bold text-slate-800">Memproses berkas...</p>
                 <p className="text-[11px] text-slate-500">
                   Mengekstrak item obat, batch, &amp; ED
@@ -373,13 +371,13 @@ export function FakturInputPage({ onBatchSaved }) {
               </div>
             ) : extractionInfo ? (
               <div className="space-y-1.5">
-                <div className="w-9 h-9 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center mx-auto">
+                <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto">
                   <CheckCircle2 className="w-4 h-4" />
                 </div>
                 <p className="text-xs font-bold text-slate-900 truncate max-w-[200px]">
                   {extractionInfo.fileName}
                 </p>
-                <span className="inline-block px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-bold">
+                <span className="inline-block px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold">
                   {extractionInfo.metode}
                 </span>
                 <p className="text-[11px] text-slate-500 leading-snug">
@@ -410,7 +408,7 @@ export function FakturInputPage({ onBatchSaved }) {
             <select
               value={selectedDistributorId}
               onChange={(e) => setSelectedDistributorId(e.target.value)}
-              className="w-full text-xs h-11 sm:h-10 px-3 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-semibold"
+              className="w-full text-xs h-11 sm:h-10 px-3 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-semibold"
             >
               {distributors.map((d) => (
                 <option key={d.id} value={d.id}>
@@ -428,7 +426,7 @@ export function FakturInputPage({ onBatchSaved }) {
               type="date"
               value={tanggalMasuk}
               onChange={(e) => setTanggalMasuk(e.target.value)}
-              className="w-full text-xs h-11 sm:h-10 px-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
+              className="w-full text-xs h-11 sm:h-10 px-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-medium"
             />
           </div>
 
@@ -441,7 +439,7 @@ export function FakturInputPage({ onBatchSaved }) {
               value={catatan}
               onChange={(e) => setCatatan(e.target.value)}
               placeholder="Contoh: FAK-2026/10/089"
-              className="w-full text-xs h-11 sm:h-10 px-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
+              className="w-full text-xs h-11 sm:h-10 px-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-medium"
             />
           </div>
         </div>
@@ -466,7 +464,7 @@ export function FakturInputPage({ onBatchSaved }) {
                 onClick={handleExportDraftCsv}
                 className="inline-flex items-center gap-1.5 px-3 min-h-[44px] sm:min-h-0 h-11 sm:h-9 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition"
               >
-                <Download className="w-3.5 h-3.5 text-blue-600" />
+                <Download className="w-3.5 h-3.5 text-emerald-600" />
                 <span>Ekspor Draft CSV</span>
               </button>
             )}
@@ -493,7 +491,7 @@ export function FakturInputPage({ onBatchSaved }) {
               {items.map((item, idx) => (
                 <div key={idx} className="p-4 space-y-3 bg-white">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2.5 py-1 rounded-lg">
+                    <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-lg">
                       Item #{idx + 1}
                     </span>
                     <button
@@ -513,7 +511,7 @@ export function FakturInputPage({ onBatchSaved }) {
                     <select
                       value={item.obat_id}
                       onChange={(e) => updateItem(idx, 'obat_id', e.target.value)}
-                      className="w-full text-xs h-11 px-3 rounded-xl border border-slate-200 font-bold bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full text-xs h-11 px-3 rounded-xl border border-slate-200 font-bold bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     >
                       {obatList.map((o) => (
                         <option key={o.id} value={o.id}>
@@ -532,7 +530,7 @@ export function FakturInputPage({ onBatchSaved }) {
                         type="text"
                         value={item.nomor_batch}
                         onChange={(e) => updateItem(idx, 'nomor_batch', e.target.value)}
-                        className="w-full text-xs h-11 px-3 rounded-xl border border-slate-200 font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full text-xs h-11 px-3 rounded-xl border border-slate-200 font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500"
                       />
                     </div>
                     <div>
@@ -543,7 +541,7 @@ export function FakturInputPage({ onBatchSaved }) {
                         type="date"
                         value={item.tanggal_kedaluwarsa}
                         onChange={(e) => updateItem(idx, 'tanggal_kedaluwarsa', e.target.value)}
-                        className="w-full text-xs h-11 px-2.5 rounded-xl border border-slate-200 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full text-xs h-11 px-2.5 rounded-xl border border-slate-200 font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500"
                       />
                     </div>
                   </div>
@@ -558,7 +556,7 @@ export function FakturInputPage({ onBatchSaved }) {
                         min="1"
                         value={item.jumlah}
                         onChange={(e) => updateItem(idx, 'jumlah', e.target.value)}
-                        className="w-full text-xs h-11 px-3 rounded-xl border border-slate-200 text-center font-bold focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full text-xs h-11 px-3 rounded-xl border border-slate-200 text-center font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500"
                       />
                     </div>
                     <div>
@@ -570,7 +568,7 @@ export function FakturInputPage({ onBatchSaved }) {
                         step="500"
                         value={item.harga_beli_satuan}
                         onChange={(e) => updateItem(idx, 'harga_beli_satuan', e.target.value)}
-                        className="w-full text-xs h-11 px-3 rounded-xl border border-slate-200 text-right font-bold focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full text-xs h-11 px-3 rounded-xl border border-slate-200 text-right font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500"
                       />
                     </div>
                   </div>
@@ -598,7 +596,7 @@ export function FakturInputPage({ onBatchSaved }) {
                         <select
                           value={item.obat_id}
                           onChange={(e) => updateItem(idx, 'obat_id', e.target.value)}
-                          className="w-full text-xs h-9 px-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 font-semibold"
+                          className="w-full text-xs h-9 px-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-1 focus:ring-emerald-500 font-semibold"
                         >
                           {obatList.map((o) => (
                             <option key={o.id} value={o.id}>
@@ -612,7 +610,7 @@ export function FakturInputPage({ onBatchSaved }) {
                           type="text"
                           value={item.nomor_batch}
                           onChange={(e) => updateItem(idx, 'nomor_batch', e.target.value)}
-                          className="w-full text-xs h-9 px-2.5 rounded-xl border border-slate-200 font-mono focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          className="w-full text-xs h-9 px-2.5 rounded-xl border border-slate-200 font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500"
                         />
                       </td>
                       <td className="py-2.5 px-4">
@@ -620,7 +618,7 @@ export function FakturInputPage({ onBatchSaved }) {
                           type="date"
                           value={item.tanggal_kedaluwarsa}
                           onChange={(e) => updateItem(idx, 'tanggal_kedaluwarsa', e.target.value)}
-                          className="w-full text-xs h-9 px-2.5 rounded-xl border border-slate-200 font-medium focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          className="w-full text-xs h-9 px-2.5 rounded-xl border border-slate-200 font-medium focus:outline-none focus:ring-1 focus:ring-emerald-500"
                         />
                       </td>
                       <td className="py-2.5 px-4 w-28">
@@ -629,7 +627,7 @@ export function FakturInputPage({ onBatchSaved }) {
                           min="1"
                           value={item.jumlah}
                           onChange={(e) => updateItem(idx, 'jumlah', e.target.value)}
-                          className="w-full text-xs h-9 px-2.5 rounded-xl border border-slate-200 text-center font-bold focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          className="w-full text-xs h-9 px-2.5 rounded-xl border border-slate-200 text-center font-bold focus:outline-none focus:ring-1 focus:ring-emerald-500"
                         />
                       </td>
                       <td className="py-2.5 px-4 w-40">
@@ -638,7 +636,7 @@ export function FakturInputPage({ onBatchSaved }) {
                           step="500"
                           value={item.harga_beli_satuan}
                           onChange={(e) => updateItem(idx, 'harga_beli_satuan', e.target.value)}
-                          className="w-full text-xs h-9 px-2.5 rounded-xl border border-slate-200 text-right font-bold focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          className="w-full text-xs h-9 px-2.5 rounded-xl border border-slate-200 text-right font-bold focus:outline-none focus:ring-1 focus:ring-emerald-500"
                         />
                       </td>
                       <td className="py-2.5 px-4 text-center">
@@ -665,7 +663,7 @@ export function FakturInputPage({ onBatchSaved }) {
               <span className="text-xs font-semibold text-slate-600 block">
                 {items.length} batch • <strong className="text-slate-900">{totalUnitFaktur} unit</strong>
               </span>
-              <span className="text-sm font-black text-blue-700 tabular-nums">
+              <span className="text-sm font-black text-emerald-700 tabular-nums">
                 Total Faktur:{' '}
                 {new Intl.NumberFormat('id-ID', {
                   style: 'currency',
@@ -678,7 +676,7 @@ export function FakturInputPage({ onBatchSaved }) {
               type="button"
               onClick={handleSaveBatches}
               disabled={isProcessing}
-              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 min-h-[44px] rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-sm shadow-blue-600/20 active:scale-95 disabled:opacity-60 w-full sm:w-auto"
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 min-h-[44px] rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-sm shadow-emerald-600/20 active:scale-95 disabled:opacity-60 w-full sm:w-auto"
             >
               <Save className="w-4 h-4" />
               <span>{isProcessing ? 'Menyimpan...' : 'Simpan ke Inventori'}</span>
@@ -699,7 +697,7 @@ export function FakturInputPage({ onBatchSaved }) {
           >
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
                   <KeyRound className="w-4 h-4" />
                 </div>
                 <div>

@@ -67,16 +67,16 @@ export const INITIAL_BATCHES = [
     nama_distributor: 'PBF Antar Mitra Sembada (AMS)',
     nomor_batch: 'KLM-2509-X',
     tanggal_masuk: '2025-09-10',
-    tanggal_kedaluwarsa: '2026-11-20',
+    tanggal_kedaluwarsa: '2026-10-20',
     batas_retur: '2026-09-20', // 2 bulan sebelum exp (sudah lewat dari tanggal acuan 31 Okt)
     jumlah_awal: 25,
     jumlah_saat_ini: 6,
     harga_beli_satuan: 12500,
     nilai_total: 75000,
-    skor_risiko: 0.96,
-    status_risiko: 'tinggi',
+    skor_risiko: 0.78,
+    status_risiko: 'sedang',
     status_retur: 'lewat_batas',
-    keterangan: 'Batas retur terlewat! Segera pisahkan agar tidak terjual.'
+    keterangan: 'Sudah kedaluwarsa & batas retur terlewat! Segera pisahkan dan catat dibuang.'
   },
   {
     id: 103,

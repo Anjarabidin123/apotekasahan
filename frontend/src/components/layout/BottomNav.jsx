@@ -39,14 +39,14 @@ export function BottomNav({ activePage, setActivePage, urgentCount = 0 }) {
               data-testid={`bottom-nav-${item.id}`}
               onClick={() => setActivePage(item.id)}
               className={`relative flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors ${
-                isActive ? 'text-blue-600' : 'text-slate-500 hover:text-slate-800'
+                isActive ? 'text-emerald-700' : 'text-slate-500 hover:text-slate-800'
               }`}
               aria-label={item.label}
               aria-current={isActive ? 'page' : undefined}
             >
               <div
                 className={`relative flex items-center justify-center px-3.5 py-1 rounded-full transition-colors ${
-                  isActive ? 'bg-blue-600 text-white shadow-xs shadow-blue-600/25' : ''
+                  isActive ? 'bg-emerald-600 text-white shadow-xs shadow-emerald-600/25' : ''
                 }`}
               >
                 <Icon size={18} strokeWidth={isActive ? 2.4 : 2} />
@@ -58,7 +58,7 @@ export function BottomNav({ activePage, setActivePage, urgentCount = 0 }) {
               </div>
               <span
                 className={`text-[10px] tracking-tight leading-none ${
-                  isActive ? 'font-bold text-blue-700' : 'font-semibold text-slate-500'
+                  isActive ? 'font-bold text-emerald-700' : 'font-semibold text-slate-500'
                 }`}
               >
                 {item.label}

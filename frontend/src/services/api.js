@@ -16,6 +16,8 @@ const STORAGE_KEYS = {
   SETTINGS: 'simaaf_settings',
   DISTRIBUTORS: 'simaaf_distributors',
   LOGS: 'simaaf_stock_logs',
+  RETURNS: 'simaaf_return_logs',
+  DISPOSALS: 'simaaf_disposal_logs',
   PROFILE: 'simaaf_profile',
   KATEGORI: 'simaaf_kategori',
   SOP: 'simaaf_sop_steps',
@@ -35,7 +37,6 @@ export const DEFAULT_PROFILE = {
   apoteker_pj: 'apt. Nurul Hasanah, S.Farm',
   sipa: '19930412/SIPA_1208/2022/2041',
   sia: '503/SIA/042/DPMPTSP/2021',
-  nib: '1210210063257',
   alamat: 'Jl. Imam Bonjol No. 331, Kel. Kisaran Timur, Kab. Asahan, Sumatera Utara 21214',
   telepon: '(0623) 41289',
   whatsapp: '0812-6543-9870',
@@ -99,6 +100,49 @@ export function hitungSelisihHari(targetDateStr, refDateStr) {
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 }
 
+export function isBatchActive(b) {
+  if (!b) return false;
+  return (
+    (b.jumlah_saat_ini ?? 0) > 0 &&
+    b.status_retur !== 'sudah_diretur' &&
+    b.status_retur !== 'dibuang' &&
+    b.status_batch !== 'dibuang'
+  );
+}
+
+export function normalizeBatchForDate(batch, refDate) {
+  if (!batch || !isBatchActive(batch)) return batch;
+
+  const sisaHariRetur = batch.batas_retur ? hitungSelisihHari(batch.batas_retur, refDate) : null;
+  let effectiveStatusRetur = batch.status_retur;
+  if (
+    batch.status_retur !== 'tidak_bisa_diretur' &&
+    batch.batas_retur &&
+    sisaHariRetur !== null &&
+    sisaHariRetur < 0
+  ) {
+    effectiveStatusRetur = 'lewat_batas';
+  }
+
+  const effectiveStatusRisiko =
+    effectiveStatusRetur === 'lewat_batas' && batch.status_risiko === 'tinggi'
+      ? 'sedang'
+      : batch.status_risiko;
+
+  if (
+    effectiveStatusRetur === batch.status_retur &&
+    effectiveStatusRisiko === batch.status_risiko
+  ) {
+    return batch;
+  }
+
+  return {
+    ...batch,
+    status_retur: effectiveStatusRetur,
+    status_risiko: effectiveStatusRisiko,
+  };
+}
+
 export const api = {
   // Autentikasi
   async login(email, password) {
@@ -144,8 +188,10 @@ export const api = {
   // Inventori batch obat
   async getBatches(filters = {}) {
     await new Promise((r) => setTimeout(r, 200));
-    let list = getStorage(STORAGE_KEYS.BATCHES, INITIAL_BATCHES);
     const settings = getStorage(STORAGE_KEYS.SETTINGS, INITIAL_SETTINGS);
+    let list = getStorage(STORAGE_KEYS.BATCHES, INITIAL_BATCHES).map((b) =>
+      normalizeBatchForDate(b, settings.tanggal_acuan)
+    );
 
     // Filter search
     if (filters.search) {
@@ -164,7 +210,10 @@ export const api = {
 
     // Filter status risiko
     if (filters.status_risiko && filters.status_risiko !== 'semua') {
-      list = list.filter((b) => b.status_risiko === filters.status_risiko);
+      list = list.filter((b) => {
+        if (filters.status_risiko === 'tinggi' && b.status_retur === 'lewat_batas') return false;
+        return b.status_risiko === filters.status_risiko;
+      });
     }
 
     // Filter status retur
@@ -198,12 +247,15 @@ export const api = {
         statusRetur = 'lewat_batas';
       }
 
-      // Simulasi model risiko (berdasarkan sisa hari ke retur dan jumlah stok)
+      // Simulasi model risiko (berdasarkan sisa hari ke retur; lewat_batas tidak diberi status_risiko 'tinggi')
       const selisihHariRetur = hitungSelisihHari(batasRetur, settings.tanggal_acuan);
       let skorRisiko = 0.25;
       let statusRisiko = 'rendah';
 
-      if (statusRetur === 'lewat_batas' || (selisihHariRetur !== null && selisihHariRetur <= 30)) {
+      if (statusRetur === 'lewat_batas') {
+        skorRisiko = 0.72;
+        statusRisiko = 'sedang';
+      } else if (selisihHariRetur !== null && selisihHariRetur <= 30) {
         skorRisiko = Number((0.75 + Math.random() * 0.2).toFixed(2));
         statusRisiko = 'tinggi';
       } else if (selisihHariRetur !== null && selisihHariRetur <= 60) {
@@ -253,64 +305,301 @@ export const api = {
     };
   },
 
-  // Pemantauan tenggat dan peringatan
+  // Pemantauan tenggat dan peringatan (4 kategori baku: Bisa Diretur, Lewat Batas Retur, Dekat ED, Stok Tipis)
   async getPengingat() {
     await new Promise((r) => setTimeout(r, 200));
     const batches = getStorage(STORAGE_KEYS.BATCHES, INITIAL_BATCHES);
     const settings = getStorage(STORAGE_KEYS.SETTINGS, INITIAL_SETTINGS);
     const refDate = settings.tanggal_acuan;
 
+    const bisaDiretur = [];
     const mendesakRetur = [];
+    const lewatBatasRetur = [];
     const mendekatiKedaluwarsa = [];
     const stokMenipis = [];
 
     batches.forEach((b) => {
-      // 1. Cek retur
-      if (b.batas_retur) {
-        const sisaHariRetur = hitungSelisihHari(b.batas_retur, refDate);
-        if (sisaHariRetur !== null && sisaHariRetur > 0 && sisaHariRetur <= settings.batas_retur_warning_hari) {
-          mendesakRetur.push({
-            ...b,
-            sisa_hari_retur: sisaHariRetur,
-            urgensi: sisaHariRetur <= 15 ? 'kritis' : 'waspada'
-          });
+      if (!isBatchActive(b)) return;
+
+      const normalized = normalizeBatchForDate(b, refDate);
+      const sisaHariRetur = normalized.batas_retur
+        ? hitungSelisihHari(normalized.batas_retur, refDate)
+        : null;
+      const sisaHariExp = hitungSelisihHari(normalized.tanggal_kedaluwarsa, refDate);
+      const effectiveStatusRetur = normalized.status_retur;
+      const normalizedBatch = {
+        ...normalized,
+        sisa_hari_retur: sisaHariRetur,
+        sisa_hari_exp: sisaHariExp,
+        sudah_kedaluwarsa: sisaHariExp !== null && sisaHariExp <= 0,
+      };
+
+      // 1. Kategori Bisa Diretur (serta subset Mendesak Retur <= warning hari)
+      if (effectiveStatusRetur === 'bisa_diretur') {
+        const urgensi =
+          sisaHariRetur !== null && sisaHariRetur <= 15
+            ? 'kritis'
+            : sisaHariRetur !== null && sisaHariRetur <= settings.batas_retur_warning_hari
+            ? 'waspada'
+            : 'normal';
+        const returItem = { ...normalizedBatch, urgensi };
+        bisaDiretur.push(returItem);
+
+        if (sisaHariRetur !== null && sisaHariRetur >= 0 && sisaHariRetur <= settings.batas_retur_warning_hari) {
+          mendesakRetur.push(returItem);
         }
       }
 
-      // 2. Cek kedaluwarsa
-      const sisaHariExp = hitungSelisihHari(b.tanggal_kedaluwarsa, refDate);
-      if (sisaHariExp !== null && sisaHariExp > 0 && sisaHariExp <= settings.batas_kedaluwarsa_warning_hari) {
-        mendekatiKedaluwarsa.push({
-          ...b,
-          sisa_hari_exp: sisaHariExp,
-          urgensi: sisaHariExp <= 30 ? 'kritis' : 'waspada'
+      // 2. Kategori Lewat Batas Retur
+      if (effectiveStatusRetur === 'lewat_batas') {
+        lewatBatasRetur.push({
+          ...normalizedBatch,
+          urgensi: normalizedBatch.sudah_kedaluwarsa ? 'kritis' : 'waspada',
         });
       }
 
-      // 3. Cek stok menipis
+      // 3. Kategori Dekat ED
+      if (sisaHariExp !== null && sisaHariExp <= settings.batas_kedaluwarsa_warning_hari) {
+        mendekatiKedaluwarsa.push({
+          ...normalizedBatch,
+          urgensi: sisaHariExp <= 30 ? 'kritis' : 'waspada',
+        });
+      }
+
+      // 4. Kategori Stok Tipis (aktif > 0 dan <= minimum)
       if (b.jumlah_saat_ini <= settings.stok_minimum_default) {
-        stokMenipis.push(b);
+        stokMenipis.push(normalizedBatch);
       }
     });
 
-    // Urutkan dari tenggat paling dekat
-    mendesakRetur.sort((a, b) => a.sisa_hari_retur - b.sisa_hari_retur);
-    mendekatiKedaluwarsa.sort((a, b) => a.sisa_hari_exp - b.sisa_hari_exp);
+    bisaDiretur.sort((a, b) => (a.sisa_hari_retur ?? 9999) - (b.sisa_hari_retur ?? 9999));
+    mendesakRetur.sort((a, b) => (a.sisa_hari_retur ?? 9999) - (b.sisa_hari_retur ?? 9999));
+    lewatBatasRetur.sort((a, b) => (a.sisa_hari_exp ?? 9999) - (b.sisa_hari_exp ?? 9999));
+    mendekatiKedaluwarsa.sort((a, b) => (a.sisa_hari_exp ?? 9999) - (b.sisa_hari_exp ?? 9999));
+    stokMenipis.sort((a, b) => (a.jumlah_saat_ini ?? 0) - (b.jumlah_saat_ini ?? 0));
 
     return {
       sukses: true,
       tanggal_acuan: refDate,
       ringkasan: {
+        total_bisa_diretur: bisaDiretur.length,
         total_mendesak_retur: mendesakRetur.length,
+        total_lewat_batas: lewatBatasRetur.length,
         total_mendekati_kedaluwarsa: mendekatiKedaluwarsa.length,
-        total_stok_menipis: stokMenipis.length
+        total_stok_menipis: stokMenipis.length,
       },
       data: {
+        bisaDiretur,
         mendesakRetur,
+        lewatBatasRetur,
         mendekatiKedaluwarsa,
-        stokMenipis
-      }
+        stokMenipis,
+      },
     };
+  },
+
+  // Pencatatan retur batch ke PBF (mengurangi stok & menandai sudah_diretur saat habis)
+  async catatReturBatch(items = [], catatan = '', petugasNama = 'Petugas Apotek') {
+    await new Promise((r) => setTimeout(r, 250));
+    const batches = getStorage(STORAGE_KEYS.BATCHES, INITIAL_BATCHES);
+    const settings = getStorage(STORAGE_KEYS.SETTINGS, INITIAL_SETTINGS);
+    const logs = getStorage(STORAGE_KEYS.LOGS, INITIAL_STOCK_LOGS);
+    const returnLogs = getStorage(STORAGE_KEYS.RETURNS, []);
+    const nowStr = new Date().toISOString().replace('T', ' ').substring(0, 16);
+
+    const normalizedItems = Array.isArray(items) ? items : [items];
+    const newStockLogs = [];
+    const newReturnLogs = [];
+    let processedCount = 0;
+
+    normalizedItems.forEach((entry, idx) => {
+      const targetId = Number(typeof entry === 'object' ? entry.batchId ?? entry.id : entry);
+      const batchIndex = batches.findIndex((b) => b.id === targetId);
+      if (batchIndex === -1) return;
+
+      const target = { ...normalizeBatchForDate(batches[batchIndex], settings.tanggal_acuan) };
+      if (!isBatchActive(target) || target.status_retur === 'lewat_batas' || target.status_retur === 'tidak_bisa_diretur') {
+        return;
+      }
+
+      const sebelum = target.jumlah_saat_ini ?? 0;
+      const requestedQty =
+        typeof entry === 'object' && entry.jumlahRetur !== undefined
+          ? Number(entry.jumlahRetur)
+          : sebelum;
+      const qtyRetur = Math.min(sebelum, Math.max(1, Number.isFinite(requestedQty) ? requestedQty : sebelum));
+      const sesudah = Math.max(0, sebelum - qtyRetur);
+
+      target.jumlah_saat_ini = sesudah;
+      target.nilai_total = sesudah * (target.harga_beli_satuan || 0);
+      target.terakhir_diretur_pada = nowStr;
+      if (sesudah === 0) {
+        target.status_retur = 'sudah_diretur';
+        target.status_risiko = 'rendah';
+        target.skor_risiko = 0;
+      }
+      batches[batchIndex] = target;
+      processedCount++;
+
+      const alasanText = catatan?.trim()
+        ? `Retur PBF: ${catatan.trim()}`
+        : `Retur batch ke ${target.nama_distributor || 'PBF'}`;
+
+      newReturnLogs.push({
+        id: Date.now() + idx,
+        batch_id: target.id,
+        nama_obat: target.nama_obat,
+        nomor_batch: target.nomor_batch,
+        nama_distributor: target.nama_distributor,
+        jumlah_diretur: qtyRetur,
+        nilai_retur: qtyRetur * (target.harga_beli_satuan || 0),
+        catatan: catatan?.trim() || 'Pengembalian batch ke distributor PBF',
+        petugas: petugasNama,
+        tanggal: nowStr,
+      });
+
+      newStockLogs.push({
+        id: Date.now() + 100 + idx,
+        batch_id: target.id,
+        nama_obat: target.nama_obat,
+        nomor_batch: target.nomor_batch,
+        jumlah_sebelum: sebelum,
+        jumlah_sesudah: sesudah,
+        selisih: -qtyRetur,
+        alasan: alasanText,
+        petugas: petugasNama,
+        tanggal: nowStr,
+      });
+    });
+
+    if (processedCount === 0) {
+      throw new Error('Tidak ada batch valid yang dapat dicatat returnya.');
+    }
+
+    setStorage(STORAGE_KEYS.BATCHES, batches);
+    setStorage(STORAGE_KEYS.RETURNS, [...newReturnLogs, ...returnLogs]);
+    setStorage(STORAGE_KEYS.LOGS, [...newStockLogs, ...logs]);
+
+    return { sukses: true, count: processedCount, returnLogs: newReturnLogs };
+  },
+
+  // Pencatatan pembuangan / pemusnahan batch yang sudah kedaluwarsa & lewat batas retur
+  async catatDibuangBatch(batchId, jumlahDibuang, alasan = 'Obat kedaluwarsa / lewat batas retur', petugasNama = 'Petugas Apotek') {
+    await new Promise((r) => setTimeout(r, 250));
+    const batches = getStorage(STORAGE_KEYS.BATCHES, INITIAL_BATCHES);
+    const logs = getStorage(STORAGE_KEYS.LOGS, INITIAL_STOCK_LOGS);
+    const disposalLogs = getStorage(STORAGE_KEYS.DISPOSALS, []);
+    const nowStr = new Date().toISOString().replace('T', ' ').substring(0, 16);
+
+    const batchIndex = batches.findIndex((b) => b.id === Number(batchId));
+    if (batchIndex === -1) throw new Error('Batch tidak ditemukan');
+
+    const target = { ...batches[batchIndex] };
+    const sebelum = target.jumlah_saat_ini ?? 0;
+    if (sebelum <= 0) throw new Error('Stok batch sudah kosong.');
+
+    const hasExplicitQty = jumlahDibuang !== undefined && jumlahDibuang !== null;
+    const requestedQty = hasExplicitQty ? Number(jumlahDibuang) : sebelum;
+    if (hasExplicitQty && (!Number.isFinite(requestedQty) || requestedQty <= 0)) {
+      throw new Error('Jumlah unit dibuang harus berupa angka lebih dari 0.');
+    }
+    const qty = Math.min(sebelum, Math.max(1, requestedQty));
+    const sesudah = Math.max(0, sebelum - qty);
+
+    target.jumlah_saat_ini = sesudah;
+    target.nilai_total = sesudah * (target.harga_beli_satuan || 0);
+    target.dibuang_pada = nowStr;
+    if (sesudah === 0) {
+      target.status_batch = 'dibuang';
+      target.status_retur = 'dibuang';
+      target.status_risiko = 'rendah';
+      target.skor_risiko = 0;
+    }
+    batches[batchIndex] = target;
+
+    const disposalLog = {
+      id: Date.now(),
+      batch_id: target.id,
+      nama_obat: target.nama_obat,
+      nomor_batch: target.nomor_batch,
+      jumlah_dibuang: qty,
+      nilai_dibuang: qty * (target.harga_beli_satuan || 0),
+      alasan: alasan?.trim() || 'Pemusnahan obat kedaluwarsa',
+      petugas: petugasNama,
+      tanggal: nowStr,
+    };
+
+    const stockLog = {
+      id: Date.now() + 1,
+      batch_id: target.id,
+      nama_obat: target.nama_obat,
+      nomor_batch: target.nomor_batch,
+      jumlah_sebelum: sebelum,
+      jumlah_sesudah: sesudah,
+      selisih: -qty,
+      alasan: `Catat Dibuang: ${alasan?.trim() || 'Obat kedaluwarsa'}`,
+      petugas: petugasNama,
+      tanggal: nowStr,
+    };
+
+    setStorage(STORAGE_KEYS.BATCHES, batches);
+    setStorage(STORAGE_KEYS.DISPOSALS, [disposalLog, ...disposalLogs]);
+    setStorage(STORAGE_KEYS.LOGS, [stockLog, ...logs]);
+
+    return { sukses: true, data: { batch: target, log: disposalLog } };
+  },
+
+  // Menandai batch lewat batas (belum ED) sebagai Prioritas Jual & opsional mencatat unit terjual
+  async tandaiPrioritasJual(batchId, jumlahTerjual = 0, catatan = '', petugasNama = 'Petugas Apotek') {
+    await new Promise((r) => setTimeout(r, 200));
+    const batches = getStorage(STORAGE_KEYS.BATCHES, INITIAL_BATCHES);
+    const logs = getStorage(STORAGE_KEYS.LOGS, INITIAL_STOCK_LOGS);
+    const nowStr = new Date().toISOString().replace('T', ' ').substring(0, 16);
+
+    const batchIndex = batches.findIndex((b) => b.id === Number(batchId));
+    if (batchIndex === -1) throw new Error('Batch tidak ditemukan');
+
+    const target = { ...batches[batchIndex] };
+    const sebelum = target.jumlah_saat_ini ?? 0;
+    const qtyTerjual = Math.min(sebelum, Math.max(0, Number(jumlahTerjual) || 0));
+    const sesudah = Math.max(0, sebelum - qtyTerjual);
+
+    target.prioritas_jual = true;
+    target.prioritas_jual_pada = nowStr;
+    if (qtyTerjual > 0) {
+      target.jumlah_saat_ini = sesudah;
+      target.nilai_total = sesudah * (target.harga_beli_satuan || 0);
+    }
+    batches[batchIndex] = target;
+    setStorage(STORAGE_KEYS.BATCHES, batches);
+
+    if (qtyTerjual > 0) {
+      const stockLog = {
+        id: Date.now(),
+        batch_id: target.id,
+        nama_obat: target.nama_obat,
+        nomor_batch: target.nomor_batch,
+        jumlah_sebelum: sebelum,
+        jumlah_sesudah: sesudah,
+        selisih: -qtyTerjual,
+        alasan: catatan?.trim()
+          ? `Prioritas Jual: ${catatan.trim()}`
+          : 'Penjualan prioritas FEFO (lewat batas retur)',
+        petugas: petugasNama,
+        tanggal: nowStr,
+      };
+      setStorage(STORAGE_KEYS.LOGS, [stockLog, ...logs]);
+    }
+
+    return { sukses: true, data: { batch: target } };
+  },
+
+  async getRiwayatRetur() {
+    return getStorage(STORAGE_KEYS.RETURNS, []);
+  },
+
+  async getRiwayatDibuang() {
+    return getStorage(STORAGE_KEYS.DISPOSALS, []);
   },
 
   // Penyesuaian stok (stock opname)
@@ -413,7 +702,10 @@ export const api = {
         const selisihHariRetur = hitungSelisihHari(batasRetur, settings.tanggal_acuan);
         let skorRisiko = 0.25;
         let statusRisiko = 'rendah';
-        if (statusRetur === 'lewat_batas' || (selisihHariRetur !== null && selisihHariRetur <= 30)) {
+        if (statusRetur === 'lewat_batas') {
+          skorRisiko = 0.72;
+          statusRisiko = 'sedang';
+        } else if (selisihHariRetur !== null && selisihHariRetur <= 30) {
           skorRisiko = 0.85;
           statusRisiko = 'tinggi';
         } else if (selisihHariRetur !== null && selisihHariRetur <= 60) {
@@ -478,8 +770,10 @@ export const api = {
   // Ringkasan dashboard
   async getDashboardSummary() {
     await new Promise((r) => setTimeout(r, 200));
-    const batches = getStorage(STORAGE_KEYS.BATCHES, INITIAL_BATCHES);
     const settings = getStorage(STORAGE_KEYS.SETTINGS, INITIAL_SETTINGS);
+    const batches = getStorage(STORAGE_KEYS.BATCHES, INITIAL_BATCHES)
+      .filter(isBatchActive)
+      .map((b) => normalizeBatchForDate(b, settings.tanggal_acuan));
 
     let totalNilaiPersediaan = 0;
     let totalNilaiBerisiko = 0;
@@ -516,11 +810,6 @@ export const api = {
         total_nilai_berisiko: totalNilaiBerisiko,
         persentase_berisiko: totalNilaiPersediaan > 0 ? ((totalNilaiBerisiko / totalNilaiPersediaan) * 100).toFixed(1) : 0,
         distributor_terancam: distributorRiskList.slice(0, 4),
-        temuan_ds: [
-          'Distributor dengan aturan retur singkat (1 bulan) menyumbang 62% obat yang gagal diretur.',
-          'Obat antibiotik dan sirup anak memerlukan pemantauan ketat menjelang pergantian bulan.',
-          'Semua estimasi risiko dihitung otomatis berdasarkan sisa hari retur dan masa kedaluwarsa obat.'
-        ]
       }
     };
   },
@@ -532,6 +821,19 @@ export const api = {
 
   async updateSettings(newSettings) {
     setStorage(STORAGE_KEYS.SETTINGS, newSettings);
+    const batches = getStorage(STORAGE_KEYS.BATCHES, INITIAL_BATCHES);
+    const refDate = newSettings?.tanggal_acuan || INITIAL_SETTINGS.tanggal_acuan;
+
+    const updatedBatches = batches.map((b) => {
+      if (!isBatchActive(b)) return b;
+      const next = { ...b };
+      if (next.status_retur !== 'tidak_bisa_diretur' && next.batas_retur) {
+        const sisaHariRetur = hitungSelisihHari(next.batas_retur, refDate);
+        next.status_retur = sisaHariRetur !== null && sisaHariRetur < 0 ? 'lewat_batas' : 'bisa_diretur';
+      }
+      return normalizeBatchForDate(next, refDate);
+    });
+    setStorage(STORAGE_KEYS.BATCHES, updatedBatches);
     return { sukses: true, data: newSettings };
   },
 
@@ -548,12 +850,13 @@ export const api = {
     const settings = getStorage(STORAGE_KEYS.SETTINGS, INITIAL_SETTINGS);
 
     batches.forEach((b) => {
-      if (b.distributor_id === Number(distributorId)) {
+      if (b.distributor_id === Number(distributorId) && isBatchActive(b)) {
         b.batas_retur = hitungBatasRetur(b.tanggal_kedaluwarsa, bulanBaru);
         if (!b.batas_retur) {
           b.status_retur = 'tidak_bisa_diretur';
         } else if (new Date(b.batas_retur) < new Date(settings.tanggal_acuan)) {
           b.status_retur = 'lewat_batas';
+          if (b.status_risiko === 'tinggi') b.status_risiko = 'sedang';
         } else {
           b.status_retur = 'bisa_diretur';
         }
@@ -566,11 +869,14 @@ export const api = {
 
   // Kelola profil sarana apotek & kategori secara persisten di browser
   async getProfile() {
-    return { ...DEFAULT_PROFILE, ...getStorage(STORAGE_KEYS.PROFILE, {}) };
+    const stored = getStorage(STORAGE_KEYS.PROFILE, {});
+    const { nib: _omit, ...cleaned } = stored || {};
+    return { ...DEFAULT_PROFILE, ...cleaned };
   },
 
   async updateProfile(nextProfile) {
-    const merged = { ...DEFAULT_PROFILE, ...nextProfile };
+    const { nib: _omit, ...cleaned } = nextProfile || {};
+    const merged = { ...DEFAULT_PROFILE, ...cleaned };
     setStorage(STORAGE_KEYS.PROFILE, merged);
     return { sukses: true, data: merged };
   },
@@ -595,9 +901,11 @@ export const api = {
 
   // Daftar notifikasi aktif untuk ikon lonceng pada Header
   async getHeaderNotifications() {
-    const batches = getStorage(STORAGE_KEYS.BATCHES, INITIAL_BATCHES);
     const settings = getStorage(STORAGE_KEYS.SETTINGS, INITIAL_SETTINGS);
     const refDate = settings.tanggal_acuan;
+    const batches = getStorage(STORAGE_KEYS.BATCHES, INITIAL_BATCHES)
+      .filter(isBatchActive)
+      .map((b) => normalizeBatchForDate(b, refDate));
     const alerts = [];
 
     batches.forEach((b) => {
@@ -610,18 +918,18 @@ export const api = {
           nama_obat: b.nama_obat,
           nomor_batch: b.nomor_batch,
           detail: `${b.nama_distributor} • Batas ${b.batas_retur}`,
-          targetPage: 'inventori',
+          targetPage: 'pengingat',
         });
         return;
       }
       if (b.batas_retur) {
         const sisaHari = hitungSelisihHari(b.batas_retur, refDate);
-        if (sisaHari !== null && sisaHari > 0 && sisaHari <= settings.batas_retur_warning_hari) {
+        if (sisaHari !== null && sisaHari >= 0 && sisaHari <= settings.batas_retur_warning_hari) {
           alerts.push({
             id: `warn-ret-${b.id}`,
             type: 'wajib_retur',
             tone: 'amber',
-            title: `Retur Sisa ${sisaHari} Hari`,
+            title: sisaHari === 0 ? 'Batas Retur Hari Ini' : `Retur Sisa ${sisaHari} Hari`,
             nama_obat: b.nama_obat,
             nomor_batch: b.nomor_batch,
             detail: `${b.nama_distributor} • ${b.jumlah_saat_ini} unit`,
@@ -634,7 +942,7 @@ export const api = {
         alerts.push({
           id: `low-${b.id}`,
           type: 'stok_tipis',
-          tone: 'blue',
+          tone: 'teal',
           title: `Stok Tipis (${b.jumlah_saat_ini} unit)`,
           nama_obat: b.nama_obat,
           nomor_batch: b.nomor_batch,
@@ -663,18 +971,22 @@ export const api = {
 
   // Cadangan dan pemulihan data lokal
   async exportFullBackup() {
+    const storedProfile = getStorage(STORAGE_KEYS.PROFILE, {});
+    const { nib: _omit, ...cleanedProfile } = storedProfile || {};
     return {
       aplikasi: 'SIMAAF Apotek Asahan Farma',
       versi_skema: 1,
       dieksport_pada: new Date().toISOString(),
       data: {
-        profile: { ...DEFAULT_PROFILE, ...getStorage(STORAGE_KEYS.PROFILE, {}) },
+        profile: { ...DEFAULT_PROFILE, ...cleanedProfile },
         settings: getStorage(STORAGE_KEYS.SETTINGS, INITIAL_SETTINGS),
         distributors: getStorage(STORAGE_KEYS.DISTRIBUTORS, DISTRIBUTORS),
         kategori: getStorage(STORAGE_KEYS.KATEGORI, DEFAULT_KATEGORI),
         sop_steps: getStorage(STORAGE_KEYS.SOP, DEFAULT_SOP_STEPS),
         batches: getStorage(STORAGE_KEYS.BATCHES, INITIAL_BATCHES),
         logs: getStorage(STORAGE_KEYS.LOGS, INITIAL_STOCK_LOGS),
+        return_logs: getStorage(STORAGE_KEYS.RETURNS, []),
+        disposal_logs: getStorage(STORAGE_KEYS.DISPOSALS, []),
         default_page: localStorage.getItem('simaaf_default_page') || 'dashboard',
         privacy_mode: localStorage.getItem('simaaf_privacy_mode') === 'true',
       },
@@ -689,10 +1001,15 @@ export const api = {
     setStorage(STORAGE_KEYS.BATCHES, payload.batches);
     setStorage(STORAGE_KEYS.DISTRIBUTORS, payload.distributors);
     if (payload.settings) setStorage(STORAGE_KEYS.SETTINGS, payload.settings);
-    if (payload.profile) setStorage(STORAGE_KEYS.PROFILE, payload.profile);
+    if (payload.profile) {
+      const { nib: _omit, ...cleanedProfile } = payload.profile;
+      setStorage(STORAGE_KEYS.PROFILE, cleanedProfile);
+    }
     if (Array.isArray(payload.kategori)) setStorage(STORAGE_KEYS.KATEGORI, payload.kategori);
     if (Array.isArray(payload.sop_steps)) setStorage(STORAGE_KEYS.SOP, payload.sop_steps);
     if (Array.isArray(payload.logs)) setStorage(STORAGE_KEYS.LOGS, payload.logs);
+    if (Array.isArray(payload.return_logs)) setStorage(STORAGE_KEYS.RETURNS, payload.return_logs);
+    if (Array.isArray(payload.disposal_logs)) setStorage(STORAGE_KEYS.DISPOSALS, payload.disposal_logs);
     if (payload.default_page) localStorage.setItem('simaaf_default_page', payload.default_page);
     if (typeof payload.privacy_mode === 'boolean') {
       localStorage.setItem('simaaf_privacy_mode', String(payload.privacy_mode));
@@ -705,6 +1022,8 @@ export const api = {
     setStorage(STORAGE_KEYS.SETTINGS, INITIAL_SETTINGS);
     setStorage(STORAGE_KEYS.DISTRIBUTORS, DISTRIBUTORS);
     setStorage(STORAGE_KEYS.LOGS, INITIAL_STOCK_LOGS);
+    setStorage(STORAGE_KEYS.RETURNS, []);
+    setStorage(STORAGE_KEYS.DISPOSALS, []);
     setStorage(STORAGE_KEYS.PROFILE, DEFAULT_PROFILE);
     setStorage(STORAGE_KEYS.KATEGORI, DEFAULT_KATEGORI);
     setStorage(STORAGE_KEYS.SOP, DEFAULT_SOP_STEPS);

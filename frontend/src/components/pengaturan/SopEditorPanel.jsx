@@ -59,7 +59,7 @@ export function SopEditorPanel({
               type="button"
               data-testid="edit-sop-btn"
               onClick={() => setIsEditingSop(true)}
-              className="btn-outline h-9 px-3 text-xs font-bold text-blue-700 border-blue-200 bg-blue-50/70 hover:bg-blue-100 cursor-pointer"
+              className="btn-outline h-9 px-3 text-xs font-bold text-emerald-700 border-emerald-200 bg-emerald-50/70 hover:bg-emerald-100 cursor-pointer"
             >
               <Edit3 className="w-3.5 h-3.5" />
               <span>Edit SOP</span>
@@ -76,7 +76,7 @@ export function SopEditorPanel({
                 key={step.id || idx}
                 className="p-2.5 rounded-xl border border-slate-200 bg-slate-50/70 flex items-start gap-2"
               >
-                <span className="w-6 h-6 rounded-lg bg-blue-600 text-white text-[11px] font-black flex items-center justify-center shrink-0 mt-1">
+                <span className="w-6 h-6 rounded-lg bg-emerald-600 text-white text-[11px] font-black flex items-center justify-center shrink-0 mt-1">
                   {idx + 1}
                 </span>
                 <textarea
@@ -87,7 +87,7 @@ export function SopEditorPanel({
                     next[idx] = { ...step, teks: e.target.value };
                     setSopSteps(next);
                   }}
-                  className="flex-1 text-xs p-2 rounded-lg border border-slate-200 bg-white font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  className="flex-1 text-xs p-2 rounded-lg border border-slate-200 bg-white font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                 />
                 <div className="flex flex-col gap-1 shrink-0">
                   <button

@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { api } from '../services/api';
+import { api, hitungSelisihHari } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import { StatusReturBadge, StatusRisikoBadge } from '../components/common/StatusBadge';
 import { exportToExcelCsv } from '../utils/fileTools';
 import { formatRupiah } from '../utils/formatters';
 import { BeritaAcaraModal } from '../components/retur/BeritaAcaraModal';
+import { BatchActionModal } from '../components/retur/BatchActionModal';
 import {
   BellRing,
   Clock,
@@ -12,8 +14,6 @@ import {
   Boxes,
   CheckCircle2,
   Search,
-  Filter,
-  ArrowUpDown,
   FileText,
   LayoutList,
   LayoutGrid,
@@ -23,6 +23,9 @@ import {
   Download,
   MessageCircle,
   ChevronDown,
+  RotateCcw,
+  Tag,
+  Trash2,
 } from 'lucide-react';
 
 /**
@@ -37,9 +40,11 @@ function buildWhatsAppUrl(phone, text) {
 
 export function PengingatReturPage({
   onNavigateToPenyesuaian,
+  onDataChanged,
   initialSearch = '',
   onClearInitialSearch,
 }) {
+  const { user } = useAuth();
   const [data, setData] = useState(null);
   const [distributors, setDistributors] = useState([]);
   const [apotekProfile, setApotekProfile] = useState(null);
@@ -54,6 +59,8 @@ export function PengingatReturPage({
   const [selectedBatchIds, setSelectedBatchIds] = useState([]);
   const [expandedCards, setExpandedCards] = useState({});
   const [bapModalData, setBapModalData] = useState({ isOpen: false, batches: [] });
+  const [actionModal, setActionModal] = useState({ isOpen: false, mode: 'retur', batch: null });
+  const [feedbackMsg, setFeedbackMsg] = useState('');
 
   useEffect(() => {
     loadPengingat();
@@ -67,7 +74,9 @@ export function PengingatReturPage({
     const matchFn = (b) =>
       (b.nama_obat || '').toLowerCase().includes(q) ||
       (b.nomor_batch || '').toLowerCase().includes(q);
-    if (data.data.mendesakRetur?.some(matchFn)) {
+    if (data.data.lewatBatasRetur?.some(matchFn)) {
+      setActiveTab('lewat_batas');
+    } else if (data.data.bisaDiretur?.some(matchFn)) {
       setActiveTab('retur');
     } else if (data.data.mendekatiKedaluwarsa?.some(matchFn)) {
       setActiveTab('kedaluwarsa');
@@ -78,7 +87,7 @@ export function PengingatReturPage({
   }, [initialSearch, data]);
 
   const loadPengingat = async () => {
-    setLoading(true);
+    if (!data) setLoading(true);
     try {
       const [res, distList, prof] = await Promise.all([
         api.getPengingat(),
@@ -95,12 +104,13 @@ export function PengingatReturPage({
     }
   };
 
-  // Kumpulan data berdasarkan tab aktif
+  // Kumpulan data berdasarkan tab aktif (4 kategori baku)
   const currentList = useMemo(() => {
     if (!data?.data) return [];
-    if (activeTab === 'retur') return data.data.mendesakRetur;
-    if (activeTab === 'kedaluwarsa') return data.data.mendekatiKedaluwarsa;
-    return data.data.stokMenipis;
+    if (activeTab === 'retur') return data.data.bisaDiretur || [];
+    if (activeTab === 'lewat_batas') return data.data.lewatBatasRetur || [];
+    if (activeTab === 'kedaluwarsa') return data.data.mendekatiKedaluwarsa || [];
+    return data.data.stokMenipis || [];
   }, [data, activeTab]);
 
   // Daftar unik PBF untuk filter dropdown
@@ -171,18 +181,44 @@ export function PengingatReturPage({
   };
 
   const handleBulkPrintReturn = () => {
-    const selectedBatches = filteredAndSortedList.filter((b) => selectedBatchIds.includes(b.id));
+    const selectedBatches = filteredAndSortedList.filter(
+      (b) => selectedBatchIds.includes(b.id) && b.status_retur === 'bisa_diretur'
+    );
+    const fallbackBatches = filteredAndSortedList.filter((b) => b.status_retur === 'bisa_diretur');
     setBapModalData({
       isOpen: true,
-      batches: selectedBatches.length > 0 ? selectedBatches : filteredAndSortedList,
+      batches: selectedBatches.length > 0 ? selectedBatches : fallbackBatches,
     });
   };
 
   const handleOpenSingleBap = (item) => {
+    if (item.status_retur === 'lewat_batas' || item.status_retur === 'tidak_bisa_diretur') return;
     setBapModalData({
       isOpen: true,
       batches: [item],
     });
+  };
+
+  const handleActionComplete = async (msg) => {
+    setFeedbackMsg(msg);
+    setSelectedBatchIds([]);
+    await loadPengingat();
+    if (onDataChanged) onDataChanged();
+    setTimeout(() => setFeedbackMsg(''), 4500);
+  };
+
+  const handleConfirmReturFromBap = async (batchesToReturn, catatan) => {
+    const itemsPayload = batchesToReturn.map((b) => ({
+      batchId: b.id,
+      jumlahRetur: b.jumlah_saat_ini ?? b.stok,
+    }));
+    const res = await api.catatReturBatch(
+      itemsPayload,
+      catatan,
+      user?.nama || 'Petugas Apotek'
+    );
+    setBapModalData({ isOpen: false, batches: [] });
+    await handleActionComplete(`Retur ${res.count} batch berhasil dicatat dan stok diperbarui.`);
   };
 
   if (loading || !data) {
@@ -193,7 +229,17 @@ export function PengingatReturPage({
     );
   }
 
-  const { mendesakRetur, mendekatiKedaluwarsa, stokMenipis } = data.data;
+  const {
+    bisaDiretur = [],
+    mendesakRetur = [],
+    lewatBatasRetur = [],
+    mendekatiKedaluwarsa = [],
+    stokMenipis = [],
+  } = data.data;
+
+  const selectedReturnableCount = filteredAndSortedList.filter(
+    (b) => selectedBatchIds.includes(b.id) && b.status_retur === 'bisa_diretur'
+  ).length;
 
   // Total nilai batch terpilih
   const totalNilaiSelected = filteredAndSortedList
@@ -202,6 +248,13 @@ export function PengingatReturPage({
 
   return (
     <div className="space-y-3">
+      {feedbackMsg && (
+        <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs flex items-center gap-2 shadow-2xs">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+          <span className="font-bold">{feedbackMsg}</span>
+        </div>
+      )}
+
       {/* Header Pengingat & Ekspor Excel */}
       <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-3">
@@ -209,9 +262,14 @@ export function PengingatReturPage({
             <BellRing className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-sm sm:text-base font-bold text-slate-900">
-              Pengingat Retur & Kedaluwarsa
-            </h2>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="text-sm sm:text-base font-bold text-slate-900">
+                Pengingat Retur &amp; Kedaluwarsa
+              </h2>
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-[10px] font-bold">
+                Data Simulasi
+              </span>
+            </div>
             <p className="text-xs text-slate-500">
               Dihitung per acuan <strong className="text-slate-700">{data.tanggal_acuan}</strong>
             </p>
@@ -238,7 +296,7 @@ export function PengingatReturPage({
             className="btn-outline h-10 sm:h-9 px-3 text-xs"
             title="Ekspor daftar ini ke format Excel CSV"
           >
-            <Download className="w-3.5 h-3.5 text-blue-600" />
+            <Download className="w-3.5 h-3.5 text-emerald-600" />
             <span>Ekspor Excel (.CSV)</span>
           </button>
 
@@ -249,8 +307,8 @@ export function PengingatReturPage({
         </div>
       </div>
 
-      {/* Kartu Kategori 3 Kolom Ringkas */}
-      <div className="grid grid-cols-3 gap-2 sm:gap-3">
+      {/* Kartu 4 Kategori Baku */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
         <button
           type="button"
           onClick={() => {
@@ -259,19 +317,45 @@ export function PengingatReturPage({
           }}
           className={`p-2.5 sm:p-3.5 rounded-2xl border text-left transition-all flex items-center justify-between cursor-pointer ${
             activeTab === 'retur'
+              ? 'bg-emerald-600 border-emerald-600 text-white shadow-xs'
+              : 'bg-white border-slate-200/80 hover:border-emerald-300 text-slate-900'
+          }`}
+        >
+          <div className="min-w-0">
+            <span className={`text-[10px] sm:text-xs font-semibold block truncate ${activeTab === 'retur' ? 'text-emerald-100' : 'text-slate-500'}`}>
+              Bisa Diretur
+            </span>
+            <p className="text-base sm:text-xl font-extrabold tabular-nums mt-0.5">
+              {bisaDiretur.length} <span className="text-[11px] font-medium hidden sm:inline">Batch</span>
+            </p>
+          </div>
+          <div className={`hidden sm:flex w-9 h-9 rounded-xl items-center justify-center shrink-0 ${activeTab === 'retur' ? 'bg-white/20 text-white' : 'bg-emerald-50 text-emerald-600'}`}>
+            <RotateCcw className="w-4 h-4" />
+          </div>
+        </button>
+
+        <button
+          type="button"
+          data-testid="tab-lewat-batas-retur"
+          onClick={() => {
+            setActiveTab('lewat_batas');
+            setSelectedBatchIds([]);
+          }}
+          className={`p-2.5 sm:p-3.5 rounded-2xl border text-left transition-all flex items-center justify-between cursor-pointer ${
+            activeTab === 'lewat_batas'
               ? 'bg-rose-600 border-rose-600 text-white shadow-xs'
               : 'bg-white border-slate-200/80 hover:border-rose-300 text-slate-900'
           }`}
         >
           <div className="min-w-0">
-            <span className={`text-[10px] sm:text-xs font-semibold block truncate ${activeTab === 'retur' ? 'text-rose-100' : 'text-slate-500'}`}>
-              Mendesak Retur
+            <span className={`text-[10px] sm:text-xs font-semibold block truncate ${activeTab === 'lewat_batas' ? 'text-rose-100' : 'text-slate-500'}`}>
+              Lewat Batas Retur
             </span>
             <p className="text-base sm:text-xl font-extrabold tabular-nums mt-0.5">
-              {mendesakRetur.length} <span className="text-[11px] font-medium hidden sm:inline">Batch</span>
+              {lewatBatasRetur.length} <span className="text-[11px] font-medium hidden sm:inline">Batch</span>
             </p>
           </div>
-          <div className={`hidden sm:flex w-9 h-9 rounded-xl items-center justify-center shrink-0 ${activeTab === 'retur' ? 'bg-white/20 text-white' : 'bg-rose-50 text-rose-600'}`}>
+          <div className={`hidden sm:flex w-9 h-9 rounded-xl items-center justify-center shrink-0 ${activeTab === 'lewat_batas' ? 'bg-white/20 text-white' : 'bg-rose-50 text-rose-600'}`}>
             <Clock className="w-4 h-4" />
           </div>
         </button>
@@ -309,19 +393,19 @@ export function PengingatReturPage({
           }}
           className={`p-2.5 sm:p-3.5 rounded-2xl border text-left transition-all flex items-center justify-between cursor-pointer ${
             activeTab === 'menipis'
-              ? 'bg-blue-600 border-blue-600 text-white shadow-xs'
-              : 'bg-white border-slate-200/80 hover:border-blue-300 text-slate-900'
+              ? 'bg-teal-600 border-teal-600 text-white shadow-xs'
+              : 'bg-white border-slate-200/80 hover:border-teal-300 text-slate-900'
           }`}
         >
           <div className="min-w-0">
-            <span className={`text-[10px] sm:text-xs font-semibold block truncate ${activeTab === 'menipis' ? 'text-blue-100' : 'text-slate-500'}`}>
+            <span className={`text-[10px] sm:text-xs font-semibold block truncate ${activeTab === 'menipis' ? 'text-teal-100' : 'text-slate-500'}`}>
               Stok Tipis
             </span>
             <p className="text-base sm:text-xl font-extrabold tabular-nums mt-0.5">
               {stokMenipis.length} <span className="text-[11px] font-medium hidden sm:inline">Batch</span>
             </p>
           </div>
-          <div className={`hidden sm:flex w-9 h-9 rounded-xl items-center justify-center shrink-0 ${activeTab === 'menipis' ? 'bg-white/20 text-white' : 'bg-blue-50 text-blue-600'}`}>
+          <div className={`hidden sm:flex w-9 h-9 rounded-xl items-center justify-center shrink-0 ${activeTab === 'menipis' ? 'bg-white/20 text-white' : 'bg-teal-50 text-teal-600'}`}>
             <Boxes className="w-4 h-4" />
           </div>
         </button>
@@ -336,7 +420,7 @@ export function PengingatReturPage({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Cari obat, nomor batch, atau PBF..."
-            className="w-full text-xs h-11 sm:h-9 pl-9 pr-3 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+            className="w-full text-xs h-11 sm:h-9 pl-9 pr-3 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition"
           />
         </div>
 
@@ -345,7 +429,7 @@ export function PengingatReturPage({
             value={filterPbf}
             onChange={(e) => setFilterPbf(e.target.value)}
             aria-label="Filter distributor PBF"
-            className="text-xs h-11 sm:h-9 px-2.5 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-medium w-full md:w-44"
+            className="text-xs h-11 sm:h-9 px-2.5 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 font-medium w-full md:w-44"
           >
             <option value="semua">Semua PBF ({uniquePbfs.length})</option>
             {uniquePbfs.map((pbf, idx) => (
@@ -359,7 +443,7 @@ export function PengingatReturPage({
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
             aria-label="Urutkan daftar"
-            className="text-xs h-11 sm:h-9 px-2.5 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-medium w-full md:w-40"
+            className="text-xs h-11 sm:h-9 px-2.5 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 font-medium w-full md:w-40"
           >
             <option value="urgensi">Tenggat Terdekat</option>
             <option value="nilai_desc">Nilai Terbesar (Rp)</option>
@@ -374,7 +458,7 @@ export function PengingatReturPage({
               onClick={() => setViewMode('table')}
               className={`w-8 h-8 flex items-center justify-center rounded-lg text-xs transition ${
                 viewMode === 'table'
-                  ? 'bg-white text-blue-600 font-bold shadow-xs'
+                  ? 'bg-white text-emerald-600 font-bold shadow-xs'
                   : 'text-slate-500 hover:text-slate-800'
               }`}
               title="Tampilan Tabel Ringkas"
@@ -387,7 +471,7 @@ export function PengingatReturPage({
               onClick={() => setViewMode('cards')}
               className={`w-8 h-8 flex items-center justify-center rounded-lg text-xs transition ${
                 viewMode === 'cards'
-                  ? 'bg-white text-blue-600 font-bold shadow-xs'
+                  ? 'bg-white text-emerald-600 font-bold shadow-xs'
                   : 'text-slate-500 hover:text-slate-800'
               }`}
               title="Tampilan Kartu"
@@ -401,11 +485,11 @@ export function PengingatReturPage({
 
       
       {selectedBatchIds.length > 0 && (
-        <div className="p-3 bg-blue-50 border border-blue-200 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs animate-in fade-in">
+        <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs animate-in fade-in">
           <div className="flex items-center gap-2">
-            <CheckSquare className="w-4 h-4 text-blue-600 shrink-0" />
+            <CheckSquare className="w-4 h-4 text-emerald-600 shrink-0" />
             <span className="text-xs font-bold text-slate-800">
-              <strong className="text-blue-700">{selectedBatchIds.length} batch</strong> terpilih
+              <strong className="text-emerald-700">{selectedBatchIds.length} batch</strong> terpilih
             </span>
             <span className="text-xs text-slate-400">•</span>
             <span className="text-xs font-extrabold text-slate-900">
@@ -414,14 +498,18 @@ export function PengingatReturPage({
           </div>
 
           <div className="flex items-center gap-2">
+            {selectedReturnableCount > 0 && (
+              <button
+                type="button"
+                onClick={handleBulkPrintReturn}
+                className="btn-primary h-8 px-3 text-xs"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span>Cetak / Catat Retur ({selectedReturnableCount})</span>
+              </button>
+            )}
             <button
-              onClick={handleBulkPrintReturn}
-              className="btn-primary h-8 px-3 text-xs"
-            >
-              <Printer className="w-3.5 h-3.5" />
-              <span>Cetak Berita Acara Retur ({selectedBatchIds.length})</span>
-            </button>
-            <button
+              type="button"
               onClick={() => setSelectedBatchIds([])}
               className="btn-outline h-8 px-2.5 text-xs text-slate-500"
             >
@@ -443,12 +531,12 @@ export function PengingatReturPage({
                     <button
                       type="button"
                       onClick={toggleSelectAll}
-                      className="text-slate-400 hover:text-blue-600 transition"
+                      className="text-slate-400 hover:text-emerald-600 transition"
                       title="Pilih Semua Batch"
                     >
                       {selectedBatchIds.length === filteredAndSortedList.length &&
                       filteredAndSortedList.length > 0 ? (
-                        <CheckSquare className="w-4 h-4 text-blue-600" />
+                        <CheckSquare className="w-4 h-4 text-emerald-600" />
                       ) : (
                         <Square className="w-4 h-4" />
                       )}
@@ -474,23 +562,29 @@ export function PengingatReturPage({
                   filteredAndSortedList.map((item) => {
                     const isSelected = selectedBatchIds.includes(item.id);
                     const isOverdue =
-                      item.sisa_hari_retur !== undefined && item.sisa_hari_retur < 0;
+                      item.status_retur === 'lewat_batas' ||
+                      (item.sisa_hari_retur !== undefined && item.sisa_hari_retur !== null && item.sisa_hari_retur < 0);
+                    const isExpiredEd =
+                      hitungSelisihHari(item.tanggal_kedaluwarsa, data.tanggal_acuan) <= 0;
+                    const effectiveSisaHariRetur =
+                      item.sisa_hari_retur ??
+                      (item.batas_retur ? hitungSelisihHari(item.batas_retur, data.tanggal_acuan) : null);
 
                     return (
                       <tr
                         key={item.id}
-                        className={`hover:bg-blue-50/40 transition-colors ${
-                          isSelected ? 'bg-blue-50/60' : ''
+                        className={`hover:bg-emerald-50/40 transition-colors ${
+                          isSelected ? 'bg-emerald-50/60' : ''
                         }`}
                       >
                         <td className="py-2 px-3 text-center">
                           <button
                             type="button"
                             onClick={() => toggleSelectOne(item.id)}
-                            className="text-slate-400 hover:text-blue-600 transition"
+                            className="text-slate-400 hover:text-emerald-600 transition"
                           >
                             {isSelected ? (
-                              <CheckSquare className="w-4 h-4 text-blue-600" />
+                              <CheckSquare className="w-4 h-4 text-emerald-600" />
                             ) : (
                               <Square className="w-4 h-4" />
                             )}
@@ -498,13 +592,18 @@ export function PengingatReturPage({
                         </td>
 
                         <td className="py-2.5 px-3">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <span className="font-extrabold text-slate-900 truncate max-w-[200px] block">
                               {item.nama_obat}
                             </span>
                             <span className="font-mono text-[10px] text-slate-600 bg-slate-100 border border-slate-200 px-1.5 py-0.2 rounded font-semibold shrink-0">
                               {item.nomor_batch}
                             </span>
+                            {item.prioritas_jual && (
+                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200">
+                                Prioritas Jual
+                              </span>
+                            )}
                           </div>
                         </td>
 
@@ -516,15 +615,16 @@ export function PengingatReturPage({
 
                         <td className="py-2.5 px-3">
                           <div className="flex items-center gap-2">
-                            {item.sisa_hari_retur !== undefined ? (
+                            {item.batas_retur ? (
                               <StatusReturBadge
                                 status={item.status_retur}
-                                sisaHari={item.sisa_hari_retur}
+                                sisaHari={effectiveSisaHariRetur}
+                                batasRetur={item.batas_retur}
                               />
                             ) : (
                               <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
                                 <Clock className="w-3 h-3 text-amber-500" />
-                                {item.sisa_hari_exp} Hari Lagi
+                                {item.sisa_hari_exp <= 0 ? 'Sudah ED' : `${item.sisa_hari_exp} Hari Lagi`}
                               </span>
                             )}
                             <span className="text-[11px] text-slate-400">
@@ -551,33 +651,82 @@ export function PengingatReturPage({
                         </td>
 
                         <td className="py-2.5 px-3 text-center">
-                          <StatusRisikoBadge
-                            status={item.status_risiko}
-                            skor={item.skor_risiko}
-                          />
+                          {item.status_retur === 'lewat_batas' ? (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-600 border border-slate-200 whitespace-nowrap">
+                              {isExpiredEd ? 'Perlu Dibuang' : 'Tindak Lanjut Jual'}
+                            </span>
+                          ) : (
+                            <StatusRisikoBadge
+                              status={item.status_risiko}
+                              skor={item.skor_risiko}
+                            />
+                          )}
                         </td>
 
                         <td className="py-2.5 px-3 text-center">
                           <div className="flex items-center justify-center gap-1.5">
+                            {item.status_retur === 'lewat_batas' ? (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setActionModal({
+                                    isOpen: true,
+                                    mode: isExpiredEd ? 'dibuang' : 'prioritas_jual',
+                                    batch: item,
+                                  })
+                                }
+                                className={`h-7 px-2.5 rounded-lg text-[11px] font-bold inline-flex items-center gap-1 text-white transition cursor-pointer ${
+                                  isExpiredEd
+                                    ? 'bg-rose-600 hover:bg-rose-700'
+                                    : 'bg-amber-600 hover:bg-amber-700'
+                                }`}
+                              >
+                                {isExpiredEd ? (
+                                  <Trash2 className="w-3 h-3" />
+                                ) : (
+                                  <Tag className="w-3 h-3" />
+                                )}
+                                <span>{isExpiredEd ? 'Catat Dibuang' : 'Prioritas Jual'}</span>
+                              </button>
+                            ) : (
+                              <>
+                                {item.status_retur === 'bisa_diretur' && (
+                                  <>
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        setActionModal({
+                                          isOpen: true,
+                                          mode: 'retur',
+                                          batch: item,
+                                        })
+                                      }
+                                      className="h-7 px-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold transition cursor-pointer"
+                                    >
+                                      Retur
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleOpenSingleBap(item)}
+                                      className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-600 transition"
+                                      title="Buat Berita Acara Retur"
+                                      aria-label={`Buat Berita Acara Retur untuk ${item.nama_obat}`}
+                                    >
+                                      <FileText className="w-3.5 h-3.5 text-emerald-600" />
+                                    </button>
+                                  </>
+                                )}
+                              </>
+                            )}
                             <button
                               type="button"
                               onClick={() =>
                                 onNavigateToPenyesuaian && onNavigateToPenyesuaian(item)
                               }
-                              className="btn-outline h-7 px-2.5 text-[11px] font-bold text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                              className="btn-outline h-7 px-2.5 text-[11px] font-bold text-emerald-700 hover:text-emerald-800 hover:bg-emerald-50"
                               title="Lakukan Cek Fisik Rak & Stock Opname"
                             >
                               Cek Rak
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={() => handleOpenSingleBap(item)}
-                              className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-600 transition"
-                              title="Buat Berita Acara Retur"
-                              aria-label={`Buat Berita Acara Retur untuk ${item.nama_obat}`}
-                            >
-                              <FileText className="w-3.5 h-3.5 text-blue-600" />
                             </button>
                           </div>
                         </td>
@@ -593,7 +742,7 @@ export function PengingatReturPage({
             <span>
               Menampilkan <strong>{filteredAndSortedList.length}</strong> batch obat
             </span>
-            <span>SIMAAF Apotek Asahan Farma • Kepatuhan Standar CDOB BPOM</span>
+            <span>SIMAAF Apotek Asahan Farma • Pengawasan Retur &amp; FEFO</span>
           </div>
         </div>
       )}
@@ -622,7 +771,7 @@ export function PengingatReturPage({
                 setExpandedCards(next);
               }
             }}
-            className="font-bold text-blue-600 hover:text-blue-800 inline-flex items-center gap-1"
+            className="font-bold text-emerald-600 hover:text-emerald-800 inline-flex items-center gap-1"
           >
             <span>
               {filteredAndSortedList.every((it) => expandedCards[it.id])
@@ -660,15 +809,23 @@ export function PengingatReturPage({
             } ingin mengajukan retur ${item.nama_obat} (Batch ${item.nomor_batch}, ${
               item.jumlah_saat_ini
             } unit, batas retur ${item.batas_retur || '-'}). Mohon arahan penjemputannya. Terima kasih.`;
-            const waUrl = buildWhatsAppUrl(pbfMeta?.telepon, waText);
+            const waUrl =
+              item.status_retur === 'bisa_diretur'
+                ? buildWhatsAppUrl(pbfMeta?.telepon, waText)
+                : null;
             const isExpanded = Boolean(expandedCards[item.id]);
+            const isExpiredEd =
+              hitungSelisihHari(item.tanggal_kedaluwarsa, data.tanggal_acuan) <= 0;
+            const effectiveSisaHariRetur =
+              item.sisa_hari_retur ??
+              (item.batas_retur ? hitungSelisihHari(item.batas_retur, data.tanggal_acuan) : null);
 
             return (
               <div
                 key={item.id}
                 className={`bg-white rounded-2xl border p-3 shadow-xs transition-all space-y-2 ${
                   selectedBatchIds.includes(item.id)
-                    ? 'border-blue-400 ring-2 ring-blue-500/20 bg-blue-50/20'
+                    ? 'border-emerald-400 ring-2 ring-emerald-500/20 bg-emerald-50/20'
                     : 'border-slate-200/85 hover:border-slate-300'
                 }`}
               >
@@ -678,12 +835,12 @@ export function PengingatReturPage({
                     <button
                       type="button"
                       onClick={() => toggleSelectOne(item.id)}
-                      className="w-8 h-8 min-w-[32px] flex items-center justify-center text-slate-400 hover:text-blue-600 transition -ml-1 -mt-0.5 shrink-0"
+                      className="w-8 h-8 min-w-[32px] flex items-center justify-center text-slate-400 hover:text-emerald-600 transition -ml-1 -mt-0.5 shrink-0"
                       title={selectedBatchIds.includes(item.id) ? 'Batalkan pilihan' : 'Pilih batch'}
                       aria-label={`Pilih batch ${item.nomor_batch}`}
                     >
                       {selectedBatchIds.includes(item.id) ? (
-                        <CheckSquare className="w-4 h-4 text-blue-600" />
+                        <CheckSquare className="w-4 h-4 text-emerald-600" />
                       ) : (
                         <Square className="w-4 h-4 text-slate-400" />
                       )}
@@ -693,7 +850,7 @@ export function PengingatReturPage({
                         {item.nama_obat}
                       </h4>
                       <p className="text-[10.5px] text-slate-500 font-medium truncate mt-0.5">
-                        <span className="font-mono font-bold text-blue-700 bg-blue-50 px-1.5 py-0.2 rounded mr-1.5">
+                        <span className="font-mono font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded mr-1.5">
                           {item.nomor_batch}
                         </span>
                         <span>{item.jumlah_saat_ini} unit</span>
@@ -710,25 +867,59 @@ export function PengingatReturPage({
                   </div>
                 </div>
 
-                {/* Status Penting + Tombol Cepat BAP & Toggle Dropdown Detail */}
+                {/* Status Penting + Tombol Cepat & Toggle Dropdown Detail */}
                 <div className="flex items-center justify-between gap-2 pt-0.5">
-                  <StatusReturBadge
-                    status={item.status_retur}
-                    sisaHari={item.sisa_hari_retur}
-                    batasRetur={item.batas_retur}
-                  />
+                  <div className="flex items-center gap-1 flex-wrap min-w-0">
+                    <StatusReturBadge
+                      status={item.status_retur}
+                      sisaHari={effectiveSisaHariRetur}
+                      batasRetur={item.batas_retur}
+                    />
+                    {item.prioritas_jual && (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
+                        Prioritas Jual
+                      </span>
+                    )}
+                  </div>
 
                   <div className="flex items-center gap-1.5 shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => handleOpenSingleBap(item)}
-                      className="h-8 px-2.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-blue-50 hover:border-blue-200 text-slate-700 hover:text-blue-700 text-[11px] font-bold inline-flex items-center gap-1 transition"
-                      title="Berita Acara Pengembalian"
-                      aria-label={`Berita Acara Retur untuk ${item.nama_obat}`}
-                    >
-                      <FileText className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                      <span>BAP</span>
-                    </button>
+                    {item.status_retur === 'lewat_batas' ? (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setActionModal({
+                            isOpen: true,
+                            mode: isExpiredEd ? 'dibuang' : 'prioritas_jual',
+                            batch: item,
+                          })
+                        }
+                        className={`h-8 px-2.5 rounded-lg text-white text-[11px] font-bold inline-flex items-center gap-1 transition ${
+                          isExpiredEd
+                            ? 'bg-rose-600 hover:bg-rose-700'
+                            : 'bg-amber-600 hover:bg-amber-700'
+                        }`}
+                      >
+                        {isExpiredEd ? (
+                          <Trash2 className="w-3.5 h-3.5 shrink-0" />
+                        ) : (
+                          <Tag className="w-3.5 h-3.5 shrink-0" />
+                        )}
+                        <span>{isExpiredEd ? 'Catat Dibuang' : 'Prioritas Jual'}</span>
+                      </button>
+                    ) : (
+                      item.status_retur === 'bisa_diretur' && (
+                        <button
+                          type="button"
+                          onClick={() => handleOpenSingleBap(item)}
+                          className="h-8 px-2.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-emerald-50 hover:border-emerald-200 text-slate-700 hover:text-emerald-700 text-[11px] font-bold inline-flex items-center gap-1 transition"
+                          title="Berita Acara Pengembalian"
+                          aria-label={`Berita Acara Retur untuk ${item.nama_obat}`}
+                        >
+                          <FileText className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                          <span>BAP</span>
+                        </button>
+                      )
+                    )}
 
                     <button
                       type="button"
@@ -739,7 +930,7 @@ export function PengingatReturPage({
                       aria-expanded={isExpanded}
                       className={`h-8 px-2.5 rounded-lg border text-[11px] font-bold inline-flex items-center gap-1 transition ${
                         isExpanded
-                          ? 'bg-blue-50 border-blue-200 text-blue-700'
+                          ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
                           : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
                       }`}
                     >
@@ -765,21 +956,65 @@ export function PengingatReturPage({
                         <span className="text-slate-400">Tgl Kedaluwarsa:</span>
                         <span className="font-semibold text-slate-700">{item.tanggal_kedaluwarsa}</span>
                       </div>
-                      <div className="flex items-center justify-between pt-0.5">
-                        <span className="text-slate-400">Tingkat Risiko:</span>
-                        <StatusRisikoBadge status={item.status_risiko} skor={item.skor_risiko} />
-                      </div>
+                      {item.status_retur !== 'lewat_batas' && (
+                        <div className="flex items-center justify-between pt-0.5">
+                          <span className="text-slate-400">Tingkat Risiko:</span>
+                          <StatusRisikoBadge status={item.status_risiko} skor={item.skor_risiko} />
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex items-center gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => handleOpenSingleBap(item)}
-                        className="btn-outline h-10 px-2.5 text-xs font-bold text-slate-700 flex-1 flex items-center justify-center gap-1"
-                      >
-                        <FileText className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                        <span>Dokumen BAP</span>
-                      </button>
+                      {item.status_retur === 'lewat_batas' ? (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setActionModal({
+                              isOpen: true,
+                              mode: isExpiredEd ? 'dibuang' : 'prioritas_jual',
+                              batch: item,
+                            })
+                          }
+                          className={`h-10 px-2.5 rounded-xl text-white text-xs font-bold flex-1 flex items-center justify-center gap-1 transition ${
+                            isExpiredEd
+                              ? 'bg-rose-600 hover:bg-rose-700'
+                              : 'bg-amber-600 hover:bg-amber-700'
+                          }`}
+                        >
+                          {isExpiredEd ? (
+                            <Trash2 className="w-3.5 h-3.5 shrink-0" />
+                          ) : (
+                            <Tag className="w-3.5 h-3.5 shrink-0" />
+                          )}
+                          <span>{isExpiredEd ? 'Catat Dibuang' : 'Prioritas Jual'}</span>
+                        </button>
+                      ) : (
+                        item.status_retur === 'bisa_diretur' && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setActionModal({
+                                  isOpen: true,
+                                  mode: 'retur',
+                                  batch: item,
+                                })
+                              }
+                              className="btn-primary h-10 px-2.5 text-xs font-bold flex-1 flex items-center justify-center gap-1"
+                            >
+                              <span>Catat Retur</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleOpenSingleBap(item)}
+                              className="btn-outline h-10 px-2.5 text-xs font-bold text-slate-700 flex items-center justify-center gap-1"
+                            >
+                              <FileText className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                              <span>BAP</span>
+                            </button>
+                          </>
+                        )
+                      )}
                       {waUrl && (
                         <a
                           href={waUrl}
@@ -795,7 +1030,7 @@ export function PengingatReturPage({
                       <button
                         type="button"
                         onClick={() => onNavigateToPenyesuaian && onNavigateToPenyesuaian(item)}
-                        className="btn-primary h-10 px-3 text-xs font-bold flex-1 flex items-center justify-center gap-1"
+                        className="btn-outline h-10 px-3 text-xs font-bold text-emerald-700 hover:bg-emerald-50 flex items-center justify-center gap-1 cursor-pointer"
                       >
                         <span>Cek Rak</span>
                         <ArrowRight className="w-3.5 h-3.5 shrink-0" />
@@ -814,6 +1049,17 @@ export function PengingatReturPage({
         batches={bapModalData.batches}
         apotekProfile={apotekProfile}
         onClose={() => setBapModalData({ isOpen: false, batches: [] })}
+        onConfirmRetur={handleConfirmReturFromBap}
+      />
+
+      <BatchActionModal
+        isOpen={actionModal.isOpen}
+        mode={actionModal.mode}
+        batch={actionModal.batch}
+        petugasNama={user?.nama || 'Petugas Apotek'}
+        onClose={() => setActionModal({ isOpen: false, mode: 'retur', batch: null })}
+        onSuccess={handleActionComplete}
+        onOpenBap={handleOpenSingleBap}
       />
     </div>
   );

@@ -1,11 +1,12 @@
 export const DEFAULT_RACK_FOLDERS = [
-  { id: 'rak-utama', name: 'Etalase Depan & Bebas', tone: 'blue' },
+  { id: 'rak-utama', name: 'Etalase Depan & Bebas', tone: 'emerald' },
   { id: 'rak-keras', name: 'Rak Obat Keras & Antibiotik', tone: 'rose' },
   { id: 'rak-topikal', name: 'Sirup Anak, Salep & Tetes', tone: 'teal' },
   { id: 'rak-karantina', name: 'Karantina & Wajib Retur PBF', tone: 'amber' },
 ];
 
 export const FOLDER_TONE_STYLES = {
+  emerald: 'bg-emerald-50 text-emerald-700 border-emerald-200/80',
   blue: 'bg-blue-50 text-blue-600 border-blue-200/80',
   rose: 'bg-rose-50 text-rose-600 border-rose-200/80',
   amber: 'bg-amber-50 text-amber-600 border-amber-200/80',
@@ -33,7 +34,7 @@ export function resolveBatchFolder(batch, groupMode, obatMap, rackFolders, batch
     return {
       id: `pbf:${batch.distributor_id || name}`,
       name,
-      tone: 'blue',
+      tone: 'teal',
     };
   }
 
@@ -45,16 +46,16 @@ export function resolveBatchFolder(batch, groupMode, obatMap, rackFolders, batch
       return { id: 'st:risiko_tinggi', name: 'Risiko Tinggi / Wajib Retur', tone: 'amber' };
     }
     if (batch.status_risiko === 'sedang') {
-      return { id: 'st:sedang', name: 'Perlu Dipantau (Waspada)', tone: 'violet' };
+      return { id: 'st:sedang', name: 'Perlu Dipantau (Waspada)', tone: 'slate' };
     }
     return { id: 'st:aman', name: 'Stok Aman Terkendali', tone: 'teal' };
   }
 
   if (groupMode === 'abjad') {
     const ch = (batch.nama_obat || 'Z').trim().charAt(0).toUpperCase();
-    if (ch >= 'A' && ch <= 'E') return { id: 'az:a-e', name: 'Obat Awalan A – E', tone: 'blue' };
+    if (ch >= 'A' && ch <= 'E') return { id: 'az:a-e', name: 'Obat Awalan A – E', tone: 'emerald' };
     if (ch >= 'F' && ch <= 'K') return { id: 'az:f-k', name: 'Obat Awalan F – K', tone: 'teal' };
-    if (ch >= 'L' && ch <= 'P') return { id: 'az:l-p', name: 'Obat Awalan L – P', tone: 'violet' };
+    if (ch >= 'L' && ch <= 'P') return { id: 'az:l-p', name: 'Obat Awalan L – P', tone: 'emerald' };
     return { id: 'az:q-z', name: 'Obat Awalan Q – Z', tone: 'amber' };
   }
 
@@ -79,11 +80,11 @@ export function resolveBatchFolder(batch, groupMode, obatMap, rackFolders, batch
 
   const catName = inferMedicineCategory(batch, obatMap);
   const lower = catName.toLowerCase();
-  let tone = 'blue';
+  let tone = 'emerald';
   if (lower.includes('antibiotik')) tone = 'rose';
   else if (lower.includes('topikal') || lower.includes('anak')) tone = 'teal';
   else if (lower.includes('lambung') || lower.includes('batuk')) tone = 'amber';
-  else if (lower.includes('suplemen') || lower.includes('vitamin')) tone = 'violet';
+  else if (lower.includes('suplemen') || lower.includes('vitamin')) tone = 'teal';
 
   return {
     id: `cat:${catName}`,
@@ -119,7 +120,7 @@ export function groupBatchesIntoProducts(batchList) {
       prod.earliestEd = b.tanggal_kedaluwarsa;
     }
     if (b.status_retur === 'lewat_batas') prod.hasOverdueRetur = true;
-    if (b.status_risiko === 'tinggi') prod.hasHighRisk = true;
+    if (b.status_risiko === 'tinggi' && b.status_retur !== 'lewat_batas') prod.hasHighRisk = true;
   });
 
   // Urutkan batch tiap produk berdasarkan FEFO (ED terdekat dulu)

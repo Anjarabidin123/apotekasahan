@@ -10,7 +10,7 @@ export function SettingToggle({ checked, onChange, label, description }) {
       className="w-full flex items-center justify-between gap-3 py-3 text-left cursor-pointer group"
     >
       <div className="min-w-0">
-        <p className="text-xs sm:text-[13px] font-bold text-slate-900 group-hover:text-blue-700 transition-colors">
+        <p className="text-xs sm:text-[13px] font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">
           {label}
         </p>
         {description && (
@@ -19,7 +19,7 @@ export function SettingToggle({ checked, onChange, label, description }) {
       </div>
       <span
         className={`relative inline-flex h-6 w-11 shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ${
-          checked ? 'bg-blue-600' : 'bg-slate-200'
+          checked ? 'bg-emerald-600' : 'bg-slate-200'
         }`}
       >
         <span

@@ -14,8 +14,10 @@ import { api } from './services/api';
 function MainApp() {
   const { user, loading, isAdmin } = useAuth();
   const [activePage, setActivePage] = useState(() => localStorage.getItem('simaaf_default_page') || 'dashboard');
+  const [pageHistory, setPageHistory] = useState([]);
   const [tanggalAcuan, setTanggalAcuan] = useState('2026-10-31');
   const [urgentReturCount, setUrgentReturCount] = useState(0);
+  const [dataVersion, setDataVersion] = useState(0);
   const [preselectedBatch, setPreselectedBatch] = useState(null);
   const [focusedQuery, setFocusedQuery] = useState('');
   const [logoUrl, setLogoUrl] = useState(() => {
@@ -41,6 +43,7 @@ function MainApp() {
       ]);
       setTanggalAcuan(settings.tanggal_acuan);
       setUrgentReturCount(pengingat.ringkasan.total_mendesak_retur);
+      setDataVersion((v) => v + 1);
     } catch (e) {
       console.error(e);
     }
@@ -53,6 +56,8 @@ function MainApp() {
       if (!isAdmin && activePage === 'dashboard') {
         setActivePage('inventori');
       }
+    } else {
+      setPageHistory([]);
     }
   }, [user, isAdmin]);
 
@@ -68,21 +73,46 @@ function MainApp() {
     return (
       <LoginPage
         logoUrl={logoUrl}
-        onSuccess={() => setActivePage(localStorage.getItem('simaaf_default_page') || 'dashboard')}
+        onSuccess={() => {
+          setPageHistory([]);
+          setActivePage(localStorage.getItem('simaaf_default_page') || 'dashboard');
+        }}
       />
     );
   }
+
+  const validPages = ['dashboard', 'faktur', 'inventori', 'pengingat', 'penyesuaian', 'kalender', 'pengaturan'];
+  const currentPage = validPages.includes(activePage) ? activePage : (localStorage.getItem('simaaf_default_page') || 'dashboard');
 
   // Navigasi dengan context data
   const handleSelectBatchForAdjustment = (batch) => {
     setPreselectedBatch(batch);
     setFocusedQuery('');
+    if (currentPage !== 'penyesuaian') {
+      setPageHistory((prev) => [...prev.slice(-19), currentPage]);
+    }
     setActivePage('penyesuaian');
   };
 
   const handleNavigateMenu = (pageId, query = '') => {
     setFocusedQuery(typeof query === 'string' ? query : '');
+    if (pageId === 'dashboard') {
+      setPageHistory([]);
+    } else if (pageId !== currentPage) {
+      setPageHistory((prev) => [...prev.slice(-19), currentPage]);
+    }
     setActivePage(pageId);
+  };
+
+  const handleNavigateBack = () => {
+    setFocusedQuery('');
+    if (pageHistory.length === 0) {
+      setActivePage(isAdmin ? 'dashboard' : 'inventori');
+      return;
+    }
+    const previousPage = pageHistory[pageHistory.length - 1];
+    setPageHistory((prev) => prev.slice(0, -1));
+    setActivePage(previousPage);
   };
 
   const getPageTitle = () => {
@@ -98,17 +128,16 @@ function MainApp() {
     }
   };
 
-  // Fallback if activePage is invalid
-  const validPages = ['dashboard', 'faktur', 'inventori', 'pengingat', 'penyesuaian', 'kalender', 'pengaturan'];
-  const currentPage = validPages.includes(activePage) ? activePage : (localStorage.getItem('simaaf_default_page') || 'dashboard');
-
   return (
     <Layout
       activePage={currentPage}
       setActivePage={(pageId, query) => handleNavigateMenu(pageId, query)}
       activePageTitle={getPageTitle()}
+      showBackButton={currentPage !== 'dashboard'}
+      onBack={handleNavigateBack}
       tanggalAcuan={tanggalAcuan}
       urgentCount={urgentReturCount}
+      dataVersion={dataVersion}
       logoUrl={logoUrl}
     >
       {currentPage === 'dashboard' && (
@@ -121,6 +150,7 @@ function MainApp() {
             batch && batch.id ? handleSelectBatchForAdjustment(batch) : handleNavigateMenu('penyesuaian')
           }
           onNavigateToPengaturan={() => handleNavigateMenu('pengaturan')}
+          onDataChanged={refreshBadgeAndSettings}
           tanggalAcuan={tanggalAcuan}
         />
       )}
@@ -141,6 +171,7 @@ function MainApp() {
           onSelectBatchForAdjustment={handleSelectBatchForAdjustment}
           onNavigateToFaktur={() => handleNavigateMenu('faktur')}
           onNavigateToPengingat={(q) => handleNavigateMenu('pengingat', q)}
+          onDataChanged={refreshBadgeAndSettings}
         />
       )}
 
@@ -149,12 +180,14 @@ function MainApp() {
           initialSearch={focusedQuery}
           onClearInitialSearch={() => setFocusedQuery('')}
           onNavigateToPenyesuaian={handleSelectBatchForAdjustment}
+          onDataChanged={refreshBadgeAndSettings}
         />
       )}
 
       {currentPage === 'penyesuaian' && (
         <PenyesuaianStokPage
           preselectedBatch={preselectedBatch}
+          onDataChanged={refreshBadgeAndSettings}
         />
       )}
 

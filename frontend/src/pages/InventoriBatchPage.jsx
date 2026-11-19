@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { api } from '../services/api';
+import { api, hitungSelisihHari, isBatchActive } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import { StatusReturBadge, StatusRisikoBadge } from '../components/common/StatusBadge';
+import { BatchActionModal } from '../components/retur/BatchActionModal';
+import { BeritaAcaraModal } from '../components/retur/BeritaAcaraModal';
 import { exportToExcelCsv, parseUploadedDocument } from '../utils/fileTools';
 import { formatRupiah, readJsonStorage, writeJsonStorage } from '../utils/formatters';
 import {
@@ -17,7 +20,6 @@ import {
   UploadCloud,
   CheckCircle2,
   AlertTriangle,
-  RotateCcw,
   SlidersHorizontal,
   Folder,
   FolderOpen,
@@ -27,21 +29,33 @@ import {
   Plus,
   BellRing,
   X,
+  Tag,
+  Trash2,
 } from 'lucide-react';
 
 export function InventoriBatchPage({
   onSelectBatchForAdjustment,
   onNavigateToFaktur,
-  onNavigateToPengingat,
+  onDataChanged,
   initialSearch = '',
   onClearInitialSearch,
 }) {
+  const { user } = useAuth();
   const [allBatches, setAllBatches] = useState([]);
   const [distributors, setDistributors] = useState([]);
   const [obatList, setObatList] = useState([]);
+  const [tanggalAcuan, setTanggalAcuan] = useState('2026-10-31');
+  const [settings, setSettings] = useState({
+    stok_minimum_default: 10,
+    batas_kedaluwarsa_warning_hari: 90,
+    batas_retur_warning_hari: 30,
+  });
+  const [apotekProfile, setApotekProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [importing, setImporting] = useState(false);
   const [importNotice, setImportNotice] = useState(null);
+  const [actionModal, setActionModal] = useState({ isOpen: false, mode: 'retur', batch: null });
+  const [bapModalData, setBapModalData] = useState({ isOpen: false, batches: [] });
   const fileImportRef = useRef(null);
 
   // State pencarian, filter modal, & navigasi 3 tingkat (Folder -> Obat -> Detail Batch)
@@ -49,6 +63,7 @@ export function InventoriBatchPage({
   const [distributorFilter, setDistributorFilter] = useState('');
   const [risikoFilter, setRisikoFilter] = useState('semua');
   const [returFilter, setReturFilter] = useState('semua');
+  const [kategoriFilter, setKategoriFilter] = useState('semua');
   const [showFilterModal, setShowFilterModal] = useState(false);
 
   const [groupMode, setGroupMode] = useState(
@@ -66,17 +81,24 @@ export function InventoriBatchPage({
   );
   const [showCreateFolderModal, setShowCreateFolderModal] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
-  const [newFolderTone, setNewFolderTone] = useState('blue');
+  const [newFolderTone, setNewFolderTone] = useState('emerald');
 
   const loadData = async () => {
     setLoading(true);
     try {
-      const [batchRes, distRes, oList] = await Promise.all([
+      const [batchRes, distRes, oList, sData, prof] = await Promise.all([
         api.getBatches(),
         api.getDistributors(),
         api.getObatList(),
+        api.getSettings(),
+        api.getProfile(),
       ]);
       setAllBatches(batchRes.data || []);
+      if (batchRes.tanggal_acuan || sData?.tanggal_acuan) {
+        setTanggalAcuan(sData?.tanggal_acuan || batchRes.tanggal_acuan);
+      }
+      if (sData) setSettings(sData);
+      setApotekProfile(prof || null);
       setDistributors(distRes || []);
       setObatList(oList || []);
     } catch (err) {
@@ -84,6 +106,22 @@ export function InventoriBatchPage({
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleActionSuccess = async (msg) => {
+    setImportNotice({ type: 'success', text: msg });
+    await loadData();
+    if (onDataChanged) onDataChanged();
+  };
+
+  const handleConfirmReturFromBap = async (batchesToReturn, catatan) => {
+    const payload = batchesToReturn.map((b) => ({
+      batchId: b.id,
+      jumlahRetur: b.jumlah_saat_ini ?? b.stok,
+    }));
+    const res = await api.catatReturBatch(payload, catatan, user?.nama || 'Petugas Apotek');
+    setBapModalData({ isOpen: false, batches: [] });
+    await handleActionSuccess(`Retur ${res.count} batch berhasil dicatat dan stok diperbarui.`);
   };
 
   useEffect(() => {
@@ -114,13 +152,15 @@ export function InventoriBatchPage({
     setDistributorFilter('');
     setRisikoFilter('semua');
     setReturFilter('semua');
+    setKategoriFilter('semua');
     if (onClearInitialSearch) onClearInitialSearch();
   };
 
   const activeFilterCount =
     (distributorFilter ? 1 : 0) +
     (risikoFilter !== 'semua' ? 1 : 0) +
-    (returFilter !== 'semua' ? 1 : 0);
+    (returFilter !== 'semua' ? 1 : 0) +
+    (kategoriFilter !== 'semua' ? 1 : 0);
 
   const isDeepFiltering = search.trim() !== '' || activeFilterCount > 0;
 
@@ -146,13 +186,31 @@ export function InventoriBatchPage({
       list = list.filter((b) => String(b.distributor_id) === String(distributorFilter));
     }
     if (risikoFilter !== 'semua') {
-      list = list.filter((b) => b.status_risiko === risikoFilter);
+      list = list.filter((b) => {
+        if (risikoFilter === 'tinggi' && b.status_retur === 'lewat_batas') return false;
+        return b.status_risiko === risikoFilter;
+      });
     }
     if (returFilter !== 'semua') {
       list = list.filter((b) => b.status_retur === returFilter);
     }
+    if (kategoriFilter !== 'semua') {
+      list = list.filter((b) => {
+        if (!isBatchActive(b)) return false;
+        if (kategoriFilter === 'bisa_diretur') return b.status_retur === 'bisa_diretur';
+        if (kategoriFilter === 'lewat_batas') return b.status_retur === 'lewat_batas';
+        if (kategoriFilter === 'dekat_ed') {
+          const days = hitungSelisihHari(b.tanggal_kedaluwarsa, tanggalAcuan);
+          return days !== null && days <= (settings?.batas_kedaluwarsa_warning_hari || 90);
+        }
+        if (kategoriFilter === 'stok_tipis') {
+          return (b.jumlah_saat_ini ?? 0) <= (settings?.stok_minimum_default || 10);
+        }
+        return true;
+      });
+    }
     return list;
-  }, [allBatches, search, distributorFilter, risikoFilter, returFilter]);
+  }, [allBatches, search, distributorFilter, risikoFilter, returFilter, kategoriFilter, tanggalAcuan, settings]);
 
   const batchesWithFolderMeta = useMemo(
     () =>
@@ -204,7 +262,7 @@ export function InventoriBatchPage({
       entry.productKeys.add(b.obat_id ? `obat:${b.obat_id}` : `nama:${(b.nama_obat || '').toLowerCase()}`);
       entry.totalNilai += b.nilai_total || 0;
       entry.totalUnit += b.jumlah_saat_ini || 0;
-      if (b.status_risiko === 'tinggi') entry.highRiskCount += 1;
+      if (b.status_risiko === 'tinggi' && b.status_retur !== 'lewat_batas') entry.highRiskCount += 1;
       if (b.status_retur === 'lewat_batas') entry.expiredReturCount += 1;
     });
 
@@ -325,6 +383,7 @@ export function InventoriBatchPage({
         text: `Berhasil mengimpor ${payload.length} batch dari "${file.name}".`,
       });
       await loadData();
+      if (onDataChanged) onDataChanged();
     } catch (err) {
       setImportNotice({ type: 'error', text: err.message || 'Gagal mengimpor data berkas.' });
     } finally {
@@ -370,7 +429,7 @@ export function InventoriBatchPage({
                   <div className="min-w-0">
                     {showFolderBadge && prod.folderName && (
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[10px] font-bold mb-1">
-                        <Folder className="w-2.5 h-2.5 text-blue-600" />
+                        <Folder className="w-2.5 h-2.5 text-emerald-600" />
                         <span className="truncate max-w-[180px]">{prod.folderName}</span>
                       </span>
                     )}
@@ -378,7 +437,7 @@ export function InventoriBatchPage({
                       {prod.nama_obat}
                     </h3>
                     <p className="text-[11px] text-slate-500 mt-0.5 truncate">
-                      <span className="font-semibold text-blue-700">
+                      <span className="font-semibold text-emerald-700">
                         {prod.batches.length} batch
                       </span>{' '}
                       • ED terdekat {prod.earliestEd}
@@ -390,7 +449,7 @@ export function InventoriBatchPage({
                       <span className="text-xs font-extrabold text-slate-950 tabular-nums block">
                         {formatRupiah(prod.totalNilai)}
                       </span>
-                      <span className="text-[11px] font-bold text-blue-700 tabular-nums">
+                      <span className="text-[11px] font-bold text-emerald-700 tabular-nums">
                         {prod.totalStok} unit
                       </span>
                     </div>
@@ -402,10 +461,17 @@ export function InventoriBatchPage({
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <StatusReturBadge
                       status={leadBatch.status_retur}
-                      sisaHari={leadBatch.sisa_hari_retur}
+                      sisaHari={hitungSelisihHari(leadBatch.batas_retur, tanggalAcuan)}
                       batasRetur={leadBatch.batas_retur}
                     />
-                    <StatusRisikoBadge status={leadBatch.status_risiko} skor={leadBatch.skor_risiko} />
+                    {leadBatch.status_retur !== 'lewat_batas' && (
+                      <StatusRisikoBadge status={leadBatch.status_risiko} skor={leadBatch.skor_risiko} />
+                    )}
+                    {leadBatch.prioritas_jual && (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
+                        Prioritas Jual
+                      </span>
+                    )}
                   </div>
                 )}
               </button>
@@ -433,17 +499,17 @@ export function InventoriBatchPage({
                   <tr
                     key={prod.key}
                     onClick={() => setSelectedProductKey(prod.key)}
-                    className="hover:bg-blue-50/35 transition cursor-pointer"
+                    className="hover:bg-emerald-50/35 transition cursor-pointer"
                   >
                     <td className="py-3 px-4 min-w-[180px]">
                       <p className="font-extrabold text-slate-900 leading-tight">{prod.nama_obat}</p>
                       <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                        <span className="text-[11px] font-bold text-blue-700">
+                        <span className="text-[11px] font-bold text-emerald-700">
                           {prod.batches.length} batch terdaftar
                         </span>
                         {showFolderBadge && prod.folderName && (
                           <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px] font-semibold">
-                            <Folder className="w-2.5 h-2.5 text-blue-600" />
+                            <Folder className="w-2.5 h-2.5 text-emerald-600" />
                             {prod.folderName}
                           </span>
                         )}
@@ -474,7 +540,7 @@ export function InventoriBatchPage({
                       <span className="font-extrabold text-slate-950 block">
                         {formatRupiah(prod.totalNilai)}
                       </span>
-                      <span className="text-[11px] font-semibold text-blue-700">
+                      <span className="text-[11px] font-semibold text-emerald-700">
                         {prod.totalStok} unit
                       </span>
                     </td>
@@ -484,19 +550,21 @@ export function InventoriBatchPage({
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <StatusReturBadge
                             status={leadBatch.status_retur}
-                            sisaHari={leadBatch.sisa_hari_retur}
+                            sisaHari={hitungSelisihHari(leadBatch.batas_retur, tanggalAcuan)}
                             batasRetur={leadBatch.batas_retur}
                           />
-                          <StatusRisikoBadge
-                            status={leadBatch.status_risiko}
-                            skor={leadBatch.skor_risiko}
-                          />
+                          {leadBatch.status_retur !== 'lewat_batas' && (
+                            <StatusRisikoBadge
+                              status={leadBatch.status_risiko}
+                              skor={leadBatch.skor_risiko}
+                            />
+                          )}
                         </div>
                       )}
                     </td>
 
                     <td className="py-3 px-4 text-right whitespace-nowrap">
-                      <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-blue-600 hover:text-white text-slate-700 text-[11px] font-bold transition">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-emerald-600 hover:text-white text-slate-700 text-[11px] font-bold transition">
                         <span>Buka Batch</span>
                         <ChevronRight className="w-3.5 h-3.5" />
                       </span>
@@ -541,7 +609,7 @@ export function InventoriBatchPage({
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1 border-t border-slate-100">
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[10px] font-bold">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold">
                   <Folder className="w-3 h-3" />
                   {selectedProduct.folderName}
                 </span>
@@ -557,7 +625,7 @@ export function InventoriBatchPage({
             <div className="grid grid-cols-2 sm:flex items-center gap-2 shrink-0">
               <div className="px-3 py-2 rounded-xl bg-slate-50 border border-slate-200/80 text-center">
                 <span className="text-[10px] font-semibold text-slate-500 block">Total Stok</span>
-                <span className="text-sm font-black text-blue-700 tabular-nums">
+                <span className="text-sm font-black text-emerald-700 tabular-nums">
                   {selectedProduct.totalStok} unit
                 </span>
               </div>
@@ -572,8 +640,30 @@ export function InventoriBatchPage({
         </div>
 
         {/* Daftar Seluruh Batch FEFO Obat Terpilih */}
+        {importNotice && (
+          <div
+            className={`p-2.5 rounded-xl text-xs flex items-center gap-2 border ${
+              importNotice.type === 'success'
+                ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                : 'bg-rose-50 border-rose-200 text-rose-800'
+            }`}
+          >
+            {importNotice.type === 'success' ? (
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            ) : (
+              <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+            )}
+            <span className="font-semibold">{importNotice.text}</span>
+          </div>
+        )}
+
         <div className="space-y-2.5">
-          {selectedProduct.batches.map((b, idx) => (
+          {selectedProduct.batches.map((b, idx) => {
+            const batchSisaHariRetur = hitungSelisihHari(b.batas_retur, tanggalAcuan);
+            const isExpiredEd = hitungSelisihHari(b.tanggal_kedaluwarsa, tanggalAcuan) <= 0;
+            const active = isBatchActive(b);
+
+            return (
             <div
               key={b.id}
               className="bg-white rounded-2xl border border-slate-200/85 p-4 shadow-2xs space-y-3"
@@ -584,13 +674,13 @@ export function InventoriBatchPage({
                     <span
                       className={`text-[10px] font-extrabold px-2 py-0.5 rounded-md ${
                         idx === 0
-                          ? 'bg-blue-600 text-white'
+                          ? 'bg-emerald-600 text-white'
                           : 'bg-slate-100 text-slate-600'
                       }`}
                     >
                       {idx === 0 ? '#1 Keluar Dulu (FEFO)' : `Batch #${idx + 1}`}
                     </span>
-                    <span className="font-mono text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded">
+                    <span className="font-mono text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
                       {b.nomor_batch}
                     </span>
                   </div>
@@ -603,15 +693,26 @@ export function InventoriBatchPage({
                   <p className="text-sm font-black text-slate-950 tabular-nums">
                     {formatRupiah(b.nilai_total)}
                   </p>
-                  <p className="text-xs font-bold text-blue-700 tabular-nums">
+                  <p className="text-xs font-bold text-emerald-700 tabular-nums">
                     Stok: {b.jumlah_saat_ini} (awal {b.jumlah_awal})
                   </p>
                 </div>
               </div>
 
               <div className="flex flex-wrap items-center gap-1.5">
-                <StatusReturBadge status={b.status_retur} batasRetur={b.batas_retur} />
-                <StatusRisikoBadge status={b.status_risiko} skor={b.skor_risiko} />
+                <StatusReturBadge
+                  status={b.status_retur}
+                  sisaHari={batchSisaHariRetur}
+                  batasRetur={b.batas_retur}
+                />
+                {b.status_retur !== 'lewat_batas' && (
+                  <StatusRisikoBadge status={b.status_risiko} skor={b.skor_risiko} />
+                )}
+                {b.prioritas_jual && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                    Prioritas Jual
+                  </span>
+                )}
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs bg-slate-50 p-2.5 rounded-xl border border-slate-100">
@@ -659,20 +760,69 @@ export function InventoriBatchPage({
                   <Edit3 className="w-4 h-4" />
                   <span>Cek Fisik &amp; Opname</span>
                 </button>
-                {onNavigateToPengingat && b.status_retur !== 'tidak_bisa_diretur' && (
+                {active && b.status_retur === 'lewat_batas' && (
                   <button
                     type="button"
-                    onClick={() => onNavigateToPengingat(b.nomor_batch)}
+                    onClick={() =>
+                      setActionModal({
+                        isOpen: true,
+                        mode: isExpiredEd ? 'dibuang' : 'prioritas_jual',
+                        batch: b,
+                      })
+                    }
+                    className={`h-11 min-h-[44px] px-3.5 rounded-xl text-white text-xs font-bold inline-flex items-center gap-1.5 transition cursor-pointer ${
+                      isExpiredEd
+                        ? 'bg-rose-600 hover:bg-rose-700'
+                        : 'bg-amber-600 hover:bg-amber-700'
+                    }`}
+                  >
+                    {isExpiredEd ? (
+                      <Trash2 className="w-4 h-4" />
+                    ) : (
+                      <Tag className="w-4 h-4" />
+                    )}
+                    <span>{isExpiredEd ? 'Catat Dibuang' : 'Prioritas Jual'}</span>
+                  </button>
+                )}
+                {active && b.status_retur === 'bisa_diretur' && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setActionModal({
+                        isOpen: true,
+                        mode: 'retur',
+                        batch: b,
+                      })
+                    }
                     className="btn-outline h-11 min-h-[44px] px-3.5 text-xs font-bold gap-1.5"
                   >
-                    <BellRing className="w-4 h-4 text-rose-600" />
+                    <BellRing className="w-4 h-4 text-emerald-600" />
                     <span>Retur</span>
                   </button>
                 )}
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
+
+        <BatchActionModal
+          isOpen={actionModal.isOpen}
+          mode={actionModal.mode}
+          batch={actionModal.batch}
+          petugasNama={user?.nama || 'Petugas Apotek'}
+          onClose={() => setActionModal({ isOpen: false, mode: 'retur', batch: null })}
+          onSuccess={handleActionSuccess}
+          onOpenBap={(batchObj) => setBapModalData({ isOpen: true, batches: [batchObj] })}
+        />
+
+        <BeritaAcaraModal
+          isOpen={bapModalData.isOpen}
+          batches={bapModalData.batches}
+          apotekProfile={apotekProfile}
+          onClose={() => setBapModalData({ isOpen: false, batches: [] })}
+          onConfirmRetur={handleConfirmReturFromBap}
+        />
       </div>
     );
   }
@@ -682,13 +832,18 @@ export function InventoriBatchPage({
       <div className="bg-white rounded-2xl border border-slate-200/80 p-3 sm:p-4 shadow-2xs space-y-2.5">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+            <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
               <Boxes className="w-4 h-4" />
             </div>
             <div className="min-w-0">
-              <h2 className="text-sm sm:text-base font-extrabold text-slate-900 truncate">
-                Stok &amp; Folder Obat
-              </h2>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="text-sm sm:text-base font-extrabold text-slate-900 truncate">
+                  Stok &amp; Folder Obat
+                </h2>
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-[10px] font-bold shrink-0">
+                  Data Simulasi
+                </span>
+              </div>
               <p className="text-[11px] text-slate-500 font-medium truncate tabular-nums">
                 {allProducts.length} produk • {allBatches.length} batch • {formatRupiah(totalPortfolioNilai)}
               </p>
@@ -706,7 +861,7 @@ export function InventoriBatchPage({
             <button
               type="button"
               onClick={() => setShowCreateFolderModal(true)}
-              className="h-9 px-2.5 rounded-xl bg-blue-50 hover:bg-blue-100 border border-blue-200/80 text-blue-700 text-[11px] sm:text-xs font-bold inline-flex items-center gap-1 transition"
+              className="h-9 px-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/80 text-emerald-700 text-[11px] sm:text-xs font-bold inline-flex items-center gap-1 transition"
               title="Buat Folder Rak Kustom"
             >
               <FolderPlus className="w-3.5 h-3.5" />
@@ -719,7 +874,7 @@ export function InventoriBatchPage({
               className="h-9 px-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-[11px] sm:text-xs font-bold inline-flex items-center gap-1 transition disabled:opacity-60"
               title="Impor Excel atau CSV"
             >
-              <UploadCloud className="w-3.5 h-3.5 text-blue-600" />
+              <UploadCloud className="w-3.5 h-3.5 text-emerald-600" />
               <span className="hidden sm:inline">{importing ? 'Impor...' : 'Impor'}</span>
             </button>
             <button
@@ -729,7 +884,7 @@ export function InventoriBatchPage({
               className="h-9 px-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-[11px] sm:text-xs font-semibold inline-flex items-center gap-1 transition disabled:opacity-50"
               title="Ekspor ke Excel CSV"
             >
-              <Download className="w-3.5 h-3.5 text-blue-600" />
+              <Download className="w-3.5 h-3.5 text-emerald-600" />
               <span className="hidden sm:inline">CSV</span>
             </button>
           </div>
@@ -739,12 +894,12 @@ export function InventoriBatchPage({
           <div
             className={`p-2.5 rounded-xl text-xs flex items-center gap-2 border ${
               importNotice.type === 'success'
-                ? 'bg-blue-50 border-blue-200 text-blue-800'
+                ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
                 : 'bg-rose-50 border-rose-200 text-rose-800'
             }`}
           >
             {importNotice.type === 'success' ? (
-              <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0" />
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
             ) : (
               <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
             )}
@@ -760,7 +915,7 @@ export function InventoriBatchPage({
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Cari obat / batch di semua folder..."
-              className="w-full text-xs h-10 sm:h-9 pl-9 pr-8 rounded-xl border border-slate-200 bg-slate-50/70 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              className="w-full text-xs h-10 sm:h-9 pl-9 pr-8 rounded-xl border border-slate-200 bg-slate-50/70 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
             />
             {search && (
               <button
@@ -793,7 +948,7 @@ export function InventoriBatchPage({
             onClick={() => setShowFilterModal(true)}
             className={`h-10 sm:h-9 px-2.5 sm:px-3 rounded-xl border text-xs font-bold inline-flex items-center gap-1.5 transition shrink-0 ${
               activeFilterCount > 0
-                ? 'bg-blue-600 border-blue-600 text-white shadow-2xs'
+                ? 'bg-emerald-600 border-emerald-600 text-white shadow-2xs'
                 : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700'
             }`}
             aria-label="Buka filter lanjutan"
@@ -801,7 +956,7 @@ export function InventoriBatchPage({
             <SlidersHorizontal className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Filter</span>
             {activeFilterCount > 0 && (
-              <span className="min-w-[16px] h-4 px-1 rounded-full bg-white text-blue-700 text-[10px] font-black flex items-center justify-center">
+              <span className="min-w-[16px] h-4 px-1 rounded-full bg-white text-emerald-700 text-[10px] font-black flex items-center justify-center">
                 {activeFilterCount}
               </span>
             )}
@@ -815,7 +970,7 @@ export function InventoriBatchPage({
               <button
                 type="button"
                 onClick={() => setDistributorFilter('')}
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 text-[11px] font-bold"
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold"
               >
                 <span>
                   PBF:{' '}
@@ -845,6 +1000,25 @@ export function InventoriBatchPage({
                 <X className="w-3 h-3" />
               </button>
             )}
+            {kategoriFilter !== 'semua' && (
+              <button
+                type="button"
+                onClick={() => setKategoriFilter('semua')}
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-teal-50 text-teal-800 border border-teal-200 text-[11px] font-bold"
+              >
+                <span>
+                  Kategori:{' '}
+                  {kategoriFilter === 'bisa_diretur'
+                    ? 'Bisa Diretur'
+                    : kategoriFilter === 'lewat_batas'
+                    ? 'Lewat Batas Retur'
+                    : kategoriFilter === 'dekat_ed'
+                    ? 'Dekat ED'
+                    : 'Stok Tipis'}
+                </span>
+                <X className="w-3 h-3" />
+              </button>
+            )}
             <button
               type="button"
               onClick={handleResetFilter}
@@ -868,9 +1042,9 @@ export function InventoriBatchPage({
       ) : isDeepFiltering ? (
         /* Filter & Search Menyusup ke Semua Folder */
         <div className="space-y-3">
-          <div className="px-3.5 py-2.5 rounded-2xl bg-blue-50/90 border border-blue-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
-            <div className="flex items-center gap-2 text-blue-950 font-semibold">
-              <Search className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+          <div className="px-3.5 py-2.5 rounded-2xl bg-emerald-50/90 border border-emerald-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+            <div className="flex items-center gap-2 text-emerald-950 font-semibold">
+              <Search className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
               <span>
                 Menembus <strong>{folderSummaries.length} folder</strong> — ditemukan{' '}
                 <strong>{allProducts.length} produk</strong> ({filteredBatches.length} batch)
@@ -883,8 +1057,8 @@ export function InventoriBatchPage({
                 onClick={() => setSearchResultLayout('flat')}
                 className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition ${
                   searchResultLayout === 'flat'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white text-slate-600 border border-blue-200'
+                    ? 'bg-emerald-600 text-white'
+                    : 'bg-white text-slate-600 border border-emerald-200'
                 }`}
               >
                 Daftar Langsung
@@ -894,8 +1068,8 @@ export function InventoriBatchPage({
                 onClick={() => setSearchResultLayout('grouped')}
                 className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition ${
                   searchResultLayout === 'grouped'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white text-slate-600 border border-blue-200'
+                    ? 'bg-emerald-600 text-white'
+                    : 'bg-white text-slate-600 border border-emerald-200'
                 }`}
               >
                 Per Folder
@@ -934,7 +1108,7 @@ export function InventoriBatchPage({
                           handleResetFilter();
                           setActiveFolderId(folder.id);
                         }}
-                        className="text-[11px] font-bold text-blue-700 hover:underline shrink-0"
+                        className="text-[11px] font-bold text-emerald-700 hover:underline shrink-0"
                       >
                         Buka Folder →
                       </button>
@@ -959,14 +1133,14 @@ export function InventoriBatchPage({
                 type="button"
                 data-testid="folder-back-btn"
                 onClick={() => setActiveFolderId(null)}
-                className="h-9 px-3 rounded-xl bg-white border border-slate-200 hover:border-blue-300 text-slate-700 text-xs font-bold inline-flex items-center gap-1.5 shadow-2xs active:scale-95 transition shrink-0"
+                className="h-9 px-3 rounded-xl bg-white border border-slate-200 hover:border-emerald-300 text-slate-700 text-xs font-bold inline-flex items-center gap-1.5 shadow-2xs active:scale-95 transition shrink-0"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
                 <span>Folder</span>
               </button>
               <div className="min-w-0">
                 <h3 className="text-xs sm:text-sm font-extrabold text-slate-950 truncate flex items-center gap-1.5">
-                  <FolderOpen className="w-4 h-4 text-blue-600 shrink-0" />
+                  <FolderOpen className="w-4 h-4 text-emerald-600 shrink-0" />
                   <span className="truncate">{activeFolder.name}</span>
                 </h3>
                 <p className="text-[11px] text-slate-500 truncate">
@@ -990,7 +1164,7 @@ export function InventoriBatchPage({
                 type="button"
                 data-testid={`stok-folder-${folder.id}`}
                 onClick={() => setActiveFolderId(folder.id)}
-                className="bg-white rounded-2xl border border-slate-200/90 hover:border-blue-300 p-3.5 sm:p-4 shadow-2xs hover:shadow-sm transition-all text-left flex flex-col justify-between gap-2.5 active:scale-[0.99] cursor-pointer group"
+                className="bg-white rounded-2xl border border-slate-200/90 hover:border-emerald-300 p-3.5 sm:p-4 shadow-2xs hover:shadow-sm transition-all text-left flex flex-col justify-between gap-2.5 active:scale-[0.99] cursor-pointer group"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0">
@@ -1008,7 +1182,7 @@ export function InventoriBatchPage({
                       </p>
                     </div>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-blue-600 shrink-0 mt-1" />
+                  <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-emerald-600 shrink-0 mt-1" />
                 </div>
 
                 <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
@@ -1052,7 +1226,7 @@ export function InventoriBatchPage({
           >
             <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
               <h4 className="text-sm font-black text-slate-900 flex items-center gap-2">
-                <SlidersHorizontal className="w-4 h-4 text-blue-600" />
+                <SlidersHorizontal className="w-4 h-4 text-emerald-600" />
                 <span>Filter &amp; Pengelompokan Lintas Folder</span>
               </h4>
               <button
@@ -1077,7 +1251,7 @@ export function InventoriBatchPage({
                       onClick={() => handleGroupModeChange(m.id)}
                       className={`h-10 px-3 rounded-xl text-xs font-bold border text-left transition ${
                         groupMode === m.id
-                          ? 'bg-blue-50 border-blue-400 text-blue-800'
+                          ? 'bg-emerald-50 border-emerald-400 text-emerald-800'
                           : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
                       }`}
                     >
@@ -1120,7 +1294,35 @@ export function InventoriBatchPage({
                       onClick={() => setRisikoFilter(pill.id)}
                       className={`h-10 rounded-xl text-xs font-bold transition ${
                         risikoFilter === pill.id
-                          ? 'bg-blue-600 text-white'
+                          ? 'bg-emerald-600 text-white'
+                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      }`}
+                    >
+                      {pill.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  Kategori Pantau (4 Standar)
+                </label>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {[
+                    { id: 'semua', label: 'Semua Kategori' },
+                    { id: 'bisa_diretur', label: 'Bisa Diretur' },
+                    { id: 'lewat_batas', label: 'Lewat Batas Retur' },
+                    { id: 'dekat_ed', label: 'Dekat ED' },
+                    { id: 'stok_tipis', label: 'Stok Tipis' },
+                  ].map((pill) => (
+                    <button
+                      key={pill.id}
+                      type="button"
+                      onClick={() => setKategoriFilter(pill.id)}
+                      className={`h-10 rounded-xl text-xs font-bold transition ${
+                        kategoriFilter === pill.id
+                          ? 'bg-emerald-600 text-white'
                           : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                       }`}
                     >
@@ -1145,7 +1347,7 @@ export function InventoriBatchPage({
                       onClick={() => setReturFilter(pill.id)}
                       className={`h-10 rounded-xl text-xs font-bold transition ${
                         returFilter === pill.id
-                          ? 'bg-blue-600 text-white'
+                          ? 'bg-emerald-600 text-white'
                           : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                       }`}
                     >
@@ -1185,7 +1387,7 @@ export function InventoriBatchPage({
           <div className="bg-white rounded-2xl max-w-sm w-full p-5 space-y-4 shadow-xl border border-slate-200">
             <div className="flex items-center justify-between border-b border-slate-100 pb-2">
               <h4 className="text-sm font-black text-slate-900 flex items-center gap-2">
-                <FolderPlus className="w-4 h-4 text-blue-600" />
+                <FolderPlus className="w-4 h-4 text-emerald-600" />
                 <span>Buat Folder Rak Baru</span>
               </h4>
               <button
@@ -1220,6 +1422,7 @@ export function InventoriBatchPage({
                   onChange={(e) => setNewFolderTone(e.target.value)}
                   className="w-full text-xs h-11 px-3 rounded-xl border border-slate-200 bg-white font-semibold"
                 >
+                  <option value="emerald">Hijau Emerald</option>
                   <option value="blue">Biru</option>
                   <option value="teal">Teal / Hijau Laut</option>
                   <option value="amber">Amber / Kuning</option>
@@ -1244,6 +1447,24 @@ export function InventoriBatchPage({
           </div>
         </div>
       )}
+
+      <BatchActionModal
+        isOpen={actionModal.isOpen}
+        mode={actionModal.mode}
+        batch={actionModal.batch}
+        petugasNama={user?.nama || 'Petugas Apotek'}
+        onClose={() => setActionModal({ isOpen: false, mode: 'retur', batch: null })}
+        onSuccess={handleActionSuccess}
+        onOpenBap={(batchObj) => setBapModalData({ isOpen: true, batches: [batchObj] })}
+      />
+
+      <BeritaAcaraModal
+        isOpen={bapModalData.isOpen}
+        batches={bapModalData.batches}
+        apotekProfile={apotekProfile}
+        onClose={() => setBapModalData({ isOpen: false, batches: [] })}
+        onConfirmRetur={handleConfirmReturFromBap}
+      />
     </div>
   );
 }

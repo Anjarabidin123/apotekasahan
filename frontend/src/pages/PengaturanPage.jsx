@@ -356,24 +356,24 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
             label: 'Profil & Logo Apotek',
             subtitle: `${profile.nama_apotek} • ${profile.logo_url ? 'Logo kustom aktif' : 'Logo standar'}`,
             icon: Building2,
-            iconClass: 'bg-blue-50 text-blue-600 border-blue-200/70',
+            iconClass: 'bg-emerald-50 text-emerald-600 border-emerald-200/70',
             keywords: 'nama apotek alamat telepon whatsapp pemilik apj logo foto upload',
           },
           {
             id: 'legalitas',
-            label: 'Legalitas BPOM & OSS',
-            subtitle: `NIB ${profile.nib}`,
+            label: 'Identitas & Izin Apotek',
+            subtitle: `SIA ${profile.sia}`,
             icon: Shield,
             iconClass: 'bg-teal-50 text-teal-600 border-teal-200/70',
-            keywords: 'nib sia sipa bpom oss izin praktek apoteker',
+            keywords: 'sia sipa izin praktek apoteker',
           },
           {
             id: 'dokumen',
             label: 'Kop & Format Surat BAP',
             subtitle: profile.format_no_retur,
             icon: FileText,
-            iconClass: 'bg-indigo-50 text-indigo-600 border-indigo-200/70',
-            keywords: 'kop surat pdf bap berita acara retur penomoran tanda tangan cdob',
+            iconClass: 'bg-teal-50 text-teal-600 border-teal-200/70',
+            keywords: 'kop surat pdf bap berita acara retur penomoran tanda tangan',
           },
         ],
       },
@@ -403,7 +403,7 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
             subtitle: 'Ambang minimum per golongan farmasi',
             badge: `${kategoriList.length}`,
             icon: Wallet,
-            iconClass: 'bg-cyan-50 text-cyan-600 border-cyan-200/70',
+            iconClass: 'bg-teal-50 text-teal-600 border-teal-200/70',
             keywords: 'kategori golongan obat keras bebas antibiotik stok minimum',
           },
         ],
@@ -416,7 +416,7 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
             label: 'Tampilan Mobile & Privasi',
             subtitle: `${privacyMode ? 'Nominal tersembunyi' : 'Nominal tampil'} • Awal: ${defaultPageLabels[defaultPage] || 'Beranda'}`,
             icon: SlidersHorizontal,
-            iconClass: 'bg-violet-50 text-violet-600 border-violet-200/70',
+            iconClass: 'bg-slate-100 text-slate-700 border-slate-200',
             keywords: 'privasi sembunyikan rupiah mobile antrean beranda awal default tampilan',
           },
           {
@@ -426,7 +426,7 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
               ? `${aiConfig.provider.toUpperCase()} (${aiConfig.model})`
               : 'Mode impor CSV/Excel lokal aktif',
             icon: Sparkles,
-            iconClass: 'bg-sky-50 text-sky-600 border-sky-200/70',
+            iconClass: 'bg-emerald-50 text-emerald-600 border-emerald-200/70',
             keywords: 'ai gemini openai api key token scan foto faktur excel csv word',
           },
         ],
@@ -444,11 +444,11 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
           },
           {
             id: 'bantuan',
-            label: 'Panduan SOP Retur CDOB',
+            label: 'Panduan SOP Retur PBF',
             subtitle: 'Langkah karantina rak & serah terima PBF',
             icon: LifeBuoy,
             iconClass: 'bg-rose-50 text-rose-600 border-rose-200/70',
-            keywords: 'bantuan sop panduan retur karantina cdob cara pakai',
+            keywords: 'bantuan sop panduan retur karantina cara pakai',
           },
         ],
       },
@@ -493,7 +493,7 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
         return (
           <form onSubmit={handleSaveProfileAndDocs} className="space-y-4">
             <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-slate-50/80 border border-slate-200/80">
-              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl border-2 border-blue-500/25 overflow-hidden bg-white shadow-xs flex items-center justify-center p-1 shrink-0">
+              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl border-2 border-emerald-500/25 overflow-hidden bg-white shadow-xs flex items-center justify-center p-1 shrink-0">
                 <BrandLogo
                   logoUrl={profile.logo_url}
                   className="w-full h-full"
@@ -505,7 +505,7 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
                   <span className="text-xs font-extrabold text-slate-900">
                     {profile.logo_url ? 'Logo Kustom' : 'Logo Standar'}
                   </span>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 font-bold">
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold">
                     Aktif
                   </span>
                 </div>
@@ -549,7 +549,7 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
                   type="text"
                   value={profile.nama_apotek}
                   onChange={(e) => setProfile({ ...profile, nama_apotek: e.target.value })}
-                  className="w-full text-xs h-11 px-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-bold"
+                  className="w-full text-xs h-11 px-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 font-bold"
                 />
               </div>
 
@@ -620,15 +620,6 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
           <form onSubmit={handleSaveProfileAndDocs} className="space-y-4">
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Nomor Induk Berusaha (NIB)</label>
-                <input
-                  type="text"
-                  value={profile.nib}
-                  onChange={(e) => setProfile({ ...profile, nib: e.target.value })}
-                  className="w-full text-xs h-11 px-3 rounded-xl border border-slate-200 font-mono font-bold"
-                />
-              </div>
-              <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">Surat Izin Apotek (SIA)</label>
                 <input
                   type="text"
@@ -654,14 +645,14 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
                 <span>Dicetak Otomatis pada Dokumen BAP Retur</span>
               </div>
               <p className="text-[11px] text-teal-800/80">
-                Nomor SIA, NIB, dan SIPA akan muncul pada kop surat resmi pengembalian barang ke PBF.
+                Nomor SIA dan SIPA akan muncul pada kop surat resmi pengembalian barang ke PBF.
               </p>
             </div>
 
             <div className="pt-1 flex justify-end">
               <button type="submit" disabled={loading} className="btn-primary h-11 px-5 text-xs font-bold">
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                <span>Simpan Legalitas</span>
+                <span>Simpan Izin Apotek</span>
               </button>
             </div>
           </form>
@@ -712,11 +703,11 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
             <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50/70 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-bold text-slate-700 inline-flex items-center gap-1.5">
-                  <Printer className="w-3.5 h-3.5 text-blue-600" />
+                  <Printer className="w-3.5 h-3.5 text-emerald-600" />
                   Pratinjau Kop Dokumen Cetak
                 </span>
-                <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full">
-                  CDOB
+                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
+                  Format BAP
                 </span>
               </div>
               <div className="p-3.5 rounded-xl border border-slate-200 bg-white text-center space-y-1">
@@ -755,7 +746,7 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
                       tanggal_acuan: new Date().toISOString().split('T')[0],
                     })
                   }
-                  className="text-[11px] font-bold text-blue-700 bg-white border border-blue-200 px-2.5 py-1 rounded-lg hover:bg-blue-50 transition"
+                  className="text-[11px] font-bold text-emerald-700 bg-white border border-emerald-200 px-2.5 py-1 rounded-lg hover:bg-emerald-50 transition"
                 >
                   Pakai Tanggal Hari Ini
                 </button>
@@ -764,7 +755,7 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
                 type="date"
                 value={settings.tanggal_acuan}
                 onChange={(e) => setSettings({ ...settings, tanggal_acuan: e.target.value })}
-                className="w-full text-xs h-11 px-3 rounded-xl border border-amber-200 bg-white font-black text-blue-700"
+                className="w-full text-xs h-11 px-3 rounded-xl border border-amber-200 bg-white font-black text-emerald-700"
               />
               <p className="text-[11px] text-amber-900/80">
                 Menentukan acuan perhitungan sisa hari retur, mendekati kedaluwarsa, dan notifikasi dashboard.
@@ -847,7 +838,7 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
                   value={pbfSearch}
                   onChange={(e) => setPbfSearch(e.target.value)}
                   placeholder="Cari nama atau kode PBF..."
-                  className="w-full text-xs h-10 pl-9 pr-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  className="w-full text-xs h-10 pl-9 pr-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                 />
               </div>
               <div className="flex items-center gap-2 shrink-0">
@@ -860,7 +851,7 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
                   }}
                   className="btn-outline h-10 px-3 text-xs"
                 >
-                  <Download className="w-3.5 h-3.5 text-blue-600" />
+                  <Download className="w-3.5 h-3.5 text-emerald-600" />
                   <span>CSV</span>
                 </button>
                 <button
@@ -880,11 +871,11 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="font-mono font-bold text-[11px] text-blue-700 bg-blue-50 px-2 py-0.5 rounded">
+                        <span className="font-mono font-bold text-[11px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
                           {d.kode}
                         </span>
                         {savingPbfId === d.id ? (
-                          <span className="text-[11px] font-bold text-blue-600 animate-pulse">
+                          <span className="text-[11px] font-bold text-emerald-600 animate-pulse">
                             Menyimpan...
                           </span>
                         ) : (
@@ -955,8 +946,8 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
                           kat.jenis === 'Keras'
                             ? 'bg-rose-100 text-rose-800'
                             : kat.jenis === 'Bebas Terbatas'
-                            ? 'bg-sky-100 text-sky-800'
-                            : 'bg-blue-100 text-blue-800'
+                            ? 'bg-emerald-100 text-emerald-800'
+                            : 'bg-emerald-100 text-emerald-800'
                         }`}
                       >
                         {kat.jenis}
@@ -1024,12 +1015,12 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
                       }}
                       className={`h-11 px-3 rounded-xl border text-xs font-bold flex items-center justify-between transition ${
                         active
-                          ? 'bg-blue-50 border-blue-300 text-blue-800'
+                          ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
                           : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
                       }`}
                     >
                       <span className="truncate">{label}</span>
-                      {active && <CheckCircle2 className="w-3.5 h-3.5 text-blue-600 shrink-0" />}
+                      {active && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />}
                     </button>
                   );
                 })}
@@ -1104,8 +1095,8 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
               </div>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-sky-50/70 border border-sky-200/80 text-xs text-slate-700 space-y-1">
-              <p className="font-bold text-sky-900">Format Berkas yang Langsung Didukung:</p>
+            <div className="p-3.5 rounded-xl bg-emerald-50/70 border border-emerald-200/80 text-xs text-slate-700 space-y-1">
+              <p className="font-bold text-emerald-900">Format Berkas yang Langsung Didukung:</p>
               <p className="text-[11px] text-slate-600">
                 CSV, TSV, Excel (.xlsx/.xls), Word (.docx), dan foto faktur fisik (.jpg/.png/.webp).
               </p>
@@ -1135,9 +1126,9 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
       case 'cadangan':
         return (
           <div className="space-y-3">
-            <div className="p-3.5 rounded-xl bg-blue-50/70 border border-blue-200/80 text-xs text-blue-900 space-y-1">
+            <div className="p-3.5 rounded-xl bg-emerald-50/70 border border-emerald-200/80 text-xs text-emerald-900 space-y-1">
               <p className="font-bold">Portabilitas Data Tanpa Backend</p>
-              <p className="text-[11px] text-blue-800/80 leading-relaxed">
+              <p className="text-[11px] text-emerald-800/80 leading-relaxed">
                 Seluruh transaksi tersimpan lokal di browser Anda. Unduh berkas cadangan (.json) untuk
                 memindahkan seluruh batch, aturan PBF, &amp; riwayat opname antar HP atau komputer apotek.
               </p>
@@ -1150,7 +1141,7 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
                 className="w-full p-3.5 flex items-center justify-between gap-3 hover:bg-slate-50 transition text-left"
               >
                 <div className="flex items-center gap-3 min-w-0">
-                  <span className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                  <span className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
                     <Download className="w-4 h-4" />
                   </span>
                   <div className="min-w-0">
@@ -1259,8 +1250,8 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
   return (
     <div className="space-y-3">
       {successMsg && (
-        <div className="p-3 rounded-xl bg-blue-50 border border-blue-200 text-blue-900 text-xs flex items-center gap-2.5 shadow-xs">
-          <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0" />
+        <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs flex items-center gap-2.5 shadow-xs">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
           <span className="font-bold">{successMsg}</span>
         </div>
       )}
@@ -1282,7 +1273,7 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
           <button
             type="button"
             onClick={() => setSelectedSection('identitas')}
-            className="w-full bg-white rounded-2xl border border-slate-200/90 p-3.5 shadow-2xs flex items-center justify-between gap-3 hover:border-blue-300 transition text-left cursor-pointer"
+            className="w-full bg-white rounded-2xl border border-slate-200/90 p-3.5 shadow-2xs flex items-center justify-between gap-3 hover:border-emerald-300 transition text-left cursor-pointer"
           >
             <div className="flex items-center gap-3 min-w-0">
               <BrandLogo logoUrl={profile.logo_url} className="w-12 h-12 shrink-0" />
@@ -1291,9 +1282,14 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
                 <p className="text-[11px] font-medium text-slate-500 truncate">
                   {profile.apoteker_pj}
                 </p>
-                <span className="inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">
-                  NIB {profile.nib}
-                </span>
+                <div className="flex items-center gap-1.5 flex-wrap mt-1">
+                  <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">
+                    SIA {profile.sia}
+                  </span>
+                  <span className="inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-800">
+                    Data Simulasi
+                  </span>
+                </div>
               </div>
             </div>
             <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
@@ -1306,7 +1302,7 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
               value={menuSearch}
               onChange={(e) => setMenuSearch(e.target.value)}
               placeholder="Cari pengaturan (logo, PBF, privasi, cadangan)..."
-              className="w-full text-xs h-11 pl-10 pr-4 rounded-2xl border border-slate-200/90 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-medium shadow-2xs"
+              className="w-full text-xs h-11 pl-10 pr-4 rounded-2xl border border-slate-200/90 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 font-medium shadow-2xs"
             />
           </div>
 
@@ -1333,7 +1329,7 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
                           onClick={() => setSelectedSection(item.id)}
                           className={`w-full px-3.5 py-3 flex items-center justify-between gap-3 text-left transition cursor-pointer min-h-[56px] ${
                             isActiveDesktop
-                              ? 'lg:bg-blue-50/75 hover:bg-blue-50'
+                              ? 'lg:bg-emerald-50/75 hover:bg-emerald-50'
                               : 'hover:bg-slate-50 active:bg-slate-100/70'
                           }`}
                         >
@@ -1346,7 +1342,7 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
                             <div className="min-w-0">
                               <p
                                 className={`text-[13px] font-bold truncate ${
-                                  isActiveDesktop ? 'lg:text-blue-700 text-slate-900' : 'text-slate-900'
+                                  isActiveDesktop ? 'lg:text-emerald-700 text-slate-900' : 'text-slate-900'
                                 }`}
                               >
                                 {item.label}
@@ -1390,10 +1386,15 @@ export function PengaturanPage({ onSettingsUpdated, currentLogoUrl, onLogoChange
             >
               <ArrowLeft className="w-4 h-4" />
             </button>
-            <div className="min-w-0">
-              <h2 className="text-sm sm:text-base font-black text-slate-950 truncate">
-                {activeDetailMeta?.label}
-              </h2>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="text-sm sm:text-base font-black text-slate-950 truncate">
+                  {activeDetailMeta?.label}
+                </h2>
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-[10px] font-bold shrink-0">
+                  Data Simulasi
+                </span>
+              </div>
               <p className="text-[11px] text-slate-500 truncate">{activeDetailMeta?.subtitle}</p>
             </div>
           </div>

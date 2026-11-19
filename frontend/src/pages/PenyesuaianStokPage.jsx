@@ -26,7 +26,7 @@ import {
   Trash2,
 } from 'lucide-react';
 
-export function PenyesuaianStokPage({ preselectedBatch }) {
+export function PenyesuaianStokPage({ preselectedBatch, onDataChanged }) {
   const { user } = useAuth();
   const [opnameMode, setOpnameMode] = useState('satuan'); // 'satuan' | 'impor'
   const [batches, setBatches] = useState([]);
@@ -175,6 +175,7 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
       );
       setCatatanKhusus('');
       await loadBatchesAndLogs();
+      if (onDataChanged) onDataChanged();
     } catch (err) {
       setErrorMsg(err.message || 'Gagal menyimpan penyesuaian.');
     } finally {
@@ -248,7 +249,7 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
     ]);
     setImportInfo({
       fileName: 'Contoh_Stok_Awal_Apotek_Lama.csv',
-      metode: 'Simulasi Migrasi',
+      metode: 'Data Simulasi',
       pesan: 'Menampilkan contoh kombinasi pembaruan batch lama dan migrasi obat baru.',
     });
   };
@@ -293,6 +294,7 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
       setImportedItems([]);
       setImportInfo(null);
       await loadBatchesAndLogs();
+      if (onDataChanged) onDataChanged();
     } catch (err) {
       setErrorMsg(err.message || 'Gagal menerapkan opname massal.');
     } finally {
@@ -302,6 +304,12 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
 
   const totalOpnameCount = riwayat.length;
   const netSelisih = riwayat.reduce((acc, curr) => acc + (curr.selisih || 0), 0);
+  const totalUnitSistem = batches.reduce((acc, b) => acc + (b.jumlah_saat_ini || 0), 0);
+  const totalAbsSelisih = riwayat.reduce((acc, curr) => acc + Math.abs(Number(curr.selisih) || 0), 0);
+  const akurasiRakPct =
+    totalUnitSistem + totalAbsSelisih > 0
+      ? ((totalUnitSistem / (totalUnitSistem + totalAbsSelisih)) * 100).toFixed(1)
+      : '100.0';
 
   return (
     <div className="space-y-3">
@@ -313,17 +321,22 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
               <ClipboardCheck className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
             <div className="min-w-0">
-              <h2 className="text-sm sm:text-base font-bold text-slate-900 truncate">
-                Stok Opname &amp; Migrasi Cepat
-              </h2>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="text-sm sm:text-base font-bold text-slate-900 truncate">
+                  Stok Opname &amp; Migrasi Cepat
+                </h2>
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200 shrink-0">
+                  Data Simulasi
+                </span>
+              </div>
               <p className="text-[11px] sm:text-xs text-slate-500 truncate">
                 Cek fisik rak satuan atau impor massal stok awal apotek lama.
               </p>
             </div>
           </div>
 
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200/80 shrink-0 tabular-nums">
-            <PackageCheck className="w-3.5 h-3.5 text-blue-600" />
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/80 shrink-0 tabular-nums">
+            <PackageCheck className="w-3.5 h-3.5 text-emerald-600" />
             <span>{totalOpnameCount} Log</span>
           </span>
         </div>
@@ -335,7 +348,7 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
             onClick={() => setOpnameMode('satuan')}
             className={`h-9 rounded-lg text-xs font-bold transition cursor-pointer ${
               opnameMode === 'satuan'
-                ? 'bg-white text-blue-700 shadow-2xs'
+                ? 'bg-white text-emerald-700 shadow-2xs'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -347,7 +360,7 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
             onClick={() => setOpnameMode('impor')}
             className={`h-9 rounded-lg text-xs font-bold transition inline-flex items-center justify-center gap-1.5 cursor-pointer ${
               opnameMode === 'impor'
-                ? 'bg-blue-600 text-white shadow-xs'
+                ? 'bg-emerald-600 text-white shadow-xs'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -359,9 +372,9 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
       </div>
 
       {preselectedBatch && opnameMode === 'satuan' && (
-        <div className="p-3 rounded-xl bg-blue-50 border border-blue-200 text-xs text-blue-900 flex items-center justify-between gap-2">
+        <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-900 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
-            <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0" />
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
             <span className="truncate">
               Batch terpilih: <strong>{preselectedBatch.nama_obat}</strong> ({preselectedBatch.nomor_batch})
             </span>
@@ -370,8 +383,8 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
       )}
 
       {successMsg && (
-        <div className="p-3.5 rounded-xl bg-blue-50 border border-blue-200 text-blue-800 text-xs flex items-center gap-2.5">
-          <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0" />
+        <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2.5">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
           <span className="font-semibold">{successMsg}</span>
         </div>
       )}
@@ -406,14 +419,14 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
                       placeholder="Cari nama obat atau nomor batch..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full text-xs h-11 sm:h-9 pl-9 pr-3 rounded-xl border border-slate-200 bg-slate-50/70 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                      className="w-full text-xs h-11 sm:h-9 pl-9 pr-3 rounded-xl border border-slate-200 bg-slate-50/70 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                     />
                   </div>
 
                   <select
                     value={selectedBatchId}
                     onChange={(e) => handleBatchChange(e.target.value)}
-                    className="w-full text-xs h-11 sm:h-10 px-3 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-slate-900"
+                    className="w-full text-xs h-11 sm:h-10 px-3 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 font-bold text-slate-900"
                   >
                     {filteredBatches.map((b) => (
                       <option key={b.id} value={b.id}>
@@ -425,7 +438,7 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
                   {selectedBatch && (
                     <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/70 text-xs flex flex-wrap items-center justify-between gap-2">
                       <div className="flex items-center gap-2 text-slate-600">
-                        <Building2 className="w-3.5 h-3.5 text-blue-600" />
+                        <Building2 className="w-3.5 h-3.5 text-emerald-600" />
                         <span className="font-medium truncate max-w-[200px]">
                           {selectedBatch.nama_distributor || 'PBF Rekanan'}
                         </span>
@@ -450,8 +463,8 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
                         </span>
                       </div>
                       <div className="border-x border-slate-200">
-                        <span className="text-[11px] font-semibold text-blue-700 block">Fisik Rak</span>
-                        <span className="text-lg font-extrabold text-blue-600 tabular-nums">
+                        <span className="text-[11px] font-semibold text-emerald-700 block">Fisik Rak</span>
+                        <span className="text-lg font-extrabold text-emerald-600 tabular-nums">
                           {jumlahFisik === '' ? 0 : jumlahFisik}
                         </span>
                       </div>
@@ -459,7 +472,7 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
                         <span className="text-[11px] font-semibold text-slate-500 block">Selisih</span>
                         <span
                           className={`text-lg font-extrabold tabular-nums ${
-                            selisih < 0 ? 'text-rose-600' : 'text-blue-600'
+                            selisih < 0 ? 'text-rose-600' : 'text-emerald-600'
                           }`}
                         >
                           {selisih > 0 ? `+${selisih}` : selisih}
@@ -488,12 +501,12 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
                         min="0"
                         value={jumlahFisik}
                         onChange={(e) => setJumlahFisik(e.target.value)}
-                        className="w-20 h-11 text-center text-lg font-extrabold rounded-xl border-2 border-blue-500 text-blue-700 bg-white focus:outline-none tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        className="w-20 h-11 text-center text-lg font-extrabold rounded-xl border-2 border-emerald-500 text-emerald-700 bg-white focus:outline-none tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
                       <button
                         type="button"
                         onClick={() => adjustJumlahFisik(1)}
-                        className="w-11 h-11 min-w-[44px] rounded-xl bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center active:scale-95 transition"
+                        className="w-11 h-11 min-w-[44px] rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center active:scale-95 transition"
                         aria-label="Tambah 1 unit"
                       >
                         <Plus className="w-4 h-4" />
@@ -501,7 +514,7 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
                       <button
                         type="button"
                         onClick={() => adjustJumlahFisik(5)}
-                        className="h-11 px-3 rounded-xl bg-blue-50 border border-blue-200 hover:bg-blue-100 text-blue-700 text-xs font-bold active:scale-95 transition"
+                        className="h-11 px-3 rounded-xl bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 text-emerald-700 text-xs font-bold active:scale-95 transition"
                       >
                         +5
                       </button>
@@ -545,7 +558,7 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
                         onClick={() => setAlasan(opt.id)}
                         className={`text-xs px-3 py-2 min-h-[42px] rounded-xl border text-left transition flex items-center ${
                           alasan === opt.id
-                            ? 'bg-blue-50 border-blue-400 text-blue-900 font-bold'
+                            ? 'bg-emerald-50 border-emerald-400 text-emerald-900 font-bold'
                             : 'bg-slate-50/70 border-slate-200 text-slate-600 hover:bg-white font-semibold'
                         }`}
                       >
@@ -559,7 +572,7 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
                     placeholder="Catatan tambahan opsional..."
                     value={catatanKhusus}
                     onChange={(e) => setCatatanKhusus(e.target.value)}
-                    className="w-full text-xs h-11 sm:h-9 px-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                    className="w-full text-xs h-11 sm:h-9 px-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                   />
                 </div>
 
@@ -571,7 +584,7 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="inline-flex items-center justify-center gap-2 px-5 py-2.5 min-h-[44px] rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-sm shadow-blue-600/20 active:scale-95 disabled:opacity-50 w-full sm:w-auto"
+                    className="inline-flex items-center justify-center gap-2 px-5 py-2.5 min-h-[44px] rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-sm shadow-emerald-600/20 active:scale-95 disabled:opacity-50 w-full sm:w-auto"
                   >
                     <Save className="w-4 h-4" />
                     <span>{loading ? 'Menyimpan...' : 'Simpan Hasil Opname'}</span>
@@ -607,7 +620,7 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
                   </label>
 
                   <label className="btn-outline h-11 min-h-[44px] px-2.5 rounded-xl cursor-pointer flex items-center justify-center gap-1.5 text-[11px] font-bold text-slate-700 bg-white">
-                    <Camera className="w-4 h-4 text-blue-600 shrink-0" />
+                    <Camera className="w-4 h-4 text-emerald-600 shrink-0" />
                     <span className="truncate">Foto Catatan</span>
                     <input
                       type="file"
@@ -623,14 +636,14 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
                     onClick={downloadTemplateOpnameCsv}
                     className="btn-outline h-11 min-h-[44px] px-2.5 text-[11px] font-bold text-slate-700"
                   >
-                    <Download className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                    <Download className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                     <span className="truncate">Templat CSV</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={handleLoadMigrationSample}
-                    className="h-11 min-h-[44px] px-2.5 rounded-xl bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 text-[11px] font-bold inline-flex items-center justify-center gap-1 transition"
+                    className="h-11 min-h-[44px] px-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 text-[11px] font-bold inline-flex items-center justify-center gap-1 transition"
                   >
                     <FileSpreadsheet className="w-3.5 h-3.5 shrink-0" />
                     <span className="truncate">Contoh</span>
@@ -639,17 +652,17 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
 
                 {isParsingDoc && (
                   <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center gap-2.5 text-xs font-semibold text-slate-700">
-                    <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin shrink-0" />
+                    <div className="w-4 h-4 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin shrink-0" />
                     <span>Membaca isi dokumen &amp; mencocokkan dengan batch apotek...</span>
                   </div>
                 )}
 
                 {importInfo && !isParsingDoc && (
-                  <div className="p-2.5 rounded-xl bg-blue-50/70 border border-blue-200 text-[11px] text-blue-900 flex items-center justify-between gap-2">
+                  <div className="p-2.5 rounded-xl bg-emerald-50/70 border border-emerald-200 text-[11px] text-emerald-900 flex items-center justify-between gap-2">
                     <span className="truncate font-semibold">
                       {importInfo.fileName} • <strong>{importInfo.metode}</strong>
                     </span>
-                    <span className="shrink-0 font-bold text-blue-700">
+                    <span className="shrink-0 font-bold text-emerald-700">
                       {previewWithMatch.length} baris
                     </span>
                   </div>
@@ -686,7 +699,7 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
                               className={`inline-block text-[10px] font-extrabold px-2 py-0.5 rounded-full mb-1 ${
                                 it.isUpdate
                                   ? 'bg-amber-50 text-amber-800 border border-amber-200'
-                                  : 'bg-blue-50 text-blue-700 border border-blue-200'
+                                  : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                               }`}
                             >
                               {it.isUpdate
@@ -710,7 +723,7 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
                                 setImportedItems(next);
                               }}
                               aria-label={`Jumlah fisik ${it.nama_obat}`}
-                              className="w-16 h-9 text-center text-xs font-extrabold rounded-xl border border-blue-300 bg-blue-50/40 text-blue-800"
+                              className="w-16 h-9 text-center text-xs font-extrabold rounded-xl border border-emerald-300 bg-emerald-50/40 text-emerald-800"
                             />
                             <button
                               type="button"
@@ -753,7 +766,7 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
         <div className="lg:col-span-5 bg-white rounded-2xl border border-slate-200/80 p-4 shadow-2xs space-y-3.5">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3 gap-2">
             <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-              <History className="w-4 h-4 text-blue-600" />
+              <History className="w-4 h-4 text-emerald-600" />
               <span>Riwayat Audit ({riwayat.length})</span>
             </h3>
 
@@ -763,7 +776,7 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
               disabled={riwayat.length === 0}
               className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold transition disabled:opacity-50"
             >
-              <Download className="w-3.5 h-3.5 text-blue-600" />
+              <Download className="w-3.5 h-3.5 text-emerald-600" />
               <span>Ekspor CSV</span>
             </button>
           </div>
@@ -773,7 +786,7 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
               <span className="text-[11px] text-slate-500 block">Akumulasi Selisih</span>
               <span
                 className={`text-sm font-extrabold tabular-nums ${
-                  netSelisih < 0 ? 'text-rose-600' : 'text-blue-600'
+                  netSelisih < 0 ? 'text-rose-600' : 'text-emerald-600'
                 }`}
               >
                 {netSelisih > 0 ? `+${netSelisih}` : netSelisih} Unit
@@ -782,7 +795,7 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
             <div>
               <span className="text-[11px] text-slate-500 block">Akurasi Rak</span>
               <span className="text-sm font-extrabold text-slate-900 tabular-nums">
-                96.4% Sesuai
+                {akurasiRakPct}% Sesuai
               </span>
             </div>
           </div>
@@ -799,7 +812,7 @@ export function PenyesuaianStokPage({ preselectedBatch }) {
                     className={`text-[10px] font-bold px-2 py-0.5 rounded-full tabular-nums ${
                       log.selisih < 0
                         ? 'bg-rose-100 text-rose-700'
-                        : 'bg-blue-100 text-blue-700'
+                        : 'bg-emerald-100 text-emerald-700'
                     }`}
                   >
                     {log.selisih > 0 ? `+${log.selisih}` : log.selisih} unit
