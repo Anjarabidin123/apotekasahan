@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Catatan Santai 12 Komentar SIMAAF - Pembagian Tugas Frontend & Backend</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 14mm 14mm 14mm 14mm;
+    }
+    * {
+      box-sizing: border-box;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    body {
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
+      color: #1e293b;
+      background: #ffffff;
+      line-height: 1.5;
+      font-size: 11pt;
+      margin: 0;
+      padding: 0;
+    }
+    .header-box {
+      border-bottom: 2px solid #10b981;
+      padding-bottom: 12px;
+      margin-bottom: 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    .title {
+      font-size: 18pt;
+      font-weight: 800;
+      color: #065f46;
+      margin: 0 0 4px 0;
+      letter-spacing: -0.5px;
+    }
+    .subtitle {
+      font-size: 11pt;
+      color: #475569;
+      margin: 0;
+      font-weight: 500;
+    }
+    .badge-top {
+      background: #ecfdf5;
+      color: #047857;
+      border: 1px solid #a7f3d0;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      font-size: 9pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+    }
+    .intro-card {
+      background: #f8fafc;
+      border-left: 4px solid #10b981;
+      padding: 12px 14px;
+      border-radius: 0 8px 8px 0;
+      margin-bottom: 20px;
+      font-size: 10.5pt;
+      color: #334155;
+    }
+    h2 {
+      font-size: 13pt;
+      font-weight: 700;
+      color: #0f172a;
+      margin: 18px 0 10px 0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 4px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 18px;
+      font-size: 9.5pt;
+    }
+    th {
+      background: #f1f5f9;
+      color: #0f172a;
+      text-align: left;
+      padding: 8px 10px;
+      font-weight: 700;
+      border: 1px solid #cbd5e1;
+    }
+    td {
+      padding: 7px 10px;
+      border: 1px solid #e2e8f0;
+      vertical-align: top;
+    }
+    tr:nth-child(even) td {
+      background: #f8fafc;
+    }
+    .tag {
+      display: inline-block;
+      padding: 2px 7px;
+      border-radius: 6px;
+      font-size: 8pt;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .tag-fe {
+      background: #ecfdf5;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+    }
+    .tag-be {
+      background: #eff6ff;
+      color: #1e40af;
+      border: 1px solid #bfdbfe;
+    }
+    .tag-both {
+      background: #fef3c7;
+      color: #92400e;
+      border: 1px solid #fde68a;
+    }
+    .tag-done {
+      background: #dcfce7;
+      color: #166534;
+      font-size: 8pt;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .chat-box {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin-bottom: 14px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+      page-break-inside: avoid;
+    }
+    .chat-header {
+      font-size: 10.5pt;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .chat-body {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 10px 12px;
+      font-family: inherit;
+      font-size: 9.5pt;
+      color: #1e293b;
+      line-height: 1.5;
+    }
+    .code-pill {
+      background: #e2e8f0;
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-family: Consolas, monospace;
+      font-size: 8.5pt;
+      color: #0f172a;
+    }
+    .page-break {
+      page-break-before: always;
+    }
+    ul {
+      margin: 6px 0 6px 18px;
+      padding: 0;
+    }
+    li {
+      margin-bottom: 3px;
+    }
+    .footer-note {
+      margin-top: 24px;
+      padding-top: 10px;
+      border-top: 1px dashed #cbd5e1;
+      font-size: 8.5pt;
+      color: #64748b;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <div class="header-box">
+    <div>
+      <h1 class="title">SIMAAF (Apotek Asahan Farma)</h1>
+      <p class="subtitle">Catatan Santai Triage 12 Komentar: Siapa Ngerjain Apa & Contekan Buat Tim Backend</p>
+    </div>
+    <div class="badge-top">Gaya Santai &bull; To The Point</div>
+  </div>
+
+  <!-- INTRO -->
+  <div class="intro-card">
+    <strong>Halo bro / temen-temen developer!</strong> 👋<br>
+    Ini rekapan santai buat ngebahas 12 poin evaluasi kemarin. Biar kerjanya rapi dan gak saling lempar, udah dipilah mana yang jadi urusan <strong>Frontend</strong> dan mana yang mesti dibantu <strong>Backend</strong>.<br>
+    Kabar baiknya: <strong>Semua urusan Frontend udah 100% beres dan udah di-push ke GitHub</strong> (di repo sendiri maupun repo kelompok). Sekarang tinggal giliran temen backend nerapin endpoint & logikanya. Di bawah udah disiapin contekan bahasa santai yang bisa langsung di-copy paste ke chat tim backend.
+  </div>
+
+  <!-- TABEL PILAH TUGAS -->
+  <h2>1. Tabel Pilah-Pilah Tugas (Frontend vs Backend)</h2>
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 5%;">No</th>
+        <th style="width: 32%;">Masukan / Komentar</th>
+        <th style="width: 14%;">Tanggung Jawab</th>
+        <th style="width: 49%;">Penjelasan Logis & Statusnya</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>1</strong></td>
+        <td>Main color jangan biru, tapi hijau (apotek = kesehatan)</td>
+        <td><span class="tag tag-fe">Frontend</span></td>
+        <td>Urusan visual & UI tema apotek. <span class="tag-done">Sudah Beres</span></td>
+      </tr>
+      <tr>
+        <td><strong>2</strong></td>
+        <td>Tambah tombol Back</td>
+        <td><span class="tag tag-fe">Frontend</span></td>
+        <td>Navigasi halaman di header aplikasi biar gampang balik. <span class="tag-done">Sudah Beres</span></td>
+      </tr>
+      <tr>
+        <td><strong>3</strong></td>
+        <td>API key Gemini di browser dipindah ke backend</td>
+        <td><span class="tag tag-be">Backend</span></td>
+        <td>Kunci rahasia gak boleh bocor di file browser. Butuh proxy di server.</td>
+      </tr>
+      <tr>
+        <td><strong>4</strong></td>
+        <td>NIB kayaknya gak perlu deh</td>
+        <td><span class="tag tag-both">FE + BE</span></td>
+        <td>FE udah hapus semua inputan & tampilannya. BE tinggal bikin kolomnya opsional.</td>
+      </tr>
+      <tr>
+        <td><strong>5</strong></td>
+        <td>Tambahin label "Data Simulasi"</td>
+        <td><span class="tag tag-fe">Frontend</span></td>
+        <td>Penanda di header & pas demo faktur biar jelas ini data mock. <span class="tag-done">Sudah Beres</span></td>
+      </tr>
+      <tr>
+        <td><strong>6</strong></td>
+        <td>Klaim standar CDOB BPOM dihapus</td>
+        <td><span class="tag tag-fe">Frontend</span></td>
+        <td>Hapus klaim yang belum tersertifikasi resmi di login & header. <span class="tag-done">Sudah Beres</span></td>
+      </tr>
+      <tr>
+        <td><strong>7</strong></td>
+        <td>Batch lewat batas retur ganti "Prioritas Jual" / "Catat Dibuang"</td>
+        <td><span class="tag tag-both">FE + BE</span></td>
+        <td>FE tombolnya udah dinamis sesuai tanggal ED. BE perlu endpoint simpannya.</td>
+      </tr>
+      <tr>
+        <td><strong>8</strong></td>
+        <td>"Proses Retur" jangan cuma pindah halaman</td>
+        <td><span class="tag tag-both">FE + BE</span></td>
+        <td>FE udah ada modal konfirmasi catat retur riil. BE perlu endpoint pencatatannya.</td>
+      </tr>
+      <tr>
+        <td><strong>9</strong></td>
+        <td>Catat retur: stok berkurang & batch hilang dari pengingat</td>
+        <td><span class="tag tag-both">FE + BE</span></td>
+        <td>FE state lokal udah potong stok & bersihin alert. BE butuh transaksi atomik di DB.</td>
+      </tr>
+      <tr>
+        <td><strong>10</strong></td>
+        <td>Bikin tab "Lewat Batas Retur" di halaman retur</td>
+        <td><span class="tag tag-both">FE + BE</span></td>
+        <td>FE udah nambahin tab filter & counter. BE sesuaikan filter query API-nya.</td>
+      </tr>
+      <tr>
+        <td><strong>11</strong></td>
+        <td>Seragamkan 4 kategori status di semua halaman</td>
+        <td><span class="tag tag-both">FE + BE</span></td>
+        <td>Bisa Diretur, Lewat Batas Retur, Dekat ED, Stok Tipis. FE udah seragam semua.</td>
+      </tr>
+      <tr>
+        <td><strong>12</strong></td>
+        <td>1 batch jangan double label (Lewat Batas + Risiko Tinggi)</td>
+        <td><span class="tag tag-both">FE + BE</span></td>
+        <td>FE udah mute label risiko tinggi kalau udah lewat batas. BE selaraskan model AI-nya.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- PAGE BREAK BIAR RAPI -->
+  <div class="page-break"></div>
+
+  <!-- BAGIAN FRONTEND -->
+  <h2>2. Yang Udah Dikerjain & Beres di Sisi Frontend</h2>
+  <div style="font-size: 10pt; color: #334155; margin-bottom: 12px;">
+    Semua perubahan di bawah ini udah ditest di berbagai ukuran layar (HP 375px, Tablet 768px, Laptop 1280px) dan lulus 100%:
+  </div>
+  <ul style="font-size: 9.5pt; color: #1e293b; line-height: 1.6;">
+    <li><strong>Warna Baru Emerald Green Apotek:</strong> Warna dasar biru udah diganti total jadi hijau emerald khas apotek herbal/kesehatan (<span class="code-pill">#059669</span>), lengkap sama ilustrasi gedung apotek baru di login dan dashboard. Background langit login juga udah dikasih gradasi awan lembut biar gak flat polosan.</li>
+    <li><strong>Tombol "Kembali" Aktif:</strong> Di pojok kiri atas header sekarang udah ada tombol <span class="code-pill">Kembali</span> di semua menu (kecuali login dan dashboard utama), jadi user gak bingung pas mau balik ke menu sebelumnya.</li>
+    <li><strong>NIB & CDOB Bersih:</strong> Kolom NIB di profil/pengaturan, cetak Berita Acara (BAP), dan sidebar udah dicopot. Tulisan klaim "Standar CDOB BPOM" juga udah diganti keterangan biasa ("Kisaran Timur").</li>
+    <li><strong>Label "Data Simulasi" & Hapus "Mode Lokal":</strong> Di header atas udah nempel badge <span class="code-pill">Data Simulasi</span>. Terus tulisan <span class="code-pill">Mode Lokal</span> di menu faktur udah dihapus tuntas.</li>
+    <li><strong>Aksi Nyata Batch & Kurang Stok:</strong> Pas tombol retur atau buang obat diklik, sekarang muncul popup modal buat konfirmasi jumlah dan catatan. Begitu disimpan, stok obat otomatis terpotong dan obatnya <em>langsung hilang dari daftar pengingat</em> tanpa perlu refresh web.</li>
+    <li><strong>Tombol Khusus Obat Lewat Batas:</strong> Kalau obat udah lewat batas retur PBF, tombolnya otomatis berubah: kalau belum kedaluwarsa jadi <span class="code-pill">Prioritas Jual</span> (taruh etalase depan/diskon), kalau udah kedaluwarsa jadi <span class="code-pill">Catat Dibuang</span> (pemusnahan obat).</li>
+    <li><strong>4 Kategori Rapi & Seragam:</strong> Semua halaman sekarang cuma pake 4 status baku: <em>Bisa Diretur</em>, <em>Lewat Batas Retur</em>, <em>Dekat ED</em>, dan <em>Stok Tipis</em>. Kalau obat udah lewat batas, badge "Risiko Tinggi" otomatis disembunyiin biar gak tabrakan.</li>
+  </ul>
+
+  <!-- BAGIAN BACKEND (CONTEKAN SANTAI) -->
+  <h2>3. Contekan Pesan Santai Buat Temen Backend (Tinggal Copy-Paste)</h2>
+  <p style="font-size: 9.5pt; color: #475569; margin: 0 0 10px 0;">
+    Tinggal copas aja pesan di bawah ini ke grup WA/Discord/Slack kalian, bahasanya udah santai kaya temen nongkrong:
+  </p>
+
+  <!-- BOX 1: API KEY -->
+  <div class="chat-box">
+    <div class="chat-header">
+      <span>🔒 1. Soal API Key Gemini OCR (#3)</span>
+      <span class="tag tag-be">Penting</span>
+    </div>
+    <div class="chat-body">
+      "Bro, buat API Key Gemini nanti jangan ditaruh di frontend ya, bahaya bisa dicolong orang lewat Inspect Element browser. Tolong bikinin satu endpoint proxy di backend kita, misalnya <span class="code-pill">POST /api/v1/faktur/ocr-gemini</span>. Jadi API key-nya aman disimpan di file <span class="code-pill">.env</span> server. Nanti dari frontend tinggal kirim file fotonya aja ke endpoint itu."
+    </div>
+  </div>
+
+  <!-- BOX 2: TRANSAKSI RETUR & BUANG -->
+  <div class="chat-box">
+    <div class="chat-header">
+      <span>📦 2. Endpoint Catat Retur, Dibuang, & Prioritas Jual (#7, #8, #9)</span>
+      <span class="tag tag-be">Kebutuhan Database</span>
+    </div>
+    <div class="chat-body">
+      "Bro, di frontend alur retur sekarang beneran nyatet aksi riil, bukan cuma pajangan atau pindah layar. Tolong bikinin transaksi database atomik di backend:
+      <ul>
+        <li><span class="code-pill">POST /api/v1/retur</span> : Buat nyatet retur obat. Stok di tabel batch dipotong, catat ke log riwayat retur, dan kalau stoknya jadi 0, tandai obatnya udah selesai diretur.</li>
+        <li><span class="code-pill">POST /api/v1/batch/:id/buang</span> : Buat obat lewat batas yang beneran udah ED. Stok dinolkan dan catat log pemusnahan.</li>
+        <li><span class="code-pill">PATCH /api/v1/batch/:id/prioritas-jual</span> : Buat nambah flag bahwa obat ini dipajang di etalase depan buat dijual cepet.</li>
+        <li><strong>Filter Pengingat:</strong> Tolong di query <span class="code-pill">GET /api/v1/pengingat</span>, jangan tampilin lagi obat yang stoknya udah 0 atau statusnya udah diretur/dibuang ya, biar lonceng notifikasi dan pengingatnya bersih."</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- BOX 3: 4 KATEGORI & NIB -->
+  <div class="chat-box">
+    <div class="chat-header">
+      <span>🏷️ 3. Format 4 Kategori Status & Kolom NIB (#4, #10, #11, #12)</span>
+      <span class="tag tag-be">Penyelarasan API</span>
+    </div>
+    <div class="chat-body">
+      "Satu lagi bro:
+      <ul>
+        <li>Format status obat di respons JSON pengingat tolong dibagi 4 grup biar sinkron sama UI: <span class="code-pill">bisa_diretur</span>, <span class="code-pill">lewat_batas_retur</span>, <span class="code-pill">mendekati_kedaluwarsa</span>, sama <span class="code-pill">stok_menipis</span>.</li>
+        <li>Kalau obat statusnya udah masuk <span class="code-pill">lewat_batas_retur</span>, gak usah dikasih status risiko 'tinggi' lagi ya biar labelnya gak tabrakan di layar.</li>
+        <li>Kolom <span class="code-pill">nib</span> di tabel profil apotek dibikin opsional/nullable aja ya, soalnya di UI udah kita copot sesuai permintaan."</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="footer-note">
+    Dokumen ini digenerate otomatis untuk koordinasi santai tim SIMAAF (Apotek Asahan Farma) &bull; Commit Frontend: <code>03818f0</code>
+  </div>
+
+</body>
+</html>
